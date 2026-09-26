@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>alreef.es — Coming soon</title>
+  <title>alreef.es</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -15,30 +15,62 @@
       font-family: Georgia, "Times New Roman", serif;
       background: #1a1a18;
       color: #f4efe6;
-      text-align: center;
       padding: 24px;
     }
-    main { max-width: 560px; }
+    main { width: 100%; max-width: 440px; }
     h1 {
       font-weight: 400;
       letter-spacing: 0.28em;
       text-transform: uppercase;
-      font-size: 1.35rem;
-      margin: 0 0 16px;
+      font-size: 1.2rem;
+      margin: 0 0 8px;
     }
-    p { line-height: 1.6; color: #cfc6b8; margin: 0 0 28px; }
-    a {
+    p { color: #cfc6b8; margin: 0 0 24px; line-height: 1.5; }
+    label { display: block; font-size: 0.85rem; margin: 0 0 6px; color: #cfc6b8; }
+    input, textarea {
+      width: 100%;
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border: 1px solid #5c574e;
+      background: #242320;
       color: #f4efe6;
-      text-decoration: none;
-      border-bottom: 1px solid #cfc6b8;
+      font: inherit;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      background: #f4efe6;
+      color: #1a1a18;
+      font: inherit;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <main>
     <h1>alreef.es</h1>
-    <p>A new site is on the way.<br>For now you can reach us by email.</p>
-    <p><a href="mailto:adib@alreef.es">adib@alreef.es</a></p>
+    <p>Send a request. It arrives in our inbox.</p>
+
+    <form action="https://formsubmit.co/adib@alreef.es" method="POST">
+      <input type="hidden" name="_subject" value="New request from alreef.es">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="https://alreef.es/thanks.html">
+      <input type="text" name="_honey" style="display:none">
+
+      <label for="name">Name</label>
+      <input id="name" type="text" name="name" required>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" name="email" required>
+
+      <label for="message">Request</label>
+      <textarea id="message" name="message" rows="6" required></textarea>
+
+      <button type="submit">Send</button>
+    </form>
   </main>
 </body>
 </html>
