@@ -3,52 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ali Chehade schedule</title>
+<title>Schedule — Ali Chehade</title>
 <style>
-  :root { --navy:#0F2744; --teal:#1B6B6B; --ink:#1A1A1A; --muted:#5c6570; --line:#d7e0e0; --gold:#F4E4B8; }
+  :root { --navy:#0F2744; --teal:#1B6B6B; --ink:#1A1A1A; --muted:#667085; --line:#E4E7EC; --gold:#F4E4B8; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:#f6f8f8; }
-  header { background:var(--navy); color:#fff; padding:18px 16px 14px; }
-  header h1 { margin:0; font-size:1.15rem; }
-  header p { margin:6px 0 0; color:#d9e4e4; font-size:.85rem; }
-  main { padding:12px 12px 28px; max-width:720px; margin:0 auto; }
-  h2 { margin:18px 4px 8px; font-size:.95rem; color:var(--navy); }
-  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:0 0 8px; }
-  .when { font-weight:700; font-size:.9rem; }
-  .what { margin-top:4px; font-size:.9rem; line-height:1.4; }
-  .tag { display:inline-block; margin-top:8px; font-size:.72rem; font-weight:700; letter-spacing:.04em; padding:3px 8px; border-radius:999px; background:#e8f3f3; color:var(--teal); }
-  .tag.warn { background:var(--gold); color:#6b4e00; }
-  .note { background:#fff7e8; border:1px solid #ead9a8; border-radius:12px; padding:12px 14px; font-size:.88rem; }
+  body { margin:0; background:#EEF1F4; color:var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px 12px 32px; }
+  .sheet { background:#fff; border:1px solid #D0D5DD; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  .top { background:var(--navy); color:#fff; padding:18px 20px 16px; display:flex; justify-content:space-between; gap:16px; align-items:flex-end; }
+  .top h1 { margin:0; font-size:1.35rem; letter-spacing:.01em; }
+  .top p { margin:4px 0 0; color:#D0D5DD; font-size:.82rem; }
+  .meta { text-align:right; font-size:.78rem; color:#D0D5DD; }
+  .alert { margin:0; padding:10px 20px; background:#FFF8E8; color:#7A5B00; border-bottom:1px solid #EAD9A8; font-size:.86rem; }
+  h2 { margin:0; padding:10px 20px; background:#F8FAFC; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--line); }
+  td { padding:12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  .time { width:148px; font-weight:700; color:var(--navy); font-size:.9rem; white-space:nowrap; }
+  .item { font-size:.95rem; line-height:1.4; }
+  .sub { color:var(--muted); font-size:.82rem; margin-top:2px; }
+  .status { width:108px; text-align:right; }
+  .pill { display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:4px 8px; border-radius:999px; background:#E8F3F3; color:var(--teal); }
+  .pill.warn { background:var(--gold); color:#7A5B00; }
+  .foot { padding:12px 20px 16px; color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); }
+  @media (max-width:640px) {
+    .top { display:block; }
+    .meta { text-align:left; margin-top:8px; }
+    table, thead, tbody, tr, th, td { display:block; }
+    thead { display:none; }
+    tr { border-bottom:1px solid var(--line); padding:10px 14px; }
+    td { border:0; padding:0; }
+    .time { width:auto; margin-bottom:2px; }
+    .status { width:auto; text-align:left; margin-top:8px; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Ali Chehade — schedule</h1>
-  <p>Updated 11 October 2026 from email</p>
-</header>
-<main>
-  <div class="note">Tuesday night car pickup is listed as 21:30. The flight lands at 22:00. Desk is open until midnight — collect after you land.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div class="top">
+      <div>
+        <h1>Ali Chehade</h1>
+        <p>Exam and travel schedule</p>
+      </div>
+      <div class="meta">Updated 11 Oct 2026<br>From email</div>
+    </div>
+    <div class="alert">Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight — collect after landing.</div>
 
-  <h2>12–14 October · paper 9702/22</h2>
-  <div class="card"><div class="when">Mon 12 Oct 14:22–17:36</div><div class="what">AVE María Zambrano → Atocha. Trainline UFPNJM. Then flat, Marqués de la Ensenada 16, apt 525.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Mon 12 Oct after 17:36</div><div class="what">Heating technician at the Madrid flat. You must be there.</div><span class="tag">Arranged</span></div>
-  <div class="card"><div class="when">Tue 13 Oct 20:40–22:00</div><div class="what">Vueling VY1013 Madrid → Barcelona. Personal item only.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Tue 13 Oct after 22:00</div><div class="what">Budget 0529-2285-ES-5 at BCN airport. QuickPass done — follow signs to the Avis desk. Return Wed 21:00. €97.91.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Night 13–14 Oct</div><div class="what">Casa Virupa, Diseminat 145, Llinars. Two single beds, breakfast, €112.50. Arrive about 23:00. +34 621 14 98 90.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Wed 14 Oct</div><div class="what">Paper 9702/22 at IRS, Disseminat 133, Can Ribó. Arrive 30 min before. Candidate 2810.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Wed 14 Oct 20:40–22:30</div><div class="what">Ryanair FR483 / T4PKJJ BCN → AGP. Gate closes 20:10.</div><span class="tag">Paid</span></div>
+    <h2>12–14 October · paper 9702/22</h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="time">Mon 12 Oct<br>14:22–17:36</td><td class="item">AVE María Zambrano → Atocha<div class="sub">Trainline UFPNJM · then flat, Marqués de la Ensenada 16, apt 525</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Mon 12 Oct<br>after 17:36</td><td class="item">Heating technician<div class="sub">Madrid flat. You must be there.</div></td><td class="status"><span class="pill">Arranged</span></td></tr>
+        <tr><td class="time">Tue 13 Oct<br>20:40–22:00</td><td class="item">Vueling VY1013 Madrid → Barcelona<div class="sub">Personal item only</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Tue 13 Oct<br>after 22:00</td><td class="item">Budget car, BCN airport<div class="sub">0529-2285-ES-5 · QuickPass → Avis desk · return Wed 21:00 · €97.91</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Night<br>13–14 Oct</td><td class="item">Casa Virupa<div class="sub">Diseminat 145, Llinars · two single beds · breakfast · €112.50 · arrive ~23:00 · +34 621 14 98 90</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Wed 14 Oct</td><td class="item">Paper 9702/22<div class="sub">IRS, Disseminat 133, Can Ribó · arrive 30 min before · candidate 2810</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Wed 14 Oct<br>20:40–22:30</td><td class="item">Ryanair FR483 BCN → AGP<div class="sub">T4PKJJ · gate closes 20:10</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+      </tbody>
+    </table>
 
-  <h2>Your trips</h2>
-  <div class="card"><div class="when">Fri 16 Oct 08:35–09:45</div><div class="what">Air Europa UX5042 Málaga → Madrid. Locator 7ASQ46. Adib only.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Fri 16 Oct</div><div class="what">Middle East Airlines Madrid → Beirut. Locator X4HZSA. Adib only. Time is on the e-ticket.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Mon 19 Oct 07:10–08:20</div><div class="what">Air Europa UX5032 Málaga → Madrid. eDreams 25902230384. Airline locator ZSWRSM. Ali Chehade.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Wed 21 Oct 19:05–20:20</div><div class="what">Air Europa UX5047 Madrid → Málaga. Same eDreams booking. Ali Chehade.</div><span class="tag">Paid</span></div>
+    <h2>Your trips</h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="time">Fri 16 Oct<br>08:35–09:45</td><td class="item">Air Europa UX5042 Málaga → Madrid<div class="sub">Locator 7ASQ46 · Adib only</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Fri 16 Oct</td><td class="item">Middle East Airlines Madrid → Beirut<div class="sub">Locator X4HZSA · Adib only · time is on the e-ticket</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Mon 19 Oct<br>07:10–08:20</td><td class="item">Air Europa UX5032 Málaga → Madrid<div class="sub">eDreams 25902230384 · airline ZSWRSM · Ali Chehade</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Wed 21 Oct<br>19:05–20:20</td><td class="item">Air Europa UX5047 Madrid → Málaga<div class="sub">Same eDreams booking · Ali Chehade</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+      </tbody>
+    </table>
 
-  <h2>10 November · paper 9702/12</h2>
-  <div class="card"><div class="when">Mon 9 Nov 19:30–20:50</div><div class="what">Vueling VY1009 Madrid → Barcelona. Booking.com. Passenger listed: Adib Chehade.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Tue 10 Nov</div><div class="what">Paper 9702/12 at the same school. Arrive 30 min before. Candidate 2810.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Tue 10 Nov 17:30–18:55</div><div class="what">Vueling VY1008 Barcelona → Madrid. Leave the school in time.</div><span class="tag">Paid</span></div>
-  <div class="card"><div class="when">Night 9 Nov</div><div class="what">No hotel near Llinars in Gmail.</div><span class="tag warn">Not confirmed</span></div>
-</main>
+    <h2>10 November · paper 9702/12</h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="time">Mon 9 Nov<br>19:30–20:50</td><td class="item">Vueling VY1009 Madrid → Barcelona<div class="sub">Booking.com · passenger listed: Adib Chehade</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Tue 10 Nov</td><td class="item">Paper 9702/12<div class="sub">Same school · arrive 30 min before · candidate 2810</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Tue 10 Nov<br>17:30–18:55</td><td class="item">Vueling VY1008 Barcelona → Madrid<div class="sub">Leave the school in time</div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr><td class="time">Night 9 Nov</td><td class="item">Stay near Llinars<div class="sub">No hotel in Gmail</div></td><td class="status"><span class="pill warn">Not confirmed</span></td></tr>
+      </tbody>
+    </table>
+    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga.</div>
+  </div>
+</div>
 </body>
 </html>
