@@ -16,6 +16,9 @@
   .clock { text-align:right; }
   .clock .t { font-variant-numeric: tabular-nums; font-size:2.8rem; font-weight:700; letter-spacing:.02em; line-height:1; }
   .clock .d { margin-top:6px; font-size:.9rem; color:#D0D5DD; }
+  .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--line); }
+  .bar span { color:var(--muted); font-size:.82rem; }
+  button { border:0; background:var(--navy); color:#fff; font: inherit; font-size:.86rem; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; }
   .alert { margin:0; padding:10px 20px; background:#FFF8E8; color:#7A5B00; border-bottom:1px solid #EAD9A8; font-size:.86rem; }
   h2 { margin:0; padding:12px 20px; background:#F8FAFC; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); }
   table { width:100%; border-collapse:collapse; }
@@ -37,12 +40,19 @@
     .top { display:block; }
     .clock { text-align:left; margin-top:12px; }
     .clock .t { font-size:2.4rem; }
+    .bar { display:block; }
+    button { width:100%; margin-top:8px; }
     table, thead, tbody, tr, th, td { display:block; }
     thead { display:none; }
     tr { border-bottom:1px solid var(--line); padding:12px 16px; }
     td { border:0; padding:0; }
     .time { width:auto; margin-bottom:8px; }
     .status { width:auto; text-align:left; margin-top:8px; }
+  }
+  @media print {
+    body { background:#fff; }
+    .wrap { padding:0; }
+    .bar, .clock { display:none; }
   }
 </style>
 </head>
@@ -59,8 +69,11 @@
         <div class="d" id="clockdate">Spain time</div>
       </div>
     </div>
+    <div class="bar">
+      <span>Checked every 6 hours. Save a copy if you are offline.</span>
+      <button type="button" onclick="window.print()">Download</button>
+    </div>
     <div class="alert">Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight — collect after landing.</div>
-
     <h2>12–14 October · paper 9702/22</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
@@ -74,7 +87,6 @@
         <tr><td class="time"><div class="when">Wed 14 Oct</div><div class="hours">20:40–22:30</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Ryanair FR483 BCN → AGP</div><div class="sub">T4PKJJ · gate closes 20:10</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
       </tbody>
     </table>
-
     <h2>Your trips</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
@@ -85,7 +97,6 @@
         <tr><td class="time"><div class="when">Wed 21 Oct</div><div class="hours">19:05–20:20</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Air Europa UX5047 Madrid → Málaga</div><div class="sub">Same eDreams booking · Ali Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
       </tbody>
     </table>
-
     <h2>10 November · paper 9702/12</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
