@@ -35,6 +35,13 @@
   .status { width:110px; text-align:right; }
   .pill { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:5px 9px; border-radius:999px; background:#E8F3F3; color:var(--teal); }
   .pill.warn { background:var(--gold); color:#7A5B00; }
+  .pill.done { background:#F2F4F7; color:#475467; }
+  details { border-top:1px solid var(--line); }
+  summary { list-style:none; cursor:pointer; padding:14px 20px; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); background:#F8FAFC; }
+  summary::-webkit-details-marker { display:none; }
+  summary:after { content:"Show"; float:right; color:var(--teal); letter-spacing:.04em; }
+  details[open] summary:after { content:"Hide"; }
+  .archive { opacity:.72; }
   .foot { padding:12px 20px 16px; color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); }
   @media (max-width:640px) {
     .top { display:block; }
@@ -53,6 +60,7 @@
     body { background:#fff; }
     .wrap { padding:0; }
     .bar, .clock { display:none; }
+    details { display:block; }
   }
 </style>
 </head>
@@ -70,7 +78,7 @@
       </div>
     </div>
     <div class="bar">
-      <span>Checked every 6 hours. Save a copy if you are offline.</span>
+      <span>Checked every 6 hours. Finished items move to Archive.</span>
       <button type="button" onclick="window.print()">Download</button>
     </div>
     <div class="alert">Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight — collect after landing.</div>
@@ -107,6 +115,17 @@
         <tr><td class="time"><div class="when">Night 9 Nov</div><div class="hours">stay</div></td><td><div class="item"><div class="icon">■</div><div><div class="title">Stay near Llinars</div><div class="sub">No hotel in Gmail</div></div></div></td><td class="status"><span class="pill warn">Not confirmed</span></td></tr>
       </tbody>
     </table>
+    <details>
+      <summary>Archive · finished</summary>
+      <table class="archive">
+        <tbody>
+          <tr><td class="time"><div class="when">7–8 Oct</div><div class="hours">exam</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Paper 9702/33</div><div class="sub">Physics practical at IRS, Disseminat 133, Can Ribó · candidate 2810</div></div></div></td><td class="status"><span class="pill done">Done</span></td></tr>
+          <tr><td class="time"><div class="when">7 Oct</div><div class="hours">arrived 19:24</div></td><td><div class="item"><div class="icon">→</div><div><div class="title">Train to Barcelona Sants</div><div class="sub">Arrived 19:24. Counter directions used on arrival.</div></div></div></td><td class="status"><span class="pill done">Done</span></td></tr>
+          <tr><td class="time"><div class="when">7–8 Oct</div><div class="hours">returned</div></td><td><div class="item"><div class="icon">□</div><div><div class="title">Budget car, Barcelona Sants</div><div class="sub">RA 273305745. Collected, used, and returned.</div></div></div></td><td class="status"><span class="pill done">Done</span></td></tr>
+          <tr><td class="time"><div class="when">Fri 9 Oct</div><div class="hours">10:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">BYD Caetano Málaga</div><div class="sub">Francisco Mate. Removed from the active list after the visit.</div></div></div></td><td class="status"><span class="pill done">Done</span></td></tr>
+        </tbody>
+      </table>
+    </details>
     <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Updated 11 Oct 2026 from email.</div>
   </div>
 </div>
