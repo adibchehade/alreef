@@ -13,7 +13,9 @@
   .top { background:var(--navy); color:#fff; padding:18px 20px 16px; display:flex; justify-content:space-between; gap:16px; align-items:flex-end; }
   .top h1 { margin:0; font-size:1.35rem; letter-spacing:.01em; }
   .top p { margin:4px 0 0; color:#D0D5DD; font-size:.82rem; }
-  .meta { text-align:right; font-size:.78rem; color:#D0D5DD; }
+  .clock { text-align:right; }
+  .clock .t { font-variant-numeric: tabular-nums; font-size:1.6rem; font-weight:700; letter-spacing:.02em; line-height:1; }
+  .clock .d { margin-top:4px; font-size:.78rem; color:#D0D5DD; }
   .alert { margin:0; padding:10px 20px; background:#FFF8E8; color:#7A5B00; border-bottom:1px solid #EAD9A8; font-size:.86rem; }
   h2 { margin:0; padding:10px 20px; background:#F8FAFC; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); }
   table { width:100%; border-collapse:collapse; }
@@ -29,7 +31,7 @@
   .foot { padding:12px 20px 16px; color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); }
   @media (max-width:640px) {
     .top { display:block; }
-    .meta { text-align:left; margin-top:8px; }
+    .clock { text-align:left; margin-top:12px; }
     table, thead, tbody, tr, th, td { display:block; }
     thead { display:none; }
     tr { border-bottom:1px solid var(--line); padding:10px 14px; }
@@ -47,7 +49,10 @@
         <h1>Ali Chehade</h1>
         <p>Exam and travel schedule</p>
       </div>
-      <div class="meta">Updated 11 Oct 2026<br>From email</div>
+      <div class="clock">
+        <div class="t" id="clock">--:--:--</div>
+        <div class="d" id="clockdate">Spain time</div>
+      </div>
     </div>
     <div class="alert">Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight — collect after landing.</div>
 
@@ -86,8 +91,19 @@
         <tr><td class="time">Night 9 Nov</td><td class="item">Stay near Llinars<div class="sub">No hotel in Gmail</div></td><td class="status"><span class="pill warn">Not confirmed</span></td></tr>
       </tbody>
     </table>
-    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga.</div>
+    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Updated 11 Oct 2026 from email.</div>
   </div>
 </div>
+<script>
+  function tick() {
+    var now = new Date();
+    var time = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+    var date = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', weekday: 'short', day: 'numeric', month: 'short' }).format(now);
+    document.getElementById('clock').textContent = time;
+    document.getElementById('clockdate').textContent = date + ' · Spain';
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
 </body>
 </html>
