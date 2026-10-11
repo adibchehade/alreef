@@ -25,17 +25,20 @@
   th { text-align:left; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); padding:12px 16px; border-bottom:1px solid var(--line); }
   td { padding:14px 16px; border-bottom:1px solid var(--line); vertical-align:top; }
   tr:last-child td { border-bottom:0; }
+  tr.next { background:#E8F6F4; box-shadow: inset 4px 0 0 var(--teal); }
   .time { width:150px; }
   .when { font-weight:700; color:var(--navy); font-size:.95rem; }
   .hours { color:var(--muted); font-size:.82rem; margin-top:2px; }
   .item { display:flex; gap:12px; align-items:flex-start; }
   .icon { width:36px; height:36px; border-radius:8px; background:#EEF3F8; color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex:0 0 36px; }
+  tr.next .icon { background:#fff; }
   .title { font-weight:700; font-size:.98rem; }
   .sub { color:var(--muted); font-size:.82rem; margin-top:2px; line-height:1.35; }
   .status { width:110px; text-align:right; }
   .pill { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:5px 9px; border-radius:999px; background:#E8F3F3; color:var(--teal); }
   .pill.warn { background:var(--gold); color:#7A5B00; }
   .pill.done { background:#F2F4F7; color:#475467; }
+  .pill.next { background:var(--teal); color:#fff; }
   details { border-top:1px solid var(--line); }
   summary { list-style:none; cursor:pointer; padding:14px 20px; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); background:#F8FAFC; }
   summary::-webkit-details-marker { display:none; }
@@ -78,7 +81,7 @@
       </div>
     </div>
     <div class="bar">
-      <span>Checked every 6 hours. Finished items move to Archive.</span>
+      <span>Checked every 6 hours. Next date is highlighted.</span>
       <button type="button" onclick="window.print()">Download</button>
     </div>
     <div class="alert">Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight — collect after landing.</div>
@@ -86,33 +89,33 @@
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td class="time"><div class="when">Mon 12 Oct</div><div class="hours">14:22–17:36</div></td><td><div class="item"><div class="icon">→</div><div><div class="title">AVE María Zambrano → Atocha</div><div class="sub">Trainline UFPNJM · then flat, Marqués de la Ensenada 16, apt 525</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Mon 12 Oct</div><div class="hours">after 17:36</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Heating technician</div><div class="sub">Madrid flat. You must be there.</div></div></div></td><td class="status"><span class="pill">Arranged</span></td></tr>
-        <tr><td class="time"><div class="when">Tue 13 Oct</div><div class="hours">20:40–22:00</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Vueling VY1013 Madrid → Barcelona</div><div class="sub">Personal item only</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Tue 13 Oct</div><div class="hours">after 22:00</div></td><td><div class="item"><div class="icon">□</div><div><div class="title">Budget car, BCN airport</div><div class="sub">0529-2285-ES-5 · QuickPass → Avis desk · return Wed 21:00 · €97.91</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Night</div><div class="hours">13–14 Oct</div></td><td><div class="item"><div class="icon">■</div><div><div class="title">Casa Virupa</div><div class="sub">Diseminat 145, Llinars · two single beds · breakfast · €112.50 · arrive ~23:00 · +34 621 14 98 90</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Wed 14 Oct</div><div class="hours">exam</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Paper 9702/22</div><div class="sub">IRS, Disseminat 133, Can Ribó · arrive 30 min before · candidate 2810</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Wed 14 Oct</div><div class="hours">20:40–22:30</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Ryanair FR483 BCN → AGP</div><div class="sub">T4PKJJ · gate closes 20:10</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-12"><td class="time"><div class="when">Mon 12 Oct</div><div class="hours">14:22–17:36</div></td><td><div class="item"><div class="icon">→</div><div><div class="title">AVE María Zambrano → Atocha</div><div class="sub">Trainline UFPNJM · then flat, Marqués de la Ensenada 16, apt 525</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-12"><td class="time"><div class="when">Mon 12 Oct</div><div class="hours">after 17:36</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Heating technician</div><div class="sub">Madrid flat. You must be there.</div></div></div></td><td class="status"><span class="pill">Arranged</span></td></tr>
+        <tr data-date="2026-10-13"><td class="time"><div class="when">Tue 13 Oct</div><div class="hours">20:40–22:00</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Vueling VY1013 Madrid → Barcelona</div><div class="sub">Personal item only</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-13"><td class="time"><div class="when">Tue 13 Oct</div><div class="hours">after 22:00</div></td><td><div class="item"><div class="icon">□</div><div><div class="title">Budget car, BCN airport</div><div class="sub">0529-2285-ES-5 · QuickPass → Avis desk · return Wed 21:00 · €97.91</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-13"><td class="time"><div class="when">Night</div><div class="hours">13–14 Oct</div></td><td><div class="item"><div class="icon">■</div><div><div class="title">Casa Virupa</div><div class="sub">Diseminat 145, Llinars · two single beds · breakfast · €112.50 · arrive ~23:00 · +34 621 14 98 90</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-14"><td class="time"><div class="when">Wed 14 Oct</div><div class="hours">exam</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Paper 9702/22</div><div class="sub">IRS, Disseminat 133, Can Ribó · arrive 30 min before · candidate 2810</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-14"><td class="time"><div class="when">Wed 14 Oct</div><div class="hours">20:40–22:30</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Ryanair FR483 BCN → AGP</div><div class="sub">T4PKJJ · gate closes 20:10</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
       </tbody>
     </table>
     <h2>Your trips</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td class="time"><div class="when">Fri 16 Oct</div><div class="hours">08:35–09:45</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Air Europa UX5042 Málaga → Madrid</div><div class="sub">Locator 7ASQ46 · Adib only</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Fri 16 Oct</div><div class="hours">after MAD</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Middle East Airlines Madrid → Beirut</div><div class="sub">Locator X4HZSA · Adib only · time is on the e-ticket</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Mon 19 Oct</div><div class="hours">07:10–08:20</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Air Europa UX5032 Málaga → Madrid</div><div class="sub">eDreams 25902230384 · airline ZSWRSM · Ali Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Wed 21 Oct</div><div class="hours">19:05–20:20</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Air Europa UX5047 Madrid → Málaga</div><div class="sub">Same eDreams booking · Ali Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-16"><td class="time"><div class="when">Fri 16 Oct</div><div class="hours">08:35–09:45</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Air Europa UX5042 Málaga → Madrid</div><div class="sub">Locator 7ASQ46 · Adib only</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-16"><td class="time"><div class="when">Fri 16 Oct</div><div class="hours">after MAD</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Middle East Airlines Madrid → Beirut</div><div class="sub">Locator X4HZSA · Adib only · time is on the e-ticket</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-19"><td class="time"><div class="when">Mon 19 Oct</div><div class="hours">07:10–08:20</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Air Europa UX5032 Málaga → Madrid</div><div class="sub">eDreams 25902230384 · airline ZSWRSM · Ali Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-10-21"><td class="time"><div class="when">Wed 21 Oct</div><div class="hours">19:05–20:20</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Air Europa UX5047 Madrid → Málaga</div><div class="sub">Same eDreams booking · Ali Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
       </tbody>
     </table>
     <h2>10 November · paper 9702/12</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td class="time"><div class="when">Mon 9 Nov</div><div class="hours">19:30–20:50</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Vueling VY1009 Madrid → Barcelona</div><div class="sub">Booking.com · passenger listed: Adib Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Tue 10 Nov</div><div class="hours">exam</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Paper 9702/12</div><div class="sub">Same school · arrive 30 min before · candidate 2810</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Tue 10 Nov</div><div class="hours">17:30–18:55</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Vueling VY1008 Barcelona → Madrid</div><div class="sub">Leave the school in time</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
-        <tr><td class="time"><div class="when">Night 9 Nov</div><div class="hours">stay</div></td><td><div class="item"><div class="icon">■</div><div><div class="title">Stay near Llinars</div><div class="sub">No hotel in Gmail</div></div></div></td><td class="status"><span class="pill warn">Not confirmed</span></td></tr>
+        <tr data-date="2026-11-09"><td class="time"><div class="when">Mon 9 Nov</div><div class="hours">19:30–20:50</div></td><td><div class="item"><div class="icon">↑</div><div><div class="title">Vueling VY1009 Madrid → Barcelona</div><div class="sub">Booking.com · passenger listed: Adib Chehade</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-11-10"><td class="time"><div class="when">Tue 10 Nov</div><div class="hours">exam</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Paper 9702/12</div><div class="sub">Same school · arrive 30 min before · candidate 2810</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-11-10"><td class="time"><div class="when">Tue 10 Nov</div><div class="hours">17:30–18:55</div></td><td><div class="item"><div class="icon">↓</div><div><div class="title">Vueling VY1008 Barcelona → Madrid</div><div class="sub">Leave the school in time</div></div></div></td><td class="status"><span class="pill">Paid</span></td></tr>
+        <tr data-date="2026-11-09"><td class="time"><div class="when">Night 9 Nov</div><div class="hours">stay</div></td><td><div class="item"><div class="icon">■</div><div><div class="title">Stay near Llinars</div><div class="sub">No hotel in Gmail</div></div></div></td><td class="status"><span class="pill warn">Not confirmed</span></td></tr>
       </tbody>
     </table>
     <details>
@@ -137,7 +140,20 @@
     document.getElementById('clock').textContent = time;
     document.getElementById('clockdate').textContent = date + ' · Spain';
   }
+  function highlightNext() {
+    var today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-date]'));
+    var next = null;
+    rows.forEach(function (row) {
+      var d = row.getAttribute('data-date');
+      if (d >= today && (next === null || d < next)) next = d;
+    });
+    rows.forEach(function (row) {
+      if (row.getAttribute('data-date') === next) row.classList.add('next');
+    });
+  }
   tick();
+  highlightNext();
   setInterval(tick, 1000);
 </script>
 </body>
