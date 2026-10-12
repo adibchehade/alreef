@@ -18,7 +18,9 @@
   .clock .d { margin-top:6px; font-size:.9rem; color:#D0D5DD; }
   .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--line); }
   .bar span { color:var(--muted); font-size:.82rem; line-height:1.4; }
-  button { border:0; background:var(--navy); color:#fff; font: inherit; font-size:.86rem; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; }
+  .bar-actions { display:flex; gap:8px; }
+  button, .btn { border:0; background:var(--navy); color:#fff; font: inherit; font-size:.86rem; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; text-decoration:none; display:inline-block; text-align:center; }
+  .btn.alt { background:var(--teal); }
   .news { display:flex; align-items:center; background:#D10000; color:#fff; overflow:hidden; }
   .news label { flex:0 0 auto; padding:0 12px; font-size:.72rem; font-weight:700; letter-spacing:.08em; background:#8A0000; color:#fff; height:40px; display:flex; align-items:center; }
   .track { flex:1; overflow:hidden; }
@@ -62,7 +64,8 @@
     .clock { text-align:left; margin-top:12px; }
     .clock .t { font-size:2.4rem; }
     .bar { display:block; }
-    button { width:100%; margin-top:8px; }
+    .bar-actions { display:flex; gap:8px; margin-top:8px; }
+    button, .btn { flex:1; }
     table, thead, tbody, tr, th, td { display:block; }
     thead { display:none; }
     tr { border-bottom:1px solid var(--line); padding:12px 16px; }
@@ -94,15 +97,18 @@
     <div class="news">
       <label>NEWS</label>
       <div class="track"><div class="ticker">
-        <span>Checks now run every 3 hours.</span>
+        <span>Update now button is on the top bar.</span>
         <span>Tue 13 Oct car slot is 21:30. Flight lands 22:00. Desk open until midnight.</span>
         <span>Night 9 Nov: no hotel near Llinars yet.</span>
         <span>No return flight from Beirut to Spain in Gmail.</span>
       </div></div>
     </div>
     <div class="bar">
-      <span>Checked every 3 hours. Last update: Mon 12 Oct 10:36 · Spain.</span>
-      <button type="button" onclick="window.print()">Download</button>
+      <span>Checked every 3 hours. Last update: Mon 12 Oct 10:40 · Spain.</span>
+      <div class="bar-actions">
+        <a class="btn alt" href="https://grok.com/?q=Update%20the%20Ali%20schedule%20now" target="_blank" rel="noopener">Update now</a>
+        <button type="button" onclick="window.print()">Download</button>
+      </div>
     </div>
     <h2>12–14 October · paper 9702/22</h2>
     <table>
@@ -148,7 +154,7 @@
         </tbody>
       </table>
     </details>
-    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Last update: Mon 12 Oct 10:36 · Spain.</div>
+    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Last update: Mon 12 Oct 10:40 · Spain.</div>
   </div>
 </div>
 <script>
