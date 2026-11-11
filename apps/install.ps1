@@ -325,13 +325,21 @@ function Start-MyApps {
         $light = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -ErrorAction SilentlyContinue).AppsUseLightTheme
         if ($light -eq 1) { 'light' } else { 'graphite' }
     }
-    function New-Brush([string]$hex) { New-Object Windows.Media.SolidColorBrush ([Windows.Media.ColorConverter]::ConvertFromString($hex)) }
+    function New-Brush([string]$hex) {
+        $b = [Windows.Media.SolidColorBrush]::new([Windows.Media.Color][Windows.Media.ColorConverter]::ConvertFromString($hex))
+        $b.Freeze()
+        ,$b
+    }
 
     function Set-Theme([string]$name) {
         if ($name -ne 'auto' -and -not $themes.Contains($name)) { $name = 'auto' }
         $script:themeChoice = $name
         $t = $themes[$(if ($name -eq 'auto') { Get-AutoTheme } else { $name })]
-        foreach ($k in $keys) { $win.Resources[$k] = New-Brush $t[$k] }
+        foreach ($k in $keys) {
+            [Windows.Media.SolidColorBrush]$brush = New-Brush $t[$k]   # typed, so WPF gets a real Brush, not a PowerShell wrapper
+            $win.Resources.Remove($k)
+            $win.Resources.Add($k, $brush.psobject.BaseObject)
+        }
         foreach ($sw in $ThemePicker.Children) {
             $sw.BorderThickness = if ($sw.Tag -eq $name) { '2' } else { '1' }
             Use-Res $sw $BRD $(if ($sw.Tag -eq $name) { 'AccentText' } else { 'BtnBorder' })
