@@ -5,6 +5,7 @@
   {"name": "Firefox", "id": "Mozilla.Firefox", "category": "Browsers", "homepage": "https://www.mozilla.org/firefox/all/", "default": false},
   {"name": "Google Chrome", "id": "Google.Chrome", "category": "Browsers", "homepage": "https://www.google.com/chrome/?standalone=1", "default": false},
   {"name": "Floorp", "id": "Ablaze.Floorp", "category": "Browsers", "homepage": "https://floorp.app", "default": false},
+  {"name": "Tor Browser", "id": "TorProject.TorBrowser", "category": "Browsers", "homepage": "https://www.torproject.org/download/", "default": false},
   {"name": "Telegram", "id": "Telegram.TelegramDesktop", "category": "Communication", "homepage": "https://desktop.telegram.org", "default": false},
   {"name": "Claude", "id": "Anthropic.Claude", "category": "Communication", "homepage": "https://claude.ai/download", "default": false},
   {"name": "9Proxy", "installer": "https://static.9proxy-cdn.net/download/latest/windows/9proxy-windows-installer.exe", "detect": "9proxy", "category": "Network", "homepage": "https://9proxy.com", "default": false},
