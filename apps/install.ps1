@@ -307,6 +307,11 @@ function Start-MyApps {
     $accent = '#2A94D6'; $accentHover = '#60B4E8'
     $cardBg = '#11234B'; $cardBorder = '#1A3260'; $cardHoverBg = '#17306A'
 
+    function Set-Pinned($sec, [bool]$pin) {
+        $sec.Pinned = $pin
+        $sec.Count.Foreground = if ($pin) { '#2A94D6' } else { '#8FA3C4' }
+        Set-Section $sec $pin
+    }
     function Set-Section($sec, [bool]$open) {
         $sec.Grid.Visibility = if ($open) { 'Visible' } else { 'Collapsed' }
         $sec.Arrow.RenderTransform.Angle = if ($open) { 0 } else { -90 }
@@ -321,7 +326,6 @@ function Start-MyApps {
         # Clickable header: chevron + name + count
         $hdr = New-Object Windows.Controls.StackPanel
         $hdr.Orientation = 'Horizontal'; $hdr.Margin = '4,14,0,6'; $hdr.Cursor = 'Hand'; $hdr.Background = 'Transparent'
-        $hdr.ToolTip = 'Click to collapse or expand'
         $arrow = New-Object Windows.Shapes.Path
         $arrow.Data = [Windows.Media.Geometry]::Parse('M1,1 L5,5 L9,1')
         $arrow.Stroke = $accent; $arrow.StrokeThickness = 1.8
@@ -334,15 +338,33 @@ function Start-MyApps {
         $cnt.Text = "$($catApps.Count)"; $cnt.FontSize = 11; $cnt.Foreground = '#8FA3C4'; $cnt.Margin = '8,0,0,0'
         [void]$hdr.Children.Add($arrow); [void]$hdr.Children.Add($title); [void]$hdr.Children.Add($cnt)
 
-        $sec = @{ Grid = $grid; Arrow = $arrow; Title = $title }
+        # Section = header + cards in one box, so hovering anywhere over it keeps it open
+        $box = New-Object Windows.Controls.StackPanel
+        $box.Background = 'Transparent'
+        [void]$box.Children.Add($hdr)
+        [void]$box.Children.Add($grid)
+        [void]$AppPanel.Children.Add($box)
+
+        $sec = @{ Grid = $grid; Arrow = $arrow; Title = $title; Count = $cnt; Box = $box; Pinned = $false; Checks = New-Object System.Collections.ArrayList }
+        $timer = New-Object Windows.Threading.DispatcherTimer
+        $timer.Interval = [TimeSpan]::FromMilliseconds(350)
+        $timer.Tag = $sec
+        $timer.Add_Tick({
+            $this.Stop()
+            $s = $this.Tag
+            $ticked = @($s.Checks | Where-Object { $_.IsChecked }).Count
+            if (-not $s.Pinned -and -not $s.Box.IsMouseOver -and -not $ticked) { Set-Section $s $false }
+        })
+        $sec.Timer = $timer
         $sections += $sec
-        $hdr.Tag = $sec
-        $hdr.Add_MouseLeftButtonUp({ Set-Section $this.Tag ($this.Tag.Grid.Visibility -ne 'Visible') })
+        $hdr.Tag = $sec; $box.Tag = $sec
+        $hdr.ToolTip = 'Hover to open. Click to keep it open.'
+
+        $box.Add_MouseEnter({ $this.Tag.Timer.Stop(); Set-Section $this.Tag $true })
+        $box.Add_MouseLeave({ $this.Tag.Timer.Start() })
+        $hdr.Add_MouseLeftButtonUp({ Set-Pinned $this.Tag (-not $this.Tag.Pinned) })
         $hdr.Add_MouseEnter({ $this.Tag.Title.Foreground = $accentHover; $this.Tag.Arrow.Stroke = $accentHover })
         $hdr.Add_MouseLeave({ $this.Tag.Title.Foreground = $accent; $this.Tag.Arrow.Stroke = $accent })
-
-        [void]$AppPanel.Children.Add($hdr)
-        [void]$AppPanel.Children.Add($grid)
 
         foreach ($a in $catApps) {
             $card = New-Object Windows.Controls.Border
@@ -367,6 +389,7 @@ function Start-MyApps {
             # Hover highlight, and clicking anywhere on the card ticks it
             $card.Cursor = 'Hand'
             $card.Tag = $cb
+            [void]$sec.Checks.Add($cb)
             $card.Add_MouseEnter({ $this.Background = $cardHoverBg; $this.BorderBrush = $accent })
             $card.Add_MouseLeave({ $this.Background = $cardBg; $this.BorderBrush = $cardBorder })
             $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
@@ -374,6 +397,7 @@ function Start-MyApps {
             $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; Pill = $pill; App = $a }
         }
     }
+    foreach ($sec in $sections) { Set-Section $sec $false }   # everything starts folded
 
     # ---------- Background worker (keeps the window responsive) ----------
     $sync = [hashtable]::Synchronized(@{
@@ -776,8 +800,8 @@ function Start-MyApps {
     })
     $LinkAll.Add_MouseLeftButtonUp({  foreach ($r in $rows.Values) { $r.Check.IsChecked = $true } })
     $LinkNone.Add_MouseLeftButtonUp({ foreach ($r in $rows.Values) { $r.Check.IsChecked = $false } })
-    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Section $sec $true } })
-    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Section $sec $false } })
+    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Pinned $sec $true } })
+    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Pinned $sec $false } })
 
     $win.Add_Closing({
         param($sender, $e)
