@@ -11,7 +11,7 @@
   {"name": "7-Zip", "id": "7zip.7zip", "category": "Utilities", "homepage": "https://www.7-zip.org", "default": false},
   {"name": "CCleaner", "id": "Piriform.CCleaner", "category": "Utilities", "homepage": "https://www.ccleaner.com/ccleaner/download", "default": false},
   {"name": "BleachBit", "id": "BleachBit.BleachBit", "category": "Utilities", "homepage": "https://www.bleachbit.org/download/windows", "default": false},
-  {"name": "Python 3.13", "id": "Python.Python.3.13", "category": "Runtimes", "homepage": "https://www.python.org/downloads/windows/", "default": false},
+  {"name": "Python 3.13", "id": "Python.Python.3.13", "category": "Runtimes", "homepage": "https://www.python.org/downloads/windows/", "default": false, "scope": "machine", "override": "/quiet InstallAllUsers=1 PrependPath=1 Include_launcher=1 Include_pip=1"},
   {"name": "Edge WebView2 Runtime", "id": "Microsoft.EdgeWebView2Runtime", "category": "Runtimes", "homepage": "https://developer.microsoft.com/microsoft-edge/webview2/", "default": false},
   {"name": ".NET 10 Desktop Runtime (x64)", "id": "Microsoft.DotNet.DesktopRuntime.10", "category": "Runtimes", "homepage": "https://dotnet.microsoft.com/download/dotnet/10.0", "default": false}
 ]

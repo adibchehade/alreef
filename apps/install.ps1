@@ -365,8 +365,11 @@ function Start-MyApps {
                         $sync.Status[$t.Key] = 'Installing...'
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Installing $($t.Name)..."
-                        $r = Invoke-Winget @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
-                                             '--accept-package-agreements', '--accept-source-agreements')
+                        $wa = @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
+                                '--accept-package-agreements', '--accept-source-agreements')
+                        if ($t.Scope)    { $wa += @('--scope', $t.Scope) }
+                        if ($t.Override) { $wa += @('--override', $t.Override) }
+                        $r = Invoke-Winget $wa
                         if ($r.Text -match 'hash does not match') {
                             Log "$($t.Name): the vendor's file no longer matches winget's checksum. Opening the official download page instead."
                             if ($t.Url) { Start-Process $t.Url }
@@ -381,8 +384,11 @@ function Start-MyApps {
                         $sync.Status[$t.Key] = 'Updating...'
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Updating $($t.Name)..."
-                        $r = Invoke-Winget @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
-                                             '--accept-package-agreements', '--accept-source-agreements')
+                        $wa = @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
+                                '--accept-package-agreements', '--accept-source-agreements')
+                        if ($t.Scope)    { $wa += @('--scope', $t.Scope) }
+                        if ($t.Override) { $wa += @('--override', $t.Override) }
+                        $r = Invoke-Winget $wa
                         if ($r.Text -match 'hash does not match') {
                             Log "$($t.Name): checksum mismatch. Opening the official download page instead."
                             if ($t.Url) { Start-Process $t.Url }
@@ -461,7 +467,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
