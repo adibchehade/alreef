@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study plan — Ali Chehade</title>
+<style>
+  :root { --navy:#0F2744; --teal:#1B6B6B; --ink:#1A1A1A; --muted:#667085; --line:#E4E7EC; --gold:#F4E4B8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#EEF1F4; color:var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px 12px 32px; }
+  .sheet { background:#fff; border:1px solid #D0D5DD; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  .top { background:var(--navy); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; gap:16px; align-items:center; }
+  .top h1 { margin:0; font-size:1.5rem; }
+  .top p { margin:4px 0 0; color:#D0D5DD; font-size:.82rem; }
+  .clock { text-align:right; }
+  .clock .t { font-variant-numeric: tabular-nums; font-size:2.8rem; font-weight:700; letter-spacing:.02em; line-height:1; }
+  .clock .d { margin-top:6px; font-size:.9rem; color:#D0D5DD; }
+  .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--line); }
+  .bar span { color:var(--muted); font-size:.82rem; line-height:1.4; }
+  button { border:0; background:var(--navy); color:#fff; font: inherit; font-size:.86rem; font-weight:700; padding:10px 16px; border-radius:8px; cursor:pointer; }
+  h2 { margin:0; padding:12px 20px; background:#F8FAFC; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); }
+  h2 .tag { color:var(--muted); font-weight:400; }
+  h2 .today { display:none; float:right; background:var(--teal); color:#fff; padding:2px 8px; border-radius:999px; font-size:.68rem; letter-spacing:.06em; }
+  h2.is-today .today { display:inline-block; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--navy); padding:12px 16px; border-bottom:1px solid var(--line); }
+  td { padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  tr.next { background:#E8F6F4; box-shadow: inset 4px 0 0 var(--teal); }
+  tr.past { opacity:.5; }
+  .time { width:150px; }
+  .when { font-weight:700; color:var(--navy); font-size:.95rem; font-variant-numeric: tabular-nums; }
+  .hours { color:var(--muted); font-size:.82rem; margin-top:2px; }
+  .item { display:flex; gap:12px; align-items:flex-start; }
+  .icon { width:36px; height:36px; border-radius:8px; background:#EEF3F8; color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex:0 0 36px; }
+  tr.k-study .icon { background:var(--navy); color:#fff; font-size:.8rem; font-weight:700; letter-spacing:.04em; }
+  tr.next .icon { background:#fff; }
+  tr.next.k-study .icon { background:var(--teal); }
+  .title { font-weight:700; font-size:.98rem; }
+  tr.k-free .title, tr.k-rest .title, tr.k-travel .title { font-weight:400; }
+  .ref { display:inline-block; margin-top:4px; font-size:.86rem; font-weight:700; letter-spacing:.04em; color:#000; background:#FFE500; padding:3px 7px; border-radius:4px; }
+  .sub { color:var(--muted); font-size:.82rem; margin-top:4px; line-height:1.35; }
+  .status { width:130px; text-align:right; }
+  .pill { display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:5px 9px; border-radius:999px; background:#E8F3F3; color:var(--teal); }
+  .pill.warn { background:var(--gold); color:#7A5B00; }
+  .pill.done { background:#F2F4F7; color:#475467; }
+  .pill.study { background:var(--navy); color:#fff; }
+  .pill.gym { background:#FDE8D8; color:#8A3B00; }
+  tr.next .pill { background:var(--teal); color:#fff; }
+  .num { text-align:right; font-weight:700; color:var(--navy); font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .foot { padding:12px 20px 16px; color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); }
+  @media (max-width:640px) {
+    .top { display:block; }
+    .clock { text-align:left; margin-top:12px; }
+    .clock .t { font-size:2.4rem; }
+    .bar { display:block; }
+    button { width:100%; margin-top:8px; }
+    .plan table, .plan thead, .plan tbody, .plan tr, .plan th, .plan td { display:block; }
+    .plan thead { display:none; }
+    .plan tr { border-bottom:1px solid var(--line); padding:12px 16px; }
+    .plan td { border:0; padding:0; }
+    .time { width:auto; margin-bottom:8px; }
+    .status { width:auto; text-align:left; margin-top:8px; }
+    .totals th, .totals td { padding:10px 12px; }
+  }
+  @media print {
+    body { background:#fff; }
+    .wrap { padding:0; max-width:none; }
+    .bar, .clock { display:none; }
+    tr.past { opacity:1; }
+    tr.next { background:none; box-shadow:none; }
+    h2 { break-after:avoid; }
+    tr { break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet">
+    <div class="top">
+      <div>
+        <h1>Ali Chehade</h1>
+        <p>Study and activity plan · Thu 12 – Sun 15 Nov</p>
+      </div>
+      <div class="clock">
+        <div class="t" id="clock">--:--:--</div>
+        <div class="d" id="clockdate">Spain time</div>
+      </div>
+    </div>
+    <div class="bar">
+      <span>Every day: 2 hours Spanish + 2 hours Computer Science + gym + free time.</span>
+      <button type="button" onclick="window.print()">Download</button>
+    </div>
+    <div class="plan">
+    <h2>Target exams</h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td class="time"><div class="when">Mon 16 Nov</div><div class="hours" data-countdown="2026-11-16"></div></td><td><div class="item"><div class="icon">★</div><div><div class="title">Spanish exam</div><div class="sub">SP 101 midterm · bring the laptop with Respondus LockDown Browser installed</div></div></div></td><td class="status"><span class="pill warn">Exam</span></td></tr>
+        <tr><td class="time"><div class="when">Tue 17 Nov</div><div class="hours" data-countdown="2026-11-17"></div></td><td><div class="item"><div class="icon">★</div><div><div class="title">Computer Science exam</div></div></div></td><td class="status"><span class="pill warn">Exam</span></td></tr>
+      </tbody>
+    </table>
+    <h2 data-day="2026-11-12">Thursday 12 November <span class="tag">· Padrón appointment day</span><span class="today">Today</span></h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr class="k-travel" data-start="2026-11-12 08:30" data-end="2026-11-12 09:00"><td class="time"><div class="when">08:30–09:00</div></td><td><div class="item"><div class="icon">→</div><div><div class="title">Travel to the padrón appointment</div><div class="sub">OAC Tetuán, C/ Simancas 6 · leave the flat by 8:15, be there 8:45</div></div></div></td><td class="status"><span class="pill done">Travel</span></td></tr>
+        <tr class="k-appt" data-start="2026-11-12 09:00" data-end="2026-11-12 10:00"><td class="time"><div class="when">09:00–10:00</div></td><td><div class="item"><div class="icon">!</div><div><div class="title">Padrón appointment</div><div class="sub">Second appointment · bring all the documents</div></div></div></td><td class="status"><span class="pill warn">Appointment</span></td></tr>
+        <tr class="k-free" data-start="2026-11-12 10:00" data-end="2026-11-12 11:30"><td class="time"><div class="when">10:00–11:30</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Free time &amp; breakfast</div><div class="sub">Relax, coffee</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-12 11:30" data-end="2026-11-12 13:30"><td class="time"><div class="when">11:30–13:30</div></td><td><div class="item"><div class="icon">ES</div><div><div class="title">Spanish study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-12 13:30" data-end="2026-11-12 15:30"><td class="time"><div class="when">13:30–15:30</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Lunch &amp; free time</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-12 15:30" data-end="2026-11-12 17:30"><td class="time"><div class="when">15:30–17:30</div></td><td><div class="item"><div class="icon">CS</div><div><div class="title">Computer Science study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-12 17:30" data-end="2026-11-12 19:00"><td class="time"><div class="when">17:30–19:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Free time</div><div class="sub">Pre-workout break</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-gym" data-start="2026-11-12 19:00" data-end="2026-11-12 20:00"><td class="time"><div class="when">19:00–20:00</div></td><td><div class="item"><div class="icon">▲</div><div><div class="title">Gym session</div><div class="sub">1 hour</div></div></div></td><td class="status"><span class="pill gym">Gym</span></td></tr>
+        <tr class="k-free" data-start="2026-11-12 20:00" data-end="2026-11-12 23:59"><td class="time"><div class="when">20:00 onward</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Free evening</div><div class="sub">Dinner and downtime</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+      </tbody>
+    </table>
+    <h2 data-day="2026-11-13">Friday 13 November <span class="tag">· Full campus day</span><span class="today">Today</span></h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr class="k-travel" data-start="2026-11-13 08:30" data-end="2026-11-13 09:00"><td class="time"><div class="when">08:30–09:00</div></td><td><div class="item"><div class="icon">→</div><div><div class="title">Commute to campus</div></div></div></td><td class="status"><span class="pill done">Travel</span></td></tr>
+        <tr class="k-class" data-start="2026-11-13 09:00" data-end="2026-11-13 12:00"><td class="time"><div class="when">09:00–12:00</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">Senior class</div><div class="sub">Guest visit</div></div></div></td><td class="status"><span class="pill ">Class</span></td></tr>
+        <tr class="k-class" data-start="2026-11-13 12:00" data-end="2026-11-13 15:00"><td class="time"><div class="when">12:00–15:00</div></td><td><div class="item"><div class="icon">○</div><div><div class="title">University: Spanish class</div><div class="sub">SP 101 make-up class · room M101 · last class before the midterm</div></div></div></td><td class="status"><span class="pill ">Class</span></td></tr>
+        <tr class="k-free" data-start="2026-11-13 15:00" data-end="2026-11-13 16:00"><td class="time"><div class="when">15:00–16:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Lunch &amp; unwind</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-13 16:00" data-end="2026-11-13 18:00"><td class="time"><div class="when">16:00–18:00</div></td><td><div class="item"><div class="icon">ES</div><div><div class="title">Spanish study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-study" data-start="2026-11-13 18:00" data-end="2026-11-13 20:00"><td class="time"><div class="when">18:00–20:00</div></td><td><div class="item"><div class="icon">CS</div><div><div class="title">Computer Science study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-gym" data-start="2026-11-13 20:00" data-end="2026-11-13 21:00"><td class="time"><div class="when">20:00–21:00</div></td><td><div class="item"><div class="icon">▲</div><div><div class="title">Gym session</div><div class="sub">1 hour</div></div></div></td><td class="status"><span class="pill gym">Gym</span></td></tr>
+        <tr class="k-free" data-start="2026-11-13 21:00" data-end="2026-11-13 23:59"><td class="time"><div class="when">21:00 onward</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Free evening</div><div class="sub">Weekend kickoff</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+      </tbody>
+    </table>
+    <h2 data-day="2026-11-14">Saturday 14 November <span class="tag">· Deep work &amp; downtime</span><span class="today">Today</span></h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr class="k-free" data-start="2026-11-14 10:00" data-end="2026-11-14 11:00"><td class="time"><div class="when">10:00–11:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Morning routine &amp; slow breakfast</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-14 11:00" data-end="2026-11-14 13:00"><td class="time"><div class="when">11:00–13:00</div></td><td><div class="item"><div class="icon">ES</div><div><div class="title">Spanish study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-14 13:00" data-end="2026-11-14 15:00"><td class="time"><div class="when">13:00–15:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Lunch &amp; free time</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-14 15:00" data-end="2026-11-14 17:00"><td class="time"><div class="when">15:00–17:00</div></td><td><div class="item"><div class="icon">CS</div><div><div class="title">Computer Science study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-14 17:00" data-end="2026-11-14 19:00"><td class="time"><div class="when">17:00–19:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Extended free time</div><div class="sub">Explore, social, hobbies</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-gym" data-start="2026-11-14 19:00" data-end="2026-11-14 20:00"><td class="time"><div class="when">19:00–20:00</div></td><td><div class="item"><div class="icon">▲</div><div><div class="title">Gym session</div><div class="sub">1 hour</div></div></div></td><td class="status"><span class="pill gym">Gym</span></td></tr>
+        <tr class="k-free" data-start="2026-11-14 20:00" data-end="2026-11-14 23:59"><td class="time"><div class="when">20:00 onward</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Free evening</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+      </tbody>
+    </table>
+    <h2 data-day="2026-11-15">Sunday 15 November <span class="tag">· Final polish &amp; early rest</span><span class="today">Today</span></h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr class="k-free" data-start="2026-11-15 10:00" data-end="2026-11-15 11:00"><td class="time"><div class="when">10:00–11:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Late brunch &amp; relaxation</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-15 11:00" data-end="2026-11-15 13:00"><td class="time"><div class="when">11:00–13:00</div></td><td><div class="item"><div class="icon">ES</div><div><div class="title">Spanish study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-15 13:00" data-end="2026-11-15 15:00"><td class="time"><div class="when">13:00–15:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Lunch &amp; free time</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-study" data-start="2026-11-15 15:00" data-end="2026-11-15 17:00"><td class="time"><div class="when">15:00–17:00</div></td><td><div class="item"><div class="icon">CS</div><div><div class="title">Computer Science study block</div><div class="sub">2 hours</div></div></div></td><td class="status"><span class="pill study">Study</span></td></tr>
+        <tr class="k-free" data-start="2026-11-15 17:00" data-end="2026-11-15 19:00"><td class="time"><div class="when">17:00–19:00</div></td><td><div class="item"><div class="icon">·</div><div><div class="title">Open afternoon</div><div class="sub">Free time</div></div></div></td><td class="status"><span class="pill done">Free</span></td></tr>
+        <tr class="k-gym" data-start="2026-11-15 19:00" data-end="2026-11-15 20:00"><td class="time"><div class="when">19:00–20:00</div></td><td><div class="item"><div class="icon">▲</div><div><div class="title">Gym session</div><div class="sub">1 hour</div></div></div></td><td class="status"><span class="pill gym">Gym</span></td></tr>
+        <tr class="k-rest" data-start="2026-11-15 20:00" data-end="2026-11-15 23:59"><td class="time"><div class="when">20:00 onward</div></td><td><div class="item"><div class="icon">☾</div><div><div class="title">Rest, pack bag, early bedtime</div><div class="sub">Ready for Monday's exam</div></div></div></td><td class="status"><span class="pill done">Rest</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <h2>Summary totals · Thu – Sun</h2>
+    <table class="totals">
+      <thead><tr><th>Category</th><th style="text-align:right">Daily target</th><th style="text-align:right">4-day total</th></tr></thead>
+      <tbody>
+        <tr><td><div class="title">Spanish study</div></td><td class="num">2 hours</td><td class="num">8 hours</td></tr>
+        <tr><td><div class="title">Computer Science study</div></td><td class="num">2 hours</td><td class="num">8 hours</td></tr>
+        <tr><td><div class="title">Gym sessions</div></td><td class="num">1 hour</td><td class="num">4 sessions</td></tr>
+        <tr><td><div class="title">Free / personal time</div></td><td class="num">4–5+ hours</td><td class="num">18+ hours</td></tr>
+      </tbody>
+    </table>
+    <div class="foot">Master study &amp; activity schedule for the 4 days before the exams. The current block is highlighted using Spain time.</div>
+  </div>
+</div>
+<script>
+  function spain(opts, loc) { return new Intl.DateTimeFormat(loc || 'en-GB', Object.assign({ timeZone: 'Europe/Madrid' }, opts)).format(new Date()); }
+  function tick() {
+    document.getElementById('clock').textContent = spain({ hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    document.getElementById('clockdate').textContent = spain({ weekday: 'short', day: 'numeric', month: 'short' }) + ' · Spain';
+  }
+  function mark() {
+    var today = spain({ year: 'numeric', month: '2-digit', day: '2-digit' }, 'en-CA');
+    var now = today + ' ' + spain({ hour: '2-digit', minute: '2-digit', hour12: false });
+    document.querySelectorAll('tr[data-start]').forEach(function (r) {
+      var s = r.getAttribute('data-start'), e = r.getAttribute('data-end');
+      r.classList.toggle('past', e <= now);
+      r.classList.toggle('next', s <= now && now < e);
+    });
+    document.querySelectorAll('h2[data-day]').forEach(function (h) { h.classList.toggle('is-today', h.getAttribute('data-day') === today); });
+    document.querySelectorAll('[data-countdown]').forEach(function (el) {
+      var n = Math.round((Date.parse(el.getAttribute('data-countdown')) - Date.parse(today)) / 864e5);
+      el.textContent = n > 1 ? 'in ' + n + ' days' : n === 1 ? 'tomorrow' : n === 0 ? 'today' : 'done';
+    });
+  }
+  tick(); mark();
+  setInterval(tick, 1000); setInterval(mark, 30000);
+</script>
+</body>
+</html>
