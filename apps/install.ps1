@@ -219,6 +219,7 @@ function Start-MyApps {
     $wa = [System.Windows.SystemParameters]::WorkArea
     $win.Width  = [Math]::Min(1060, $wa.Width  - 40)
     $win.Height = [Math]::Min(1000, $wa.Height - 40)
+    $win.WindowState = 'Maximized'   # open full screen; Restore Down returns to the size above
 
     # Status pill colours: text, background
     $pillColors = @{
