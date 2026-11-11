@@ -18,8 +18,15 @@ function Start-MyApps {
     $isDesktop = $PSVersionTable.PSEdition -eq 'Desktop'
     $isSta     = [Threading.Thread]::CurrentThread.ApartmentState -eq 'STA'
     if (-not ($isAdmin -and $isDesktop -and $isSta)) {
-        $cmd = if ($PSCommandPath) { "& '$PSCommandPath'" } else { "irm '$ScriptUrl' | iex" }
-        Start-Process powershell.exe -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-Command', $cmd)
+        $file = $PSCommandPath
+        if (-not $file) {
+            $file = Join-Path $env:TEMP 'MyApps-install.ps1'
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $ScriptUrl -OutFile $file -UseBasicParsing -ErrorAction Stop
+            } catch { Write-Host "Couldn't download My Apps: $($_.Exception.Message)" -ForegroundColor Red; return }
+        }
+        Start-Process powershell.exe -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'RemoteSigned', '-STA', '-File', "`"$file`"")
         return
     }
 
@@ -661,22 +668,35 @@ function Start-MyApps {
                 switch ($t.Action) {
 
                     'shortcut' {
-                        # A scheduled task that runs My Apps with admin rights, plus shortcuts that start it: no UAC prompt
+                        # Keep a local copy in a folder only admins can change, and a task that runs it with admin rights.
+                        # No hidden window, no download-and-run in the task: just a normal script file.
                         try {
-                            $tn = "MyApps-$env:USERNAME"
-                            if (-not (Get-ScheduledTask -TaskName $tn -ErrorAction SilentlyContinue)) {
-                                $arg = "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command `"irm '$($sync.ScriptUrl)' | iex`""
-                                $act = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $arg
-                                $pri = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
-                                $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
-                                Register-ScheduledTask -TaskName $tn -Action $act -Principal $pri -Settings $set -Description 'Opens My Apps (alreef.es/t) with admin rights' -Force -ErrorAction Stop | Out-Null
-                                $new = $true
-                            }
+                            $dir   = Join-Path $env:ProgramData 'MyApps'
+                            $local = Join-Path $dir 'install.ps1'
+                            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                            & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
+
+                            # Refresh the local copy (used from the next launch on)
+                            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                            $tmp = "$local.new"
+                            Invoke-WebRequest -Uri $sync.ScriptUrl -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+                            if ((Get-Item $tmp).Length -gt 20000 -and (Select-String -Path $tmp -Pattern 'function Start-MyApps' -Quiet)) {
+                                Move-Item $tmp $local -Force
+                            } else { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+
+                            $tn  = "MyApps-$env:USERNAME"
+                            $arg = "-NoProfile -ExecutionPolicy RemoteSigned -WindowStyle Minimized -File `"$local`""
+                            $act = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $arg
+                            $pri = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
+                            $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+                            $old = Get-ScheduledTask -TaskName $tn -ErrorAction SilentlyContinue
+                            $isNew = -not $old -or ($old.Actions[0].Arguments -ne $arg)
+                            Register-ScheduledTask -TaskName $tn -Action $act -Principal $pri -Settings $set `
+                                -Description 'Opens My Apps (from C:\ProgramData\MyApps) with admin rights' -Force -ErrorAction Stop | Out-Null
+
                             $shell = New-Object -ComObject WScript.Shell
-                            $places = @((Join-Path ([Environment]::GetFolderPath('Programs')) 'My Apps.lnk'),
-                                        (Join-Path ([Environment]::GetFolderPath('Desktop'))  'My Apps.lnk'))
-                            foreach ($lp in $places) {
-                                if (Test-Path $lp) { continue }
+                            foreach ($lp in @((Join-Path ([Environment]::GetFolderPath('Programs')) 'My Apps.lnk'),
+                                              (Join-Path ([Environment]::GetFolderPath('Desktop'))  'My Apps.lnk'))) {
                                 $l = $shell.CreateShortcut($lp)
                                 $l.TargetPath   = "$env:SystemRoot\System32\schtasks.exe"
                                 $l.Arguments    = "/run /tn `"$tn`""
@@ -684,10 +704,9 @@ function Start-MyApps {
                                 $l.WindowStyle  = 7
                                 $l.Description  = 'My Apps installer'
                                 $l.Save()
-                                $new = $true
                             }
-                            if ($new) { Log 'Shortcut ready: "My Apps" on the desktop and in the Start menu (opens with no UAC prompt).' }
-                        } catch { Log "Couldn't create the My Apps shortcut: $($_.Exception.Message)" }
+                            if ($isNew) { Log 'Shortcut ready: "My Apps" on the desktop and in the Start menu (no UAC prompt).' }
+                        } catch { Log "Couldn't set up the My Apps shortcut: $($_.Exception.Message)" }
                     }
 
                     'wingetcheck' {
@@ -781,7 +800,7 @@ function Start-MyApps {
                             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
                             Invoke-WebRequest -Uri "$($sync.RepoRaw)/libernt-look.ps1" -OutFile $f -UseBasicParsing -ErrorAction Stop
                             Log 'Applying the LiberNT look (Explorer restarts once)...'
-                            $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $f 2>&1 | ForEach-Object { "$_" }
+                            $out = & powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File $f 2>&1 | ForEach-Object { "$_" }
                             $out | Where-Object { $_ } | Select-Object -Last 6 | ForEach-Object { Log "    $_" }
                             if ($LASTEXITCODE -eq 0) { Log 'LiberNT look applied.' } else { Log "LiberNT script ended with code $LASTEXITCODE." }
                         } catch { Log "LiberNT look failed: $($_.Exception.Message)" }
