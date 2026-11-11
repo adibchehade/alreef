@@ -251,23 +251,82 @@ function Start-MyApps {
       </ScrollViewer>
     </Border>
 
-    <StackPanel Grid.Row="2" Margin="0,16,0,6">
-      <WrapPanel>
-        <Button x:Name="BtnInstall"   Content="Install selected" Style="{StaticResource Primary}"/>
-        <Button x:Name="BtnUpdate"    Content="Update selected"/>
-        <Button x:Name="BtnUninstall" Content="Uninstall selected" Style="{StaticResource Danger}"/>
-        <Button x:Name="BtnUpdateAll" Content="Update everything on this PC"/>
-        <Button x:Name="BtnRefresh"   Content="Refresh status"/>
-      </WrapPanel>
-      <WrapPanel>
-        <TextBlock Text="WINDOWS" Foreground="{DynamicResource AccentText}" FontSize="11" FontWeight="SemiBold"
-                   VerticalAlignment="Center" Margin="2,0,14,8"/>
-        <Button x:Name="BtnRestore" Content="Create restore point"/>
-        <Button x:Name="BtnScripts" Content="Allow PowerShell scripts" ToolTip="Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"/>
-        <Button x:Name="BtnLiberNT" Content="Apply LiberNT look" ToolTip="Wallpaper, dark mode, blue accent, clean taskbar, desktop icons"/>
-        <Button x:Name="BtnEdge"    Content="Remove Edge" Style="{StaticResource Danger}"/>
-      </WrapPanel>
-    </StackPanel>
+    <Border Grid.Row="2" Margin="0,14,0,6" Padding="14,12,6,4" CornerRadius="14" BorderThickness="1"
+            Background="{DynamicResource Panel}" BorderBrush="{DynamicResource PanelBorder}">
+      <StackPanel>
+        <DockPanel Margin="0,0,0,4">
+          <TextBlock Text="APPS" Width="96" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentText}" VerticalAlignment="Top" Margin="2,11,0,0"/>
+          <WrapPanel>
+            <Button x:Name="BtnInstall" Style="{StaticResource Primary}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Install selected" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnUpdate">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE777;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Update selected" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnUninstall" Style="{StaticResource Danger}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE74D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Uninstall selected" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnUpdateAll">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE895;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Update everything on this PC" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnRefresh">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Refresh status" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </WrapPanel>
+        </DockPanel>
+        <Border Height="1" Margin="0,4,8,4" Background="{DynamicResource PanelBorder}"/>
+        <DockPanel Margin="0,6,0,0">
+          <TextBlock Text="WINDOWS" Width="96" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentText}" VerticalAlignment="Top" Margin="2,11,0,0"/>
+          <WrapPanel>
+            <Button x:Name="BtnRestore">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE81C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Create restore point" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnScripts" ToolTip="Set-ExecutionPolicy RemoteSigned -Scope CurrentUser">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE756;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Allow PowerShell scripts" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnRdp" ToolTip="Turns off the newer security warning when opening .rdp files (RedirectionWarningDialogVersion = 1)">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8AF;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Classic RDP warning" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnLiberNT" ToolTip="Wallpaper, dark mode, blue accent, clean taskbar, desktop icons">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE771;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Apply LiberNT look" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnEdge" Style="{StaticResource Danger}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Margin="0,1,9,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Remove Edge" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
+          </WrapPanel>
+        </DockPanel>
+      </StackPanel>
+    </Border>
 
     <Border Grid.Row="3" Background="{DynamicResource LogBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="4">
       <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
@@ -289,10 +348,10 @@ function Start-MyApps {
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
-    $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT)
+    $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT, $BtnRdp)
 
     # Open as large as the screen allows
     $wa = [System.Windows.SystemParameters]::WorkArea
@@ -844,6 +903,15 @@ function Start-MyApps {
                         Log 'Update everything: finished.'
                     }
 
+                    'rdpwarn' {
+                        try {
+                            $k = 'HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services\Client'
+                            New-Item -Path $k -Force | Out-Null
+                            New-ItemProperty -Path $k -Name 'RedirectionWarningDialogVersion' -PropertyType DWord -Value 1 -Force | Out-Null
+                            Log 'RDP: classic connection warning set (RedirectionWarningDialogVersion = 1). Applies to the next .rdp file you open.'
+                        } catch { Log "RDP setting failed: $($_.Exception.Message)" }
+                    }
+
                     'execpolicy' {
                         Log 'Allowing PowerShell scripts for this user (RemoteSigned)...'
                         try { Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction Stop } catch {}
@@ -979,6 +1047,7 @@ function Start-MyApps {
     $BtnRefresh.Add_Click({   Start-Work (Get-StatusTasks) })
     $BtnRefreshTop.Add_Click({ Start-Work (Get-StatusTasks) })
     $BtnScripts.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'execpolicy' }) })
+    $BtnRdp.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'rdpwarn' }) })
     $BtnLiberNT.Add_Click({
         if (Confirm-Action "Apply the LiberNT look to this account?`n`nWallpaper, dark mode, blue accent, clean taskbar and desktop icons. Explorer restarts once.") {
             Start-Work @([pscustomobject]@{ Action = 'libernt' })
