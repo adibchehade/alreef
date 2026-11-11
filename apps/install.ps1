@@ -277,8 +277,8 @@ function Start-MyApps {
 
     <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-        <TextBlock x:Name="LinkExpand"   Text="Expand all"   Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
-        <TextBlock x:Name="LinkCollapse" Text="Collapse all" Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,28,0"/>
+        <TextBlock x:Name="LinkExpand"   Text="Show all apps"   Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,28,0"/>
+        <TextBlock x:Name="LinkCollapse" Text="" Visibility="Collapsed"/>
         <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
         <TextBlock x:Name="LinkNone" Text="Select none" Foreground="{DynamicResource AccentText}" Cursor="Hand"/>
       </StackPanel>
@@ -384,67 +384,119 @@ function Start-MyApps {
     }
     Set-Theme $(if ($saved) { $saved } else { 'auto' })
 
-    # ---------- App rows (collapsible sections, two columns of cards) ----------
+    # ---------- Home: big category tiles; hovering a tile shows its apps below ----------
     $rows = @{}
     $sections = @()
+    $script:activeSec = $null
+    $script:allPanel  = $null
+    $TBK = [Windows.Controls.Border]::BorderThicknessProperty
 
-    function Set-Pinned($sec, [bool]$pin) {
-        $sec.Pinned = $pin
-        Use-Res $sec.Count $FG $(if ($pin) { 'AccentText' } else { 'Muted' })
-        Set-Section $sec $pin
+    $tiles = New-Object Windows.Controls.WrapPanel
+    $tiles.Margin = '0,8,0,0'
+    [void]$AppPanel.Children.Add($tiles)
+
+    $detailHead = New-Object Windows.Controls.DockPanel
+    $detailHead.Margin = '8,18,0,4'
+    $detailTitle = New-Object Windows.Controls.TextBlock
+    $detailTitle.FontSize = 18; $detailTitle.FontWeight = 'SemiBold'; Use-Res $detailTitle $FG 'Text'
+    $detailHint = New-Object Windows.Controls.TextBlock
+    $detailHint.Text = 'Hover a card above to switch'; $detailHint.FontSize = 12; $detailHint.Margin = '14,0,0,0'
+    $detailHint.VerticalAlignment = 'Bottom'; Use-Res $detailHint $FG 'Muted'
+    [void]$detailHead.Children.Add($detailTitle); [void]$detailHead.Children.Add($detailHint)
+    [void]$AppPanel.Children.Add($detailHead)
+
+    $detail = New-Object Windows.Controls.ContentControl
+    $detail.Margin = '2,0,0,0'
+    [void]$AppPanel.Children.Add($detail)
+
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Utilities' = 0xE90F;
+                 'Runtimes' = 0xE943; 'Visual C++ Runtimes' = 0xEC7A }
+
+    function Set-TileLook($sec) {
+        $active = [object]::ReferenceEquals($sec, $script:activeSec)
+        $hover  = $sec.Tile.IsMouseOver
+        Use-Res $sec.Tile $BG  $(if ($hover) { 'CardHover' } else { 'Card' })
+        Use-Res $sec.Tile $BRD $(if ($active) { 'Accent' } elseif ($hover) { 'AccentText' } else { 'CardBorder' })
+        $sec.Tile.BorderThickness = if ($active) { '2' } else { '1' }
     }
-    function Set-Section($sec, [bool]$open) {
-        $sec.Grid.Visibility = if ($open) { 'Visible' } else { 'Collapsed' }
-        $sec.Arrow.RenderTransform.Angle = if ($open) { 0 } else { -90 }
+    function Clear-Detail {
+        $detail.Content = $null
+        if ($script:allPanel) { $script:allPanel.Children.Clear(); $script:allPanel = $null }
+    }
+    function Show-Category($sec) {
+        Clear-Detail
+        $detail.Content = $sec.Grid
+        $detailTitle.Text = $sec.Name
+        $script:activeSec = $sec
+        foreach ($s in $sections) { Set-TileLook $s }
+    }
+    function Show-AllApps {
+        Clear-Detail
+        $sp = New-Object Windows.Controls.StackPanel
+        foreach ($s in $sections) {
+            $h = New-Object Windows.Controls.TextBlock
+            $h.Text = $s.Name.ToUpper(); $h.FontSize = 11; $h.FontWeight = 'SemiBold'; $h.Margin = '6,14,0,6'
+            Use-Res $h $FG 'AccentText'
+            [void]$sp.Children.Add($h); [void]$sp.Children.Add($s.Grid)
+        }
+        $script:allPanel = $sp
+        $detail.Content = $sp
+        $detailTitle.Text = 'All apps'
+        $script:activeSec = $null
+        foreach ($s in $sections) { Set-TileLook $s }
     }
 
     foreach ($cat in ($apps | ForEach-Object { $_.category } | Select-Object -Unique)) {
         $catApps = @($apps | Where-Object { $_.category -eq $cat })
 
         $grid = New-Object Windows.Controls.Primitives.UniformGrid
-        $grid.Columns = 2
+        $grid.Columns = 3
 
-        # Clickable header: chevron + name + count
-        $hdr = New-Object Windows.Controls.StackPanel
-        $hdr.Orientation = 'Horizontal'; $hdr.Margin = '4,14,0,6'; $hdr.Cursor = 'Hand'; $hdr.Background = 'Transparent'
-        $arrow = New-Object Windows.Shapes.Path
-        $arrow.Data = [Windows.Media.Geometry]::Parse('M1,1 L5,5 L9,1')
-        Use-Res $arrow $STRK 'AccentText'; $arrow.StrokeThickness = 1.8
-        $arrow.StrokeStartLineCap = 'Round'; $arrow.StrokeEndLineCap = 'Round'; $arrow.StrokeLineJoin = 'Round'
-        $arrow.Width = 10; $arrow.Height = 6; $arrow.Margin = '0,0,9,0'; $arrow.VerticalAlignment = 'Center'
-        $arrow.RenderTransformOrigin = '0.5,0.5'; $arrow.RenderTransform = New-Object Windows.Media.RotateTransform 0
-        $title = New-Object Windows.Controls.TextBlock
-        $title.Text = "$cat".ToUpper(); $title.FontSize = 11; $title.FontWeight = 'SemiBold'; Use-Res $title $FG 'AccentText'
-        $cnt = New-Object Windows.Controls.TextBlock
-        $cnt.Text = "$($catApps.Count)"; $cnt.FontSize = 11; Use-Res $cnt $FG 'Muted'; $cnt.Margin = '8,0,0,0'
-        [void]$hdr.Children.Add($arrow); [void]$hdr.Children.Add($title); [void]$hdr.Children.Add($cnt)
+        # The big tile
+        $tile = New-Object Windows.Controls.Border
+        $tile.Width = 250; $tile.Height = 124; $tile.Margin = '6'; $tile.CornerRadius = '14'; $tile.Padding = '18,14'
+        $tile.Cursor = 'Hand'; $tile.BorderThickness = '1'
+        $tsp = New-Object Windows.Controls.StackPanel
 
-        # Section = header + cards in one box, so hovering anywhere over it keeps it open
-        $box = New-Object Windows.Controls.StackPanel
-        $box.Background = 'Transparent'
-        [void]$box.Children.Add($hdr)
-        [void]$box.Children.Add($grid)
-        [void]$AppPanel.Children.Add($box)
+        $top = New-Object Windows.Controls.DockPanel
+        $badge = New-Object Windows.Controls.Border
+        $badge.CornerRadius = '9'; $badge.Padding = '8,1'; $badge.VerticalAlignment = 'Top'; $badge.Visibility = 'Collapsed'
+        Use-Res $badge $BG 'Accent'
+        $badgeText = New-Object Windows.Controls.TextBlock
+        $badgeText.FontSize = 11; Use-Res $badgeText $FG 'OnAccent'
+        $badge.Child = $badgeText
+        [Windows.Controls.DockPanel]::SetDock($badge, 'Right')
+        $icon = New-Object Windows.Controls.TextBlock
+        $g = if ($glyphs.ContainsKey($cat)) { $glyphs[$cat] } else { 0xE71D }
+        $icon.Text = [string][char]$g
+        $icon.FontFamily = 'Segoe Fluent Icons, Segoe MDL2 Assets'; $icon.FontSize = 26
+        Use-Res $icon $FG 'AccentText'
+        [void]$top.Children.Add($badge); [void]$top.Children.Add($icon)
 
-        $sec = @{ Grid = $grid; Arrow = $arrow; Title = $title; Count = $cnt; Box = $box; Pinned = $false; Checks = New-Object System.Collections.ArrayList }
-        $timer = New-Object Windows.Threading.DispatcherTimer
-        $timer.Interval = [TimeSpan]::FromMilliseconds(350)
-        $timer.Tag = $sec
-        $timer.Add_Tick({
-            $this.Stop()
-            $s = $this.Tag
-            $ticked = @($s.Checks | Where-Object { $_.IsChecked }).Count
-            if (-not $s.Pinned -and -not $s.Box.IsMouseOver -and -not $ticked) { Set-Section $s $false }
-        })
-        $sec.Timer = $timer
+        $tt = New-Object Windows.Controls.TextBlock
+        $tt.Text = "$cat"; $tt.FontSize = 17; $tt.FontWeight = 'SemiBold'; $tt.Margin = '0,12,0,2'; $tt.TextTrimming = 'CharacterEllipsis'
+        Use-Res $tt $FG 'Text'
+        $sub = New-Object Windows.Controls.TextBlock
+        $sub.Text = "$($catApps.Count) apps"; $sub.FontSize = 12
+        Use-Res $sub $FG 'Muted'
+        [void]$tsp.Children.Add($top); [void]$tsp.Children.Add($tt); [void]$tsp.Children.Add($sub)
+        $tile.Child = $tsp
+        [void]$tiles.Children.Add($tile)
+
+        $sec = @{ Name = "$cat"; Grid = $grid; Tile = $tile; Sub = $sub; Badge = $badge; BadgeText = $badgeText
+                  Checks = New-Object System.Collections.ArrayList; Statuses = New-Object System.Collections.ArrayList }
+        # Short hover delay, so moving the mouse across other tiles doesn't switch by accident
+        $ht = New-Object Windows.Threading.DispatcherTimer
+        $ht.Interval = [TimeSpan]::FromMilliseconds(220)
+        $ht.Tag = $sec
+        $ht.Add_Tick({ $this.Stop(); if ($this.Tag.Tile.IsMouseOver) { Show-Category $this.Tag } })
+        $sec.HoverTimer = $ht
+        $tile.Tag = $sec
+        $tile.Add_MouseEnter({ Set-TileLook $this.Tag; $this.Tag.HoverTimer.Start() })
+        $tile.Add_MouseLeave({ $this.Tag.HoverTimer.Stop(); Set-TileLook $this.Tag })
+        $tile.Add_MouseLeftButtonUp({ Show-Category $this.Tag })
+        Set-TileLook $sec
         $sections += $sec
-        $hdr.Tag = $sec; $box.Tag = $sec
-        $hdr.ToolTip = 'Hover to open. Click to fold it away.'
-
-        $box.Add_MouseEnter({ Set-Section $this.Tag $true })   # hover opens; it stays open
-        $hdr.Add_MouseLeftButtonUp({ Set-Section $this.Tag ($this.Tag.Grid.Visibility -ne 'Visible') })
-        $hdr.Add_MouseEnter({ Use-Res $this.Tag.Title $FG 'AccentHover'; Use-Res $this.Tag.Arrow $STRK 'AccentHover' })
-        $hdr.Add_MouseLeave({ Use-Res $this.Tag.Title $FG 'AccentText'; Use-Res $this.Tag.Arrow $STRK 'AccentText' })
 
         foreach ($a in $catApps) {
             $card = New-Object Windows.Controls.Border
@@ -470,6 +522,7 @@ function Start-MyApps {
             $card.Cursor = 'Hand'
             $card.Tag = $cb
             [void]$sec.Checks.Add($cb)
+            [void]$sec.Statuses.Add($st)
             $card.Add_MouseEnter({ Use-Res $this $BG 'CardHover'; Use-Res $this $BRD 'AccentText' })
             $card.Add_MouseLeave({ Use-Res $this $BG 'Card'; Use-Res $this $BRD 'CardBorder' })
             $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
@@ -477,7 +530,7 @@ function Start-MyApps {
             $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; Pill = $pill; App = $a }
         }
     }
-    foreach ($sec in $sections) { Set-Section $sec $false }   # everything starts folded
+    if ($sections.Count) { Show-Category $sections[0] }
 
     # ---------- Background worker (keeps the window responsive) ----------
     $sync = [hashtable]::Synchronized(@{
@@ -899,6 +952,14 @@ function Start-MyApps {
         $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
         $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
         $Summary.Text = "$($rows.Count) apps  |  $inst installed" + $(if ($upd) { "  |  $upd update" + $(if ($upd -gt 1) { 's' } else { '' }) } else { '' })
+        foreach ($sc in $sections) {
+            $inst = @($sc.Statuses | Where-Object { $_.Text -in 'Installed', 'Update available', 'Partly installed' }).Count
+            $sel  = @($sc.Checks | Where-Object { $_.IsChecked }).Count
+            $txt  = "$($sc.Checks.Count) apps  |  $inst installed"
+            if ($sc.Sub.Text -ne $txt) { $sc.Sub.Text = $txt }
+            $sc.BadgeText.Text = "$sel selected"
+            $sc.Badge.Visibility = if ($sel) { 'Visible' } else { 'Collapsed' }
+        }
         if (-not $busy -and $sync.PS) {
             try { $sync.PS.EndInvoke($sync.Job) | Out-Null } catch {}
             $sync.PS.Dispose(); $sync.PS = $null
@@ -932,8 +993,8 @@ function Start-MyApps {
     })
     $LinkAll.Add_MouseLeftButtonUp({  foreach ($r in $rows.Values) { $r.Check.IsChecked = $true } })
     $LinkNone.Add_MouseLeftButtonUp({ foreach ($r in $rows.Values) { $r.Check.IsChecked = $false } })
-    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Section $sec $true } })
-    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Section $sec $false } })
+    $LinkExpand.Add_MouseLeftButtonUp({ Show-AllApps })
+
 
     $win.Add_Closing({
         param($sender, $e)
