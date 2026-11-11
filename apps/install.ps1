@@ -358,11 +358,10 @@ function Start-MyApps {
         $sec.Timer = $timer
         $sections += $sec
         $hdr.Tag = $sec; $box.Tag = $sec
-        $hdr.ToolTip = 'Hover to open. Click to keep it open.'
+        $hdr.ToolTip = 'Hover to open. Click to fold it away.'
 
-        $box.Add_MouseEnter({ $this.Tag.Timer.Stop(); Set-Section $this.Tag $true })
-        $box.Add_MouseLeave({ $this.Tag.Timer.Start() })
-        $hdr.Add_MouseLeftButtonUp({ Set-Pinned $this.Tag (-not $this.Tag.Pinned) })
+        $box.Add_MouseEnter({ Set-Section $this.Tag $true })   # hover opens; it stays open
+        $hdr.Add_MouseLeftButtonUp({ Set-Section $this.Tag ($this.Tag.Grid.Visibility -ne 'Visible') })
         $hdr.Add_MouseEnter({ $this.Tag.Title.Foreground = $accentHover; $this.Tag.Arrow.Stroke = $accentHover })
         $hdr.Add_MouseLeave({ $this.Tag.Title.Foreground = $accent; $this.Tag.Arrow.Stroke = $accent })
 
@@ -800,8 +799,8 @@ function Start-MyApps {
     })
     $LinkAll.Add_MouseLeftButtonUp({  foreach ($r in $rows.Values) { $r.Check.IsChecked = $true } })
     $LinkNone.Add_MouseLeftButtonUp({ foreach ($r in $rows.Values) { $r.Check.IsChecked = $false } })
-    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Pinned $sec $true } })
-    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Pinned $sec $false } })
+    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Section $sec $true } })
+    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Section $sec $false } })
 
     $win.Add_Closing({
         param($sender, $e)
