@@ -327,7 +327,7 @@ function Start-MyApps {
 
             $cb = New-Object Windows.Controls.CheckBox
             $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default
-            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } else { $a.installer })
+            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } else { $a.installer })
             [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
             $card.Child = $dock
@@ -384,6 +384,9 @@ function Start-MyApps {
         }
 
         function Get-State($t) {
+            if ($t.Portable) {
+                if (Test-Path (Join-Path (Get-PortableDir $t) $t.Exe)) { return 'Installed' } else { return 'Not installed' }
+            }
             if (-not $t.Id) {
                 if (Find-Uninstall $t.Detect) { return 'Installed' } else { return 'Not installed' }
             }
@@ -417,6 +420,59 @@ function Start-MyApps {
             Start-Process -FilePath $file -Wait
             Remove-Item $file -Force -ErrorAction SilentlyContinue
             if (Find-Uninstall $t.Detect) { Log "$($t.Name): installed." } else { Log "$($t.Name): setup closed, but it doesn't show as installed." }
+        }
+
+        # Portable apps: a single .exe kept in Program Files, with Start menu and desktop shortcuts
+        function Get-PortableDir($t) { Join-Path $env:ProgramFiles ($t.Name -replace '[^\w\- ]', '') }
+        function Get-PortableLinks($t) {
+            @((Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\$($t.Name).lnk"),
+              (Join-Path $env:PUBLIC "Desktop\$($t.Name).lnk"))
+        }
+        function Stop-Portable($t) {
+            Get-Process -Name ([IO.Path]::GetFileNameWithoutExtension($t.Exe)) -ErrorAction SilentlyContinue | Stop-Process -Force
+            Start-Sleep -Milliseconds 500
+        }
+
+        function Install-Portable($t) {
+            $dir = Get-PortableDir $t
+            $tmp = Join-Path $env:TEMP $t.Exe
+            Log "Downloading $($t.Name)..."
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $t.Portable -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+            } catch { Log "$($t.Name): download failed: $($_.Exception.Message)"; return }
+            $sig = Get-AuthenticodeSignature $tmp
+            if ($sig.Status -eq 'Valid') {
+                $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
+                Log "$($t.Name): signed by $signer."
+            } elseif ($sig.Status -eq 'NotSigned') {
+                Log "$($t.Name): not digitally signed (normal for this portable build); using the official download link."
+            } else {
+                Log "$($t.Name): the file's signature is broken ($($sig.Status)), so it was not installed."
+                Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+                return
+            }
+            Stop-Portable $t
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            Move-Item $tmp (Join-Path $dir $t.Exe) -Force
+            $shell = New-Object -ComObject WScript.Shell
+            foreach ($lnkPath in (Get-PortableLinks $t)) {
+                $lnk = $shell.CreateShortcut($lnkPath)
+                $lnk.TargetPath = Join-Path $dir $t.Exe
+                $lnk.WorkingDirectory = $dir
+                $lnk.Save()
+            }
+            Log "$($t.Name): installed to $dir, with Start menu and desktop shortcuts."
+        }
+
+        function Uninstall-Portable($t) {
+            $dir = Get-PortableDir $t
+            if (-not (Test-Path $dir)) { Log "$($t.Name): not installed."; return }
+            Log "Uninstalling $($t.Name)..."
+            Stop-Portable $t
+            Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+            Get-PortableLinks $t | Where-Object { Test-Path $_ } | Remove-Item -Force -ErrorAction SilentlyContinue
+            if (Test-Path $dir) { Log "$($t.Name): some files are in use; close it and try again." } else { Log "$($t.Name): removed." }
         }
 
         function Uninstall-Direct($t) {
@@ -480,6 +536,7 @@ function Start-MyApps {
 
                     'install' {
                         $sync.Status[$t.Key] = 'Installing...'
+                        if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Installing $($t.Name)..."
                         $wa = @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
@@ -499,6 +556,7 @@ function Start-MyApps {
 
                     'update' {
                         $sync.Status[$t.Key] = 'Updating...'
+                        if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Updating $($t.Name)..."
                         $wa = @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
@@ -519,6 +577,7 @@ function Start-MyApps {
 
                     'uninstall' {
                         $sync.Status[$t.Key] = 'Removing...'
+                        if ($t.Portable)  { Uninstall-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Uninstalling $($t.Name)..."
                         $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--source', 'winget', '--silent', '--accept-source-agreements')
@@ -611,7 +670,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Portable = $app.portable; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
