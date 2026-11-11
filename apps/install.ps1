@@ -659,7 +659,9 @@ function Start-MyApps {
 
         # Download a vendor's installer, refuse it unless it carries a valid digital signature, then run it
         function Install-Direct($t) {
-            $file = Join-Path $env:TEMP ([IO.Path]::GetFileName(([uri]$t.Installer).AbsolutePath))
+            $fname = [IO.Path]::GetFileName(([uri]$t.Installer).AbsolutePath)
+            if ([IO.Path]::GetExtension($fname) -notin '.exe', '.msi') { $fname = ($t.Name -replace '[^\w]', '') + '-setup.exe' }
+            $file = Join-Path $env:TEMP $fname
             Log "Downloading $($t.Name)..."
             try {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -672,8 +674,13 @@ function Start-MyApps {
                 return
             }
             $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
-            Log "$($t.Name): signed by $signer. Running the installer - finish its setup window."
-            Start-Process -FilePath $file -Wait
+            if ($t.Args) {
+                Log "$($t.Name): signed by $signer. Installing silently..."
+                Start-Process -FilePath $file -ArgumentList $t.Args -Wait
+            } else {
+                Log "$($t.Name): signed by $signer. Running the installer - finish its setup window."
+                Start-Process -FilePath $file -Wait
+            }
             Remove-Item $file -Force -ErrorAction SilentlyContinue
             if (Find-Uninstall $t.Detect) { Log "$($t.Name): installed." } else { Log "$($t.Name): setup closed, but it doesn't show as installed." }
         }
@@ -731,13 +738,43 @@ function Start-MyApps {
             if (Test-Path $dir) { Log "$($t.Name): some files are in use; close it and try again." } else { Log "$($t.Name): removed." }
         }
 
+        function Invoke-Uninstaller($u, [string]$extraArgs) {
+            if ($u.QuietUninstallString) { $cmd = $u.QuietUninstallString }
+            elseif ($u.UninstallString -match 'msiexec') {
+                $guid = [regex]::Match($u.UninstallString, '\{[0-9A-Fa-f\-]+\}').Value
+                $cmd = "msiexec.exe /x $guid /qb /norestart"
+            } else {
+                $cmd = $u.UninstallString
+                if ($extraArgs) { $cmd = "$cmd $extraArgs" }
+            }
+            Log "    running: $cmd"
+            Start-Process -FilePath cmd.exe -ArgumentList "/c `"$cmd`"" -Wait
+        }
+
         function Uninstall-Direct($t) {
             $u = Find-Uninstall $t.Detect
             if (-not $u) { Log "$($t.Name): not installed."; return }
-            $cmd = if ($u.QuietUninstallString) { $u.QuietUninstallString } else { $u.UninstallString }
             Log "Uninstalling $($t.Name)..."
-            Start-Process -FilePath cmd.exe -ArgumentList "/c `"$cmd`"" -Wait
-            if (Find-Uninstall $t.Detect) { Log "$($t.Name): still installed." } else { Log "$($t.Name): removed." }
+            Invoke-Uninstaller $u $t.UninstallArgs
+            if (Find-Uninstall $t.Detect) { Log "$($t.Name): still installed - finish or check its uninstall window." } else { Log "$($t.Name): removed." }
+        }
+
+        # winget first; if winget can't, use the app's own uninstaller from Windows' program list
+        function Uninstall-Winget($t) {
+            Log "Uninstalling $($t.Name)..."
+            $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--silent', '--accept-source-agreements')
+            if ($r.Code -eq 0) { Log "$($t.Name): removed."; return }
+            if ($r.Code -ne $NOT_FOUND) {
+                Log-Failure $t.Name $r
+                Log "$($t.Name): trying again with its normal uninstall window..."
+                $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--accept-source-agreements')
+                if ($r.Code -eq 0) { Log "$($t.Name): removed."; return }
+            }
+            $u = Find-Uninstall $t.Name
+            if (-not $u) { Log "$($t.Name): winget and Windows' program list don't show it as installed."; return }
+            Log "$($t.Name): using its own uninstaller ($($u.DisplayName))..."
+            Invoke-Uninstaller $u ''
+            if (Find-Uninstall $t.Name) { Log "$($t.Name): still installed - finish or check its uninstall window." } else { Log "$($t.Name): removed." }
         }
 
         function Log-Failure($name, $r) {
@@ -762,7 +799,8 @@ function Start-MyApps {
                         $sync.Status[$t.Key] = @{ install = 'Installing...'; upgrade = 'Updating...'; uninstall = 'Removing...' }[$verb]
                         Log "$($t.Name): $verb..."
                         foreach ($gid in $t.Ids) {
-                            $wa = @($verb, '--id', $gid, '-e', '--source', 'winget', '--silent', '--accept-source-agreements')
+                            $wa = @($verb, '--id', $gid, '-e', '--silent', '--accept-source-agreements')
+                            if ($verb -ne 'uninstall') { $wa += @('--source', 'winget') }
                             if ($verb -ne 'uninstall') { $wa += '--accept-package-agreements' }
                             $r = Invoke-Winget $wa
                             if ($r.Code -eq 0)                           { Log "    $($gid): done." }
@@ -886,11 +924,7 @@ function Start-MyApps {
                         $sync.Status[$t.Key] = 'Removing...'
                         if ($t.Portable)  { Uninstall-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
-                        Log "Uninstalling $($t.Name)..."
-                        $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--source', 'winget', '--silent', '--accept-source-agreements')
-                        if ($r.Code -eq 0)              { Log "$($t.Name): removed." }
-                        elseif ($r.Code -eq $NOT_FOUND) { Log "$($t.Name): not installed." }
-                        else { Log-Failure $t.Name $r }
+                        Uninstall-Winget $t
                         $sync.Status[$t.Key] = Get-State $t
                     }
 
@@ -986,7 +1020,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Portable = $app.portable; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $app.portable; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
