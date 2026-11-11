@@ -55,6 +55,7 @@
   .title { display:block; font-weight:600; }
   .k-free .title, .k-rest .title, .k-travel .title { font-weight:400; }
   .sub { display:block; color:var(--muted); font-size:12px; margin-top:1px; }
+  .row[data-dow] + .row[data-dow]:not([data-dow="1"]) { }
   .row:has(input:checked) .title { text-decoration:line-through; text-decoration-color:var(--muted); }
   .pill { font-size:11px; font-weight:600; padding:3px 10px; border-radius:10px; white-space:nowrap; }
   .pill.ok { color:var(--ok-fg); background:var(--ok-bg); } .pill.warn { color:var(--warn-fg); background:var(--warn-bg); }
@@ -112,7 +113,7 @@
     <div class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7v14M13 7c-2-1.6-5-2-8-1.6v13c3-.4 6 0 8 1.6M13 7c2-1.6 5-2 8-1.6v13c-3-.4-6 0-8 1.6"/></svg></div>
     <div class="ttl">
       <h1>Ali's Study Plan</h1>
-      <p>Fall 2026 at Schiller Madrid · exams, the 4-day study plan and classes until the end of the semester.</p>
+      <p>Fall 2026 at Schiller Madrid · exams, the 4-day plan, a weekly study plan for all four subjects, and classes until the end of the semester.</p>
     </div>
     <div class="tools">
       <div class="swatches" id="swatches" role="group" aria-label="Theme"></div>
@@ -126,12 +127,13 @@
     <header><span class="label">Exams &amp; deadlines</span><span class="tag">All four subjects</span></header>
     <div class="row"><span class="nobox"></span><span class="when">Mon 16 Nov<br>12:00</span><span class="what"><span class="title">Spanish midterm · SP101 Elementary Spanish I</span><span class="sub">In class with Belén Hereza, on Blackboard · bring the laptop with Respondus LockDown Browser installed and the practice test done · covers all 7 classes, no oral part</span></span><span class="pill warn" data-countdown="2026-11-16">Exam</span></div>
     <div class="row"><span class="nobox"></span><span class="when">Tue 17 Nov<br>in class</span><span class="what"><span class="title">Computer Science exam</span><span class="sub">Tuesday class day (09:00 – 15:00) · exact time and room are not in the emails</span></span><span class="pill warn" data-countdown="2026-11-17">Exam</span></div>
-    <div class="row"><span class="nobox"></span><span class="when">Mon 23 Nov<br>14:00</span><span class="what"><span class="title">Spring 2027 course registration opens</span><span class="sub">Student Portal · first come, first served · closes Sun 6 Dec 14:00</span></span><span class="pill work" data-countdown="2026-11-23">Deadline</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 23 Nov<br>14:00</span><span class="what"><span class="title">Spring 2027 course registration opens</span><span class="sub">Student Portal · first come, first served · closes Sun 6 Dec 14:00</span></span><span class="pill work" data-countdown="2026-11-23" data-after="Open">Deadline</span></div>
     <div class="row"><span class="nobox"></span><span class="when">Mon 14 Dec<br>in class</span><span class="what"><span class="title">International Business midterm project · GEB1350</span><span class="sub">Ali + Sofie Z. present <b>Alphabet</b> to Jose Velasco · upload to Blackboard the same day · executive summary (8–12 slides), strategy since COVID, valuation (comparable companies, comparable acquisitions, DCF), conclusions</span></span><span class="pill warn" data-countdown="2026-12-14">Exam</span></div>
     <div class="row"><span class="nobox"></span><span class="when">Mon 9 Nov</span><span class="what"><span class="title">English Composition midterm · EN113</span><span class="sub">Paper 1 "Describing and Reflecting" for Peter Bonney · submitted on Blackboard</span></span><span class="pill ok">Submitted</span></div>
     <div class="row"><span class="nobox"></span><span class="when">By Fri 22 Jan</span><span class="what"><span class="title">Final exams · all subjects</span><span class="sub">Dates not announced yet · the term ends Fri 22 Jan 2027 · the Spanish final has an oral part</span></span><span class="pill off">Not announced</span></div>
   </section>
 
+  <div id="fourday">
   <h2 class="group">4-day study plan · Thu 12 – Sun 15 Nov <span>2 h Spanish + 2 h Computer Science + gym every day · tick each block when it's done</span></h2>
   <section class="panel day" data-day="2026-11-12">
     <header><span class="label">Thursday 12 November</span><span class="tag">Padrón appointment day</span><span class="today">Today</span></header>
@@ -187,6 +189,52 @@
     </div>
   </section>
 
+  </div>
+
+  <div id="weekly">
+  <h2 class="group">Weekly study plan · Wed 18 Nov – Fri 22 Jan <span>All four subjects, every week, even without an exam · same rhythm as the 4-day plan · ticks reset every Monday</span></h2>
+  <section class="panel">
+    <header><span class="label">Every week</span><span class="tag">10 study blocks: Computer Science 3 · Spanish 2 · English 2 · International Business 2 · catch-up 1</span></header>
+    <label class="row k-study" data-dow="1" data-s="09:30" data-e="11:30"><input type="checkbox" data-wid="1-09:30" data-group="study" aria-label="Done: Computer Science Mon"><span class="when">Mon<br>09:30 – 11:30</span><span class="what"><span class="title">Computer Science study block</span><span class="sub">Before class · practise what last Tuesday covered</span></span><span class="pill work">Study</span></label>
+    <div class="row k-class" data-dow="1" data-s="12:00" data-e="18:00"><span class="nobox"></span><span class="when">Mon<br>12:00 – 18:00</span><span class="what"><span class="title">University</span><span class="sub">Classes: Spanish 12:00 – 15:00, International Business 15:00 – 18:00</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-dow="2" data-s="09:00" data-e="15:00"><span class="nobox"></span><span class="when">Tue<br>09:00 – 15:00</span><span class="what"><span class="title">University</span><span class="sub">Classes: English Composition and Computer Science</span></span><span class="pill ok">Class</span></div>
+    <label class="row k-study" data-dow="2" data-s="16:30" data-e="18:30"><input type="checkbox" data-wid="2-16:30" data-group="study" aria-label="Done: English Composition Tue"><span class="when">Tue<br>16:30 – 18:30</span><span class="what"><span class="title">English Composition study block</span><span class="sub">This week's writing assignment while the class is fresh</span></span><span class="pill work">Study</span></label>
+    <label class="row k-gym" data-dow="2" data-s="19:00" data-e="20:00"><input type="checkbox" data-wid="2-19:00" data-group="gym" aria-label="Done: gym Tue"><span class="when">Tue<br>19:00 – 20:00</span><span class="what"><span class="title">Gym session</span></span><span class="pill warn">Gym</span></label>
+    <label class="row k-study" data-dow="3" data-s="11:00" data-e="13:00"><input type="checkbox" data-wid="3-11:00" data-group="study" aria-label="Done: International Business Wed"><span class="when">Wed<br>11:00 – 13:00</span><span class="what"><span class="title">International Business study block</span><span class="sub">Alphabet project until 14 Dec, then course review</span></span><span class="pill work">Study</span></label>
+    <label class="row k-study" data-dow="3" data-s="15:00" data-e="17:00"><input type="checkbox" data-wid="3-15:00" data-group="study" aria-label="Done: Computer Science Wed"><span class="when">Wed<br>15:00 – 17:00</span><span class="what"><span class="title">Computer Science study block</span><span class="sub">New material from Tuesday · exercises</span></span><span class="pill work">Study</span></label>
+    <label class="row k-gym" data-dow="3" data-s="19:00" data-e="20:00"><input type="checkbox" data-wid="3-19:00" data-group="gym" aria-label="Done: gym Wed"><span class="when">Wed<br>19:00 – 20:00</span><span class="what"><span class="title">Gym session</span></span><span class="pill warn">Gym</span></label>
+    <label class="row k-study" data-dow="4" data-s="11:00" data-e="13:00"><input type="checkbox" data-wid="4-11:00" data-group="study" aria-label="Done: Spanish Thu"><span class="when">Thu<br>11:00 – 13:00</span><span class="what"><span class="title">Spanish study block</span><span class="sub">Quizlet vocabulary + grammar from Monday's class</span></span><span class="pill work">Study</span></label>
+    <label class="row k-study" data-dow="4" data-s="15:00" data-e="17:00"><input type="checkbox" data-wid="4-15:00" data-group="study" aria-label="Done: English Composition Thu"><span class="when">Thu<br>15:00 – 17:00</span><span class="what"><span class="title">English Composition study block</span><span class="sub">Finish and submit the writing assignment</span></span><span class="pill work">Study</span></label>
+    <label class="row k-gym" data-dow="4" data-s="19:00" data-e="20:00"><input type="checkbox" data-wid="4-19:00" data-group="gym" aria-label="Done: gym Thu"><span class="when">Thu<br>19:00 – 20:00</span><span class="what"><span class="title">Gym session</span></span><span class="pill warn">Gym</span></label>
+    <label class="row k-study" data-dow="5" data-s="11:00" data-e="13:00"><input type="checkbox" data-wid="5-11:00" data-group="study" aria-label="Done: Computer Science Fri"><span class="when">Fri<br>11:00 – 13:00</span><span class="what"><span class="title">Computer Science study block</span><span class="sub">Longer practice · code or problem sets</span></span><span class="pill work">Study</span></label>
+    <label class="row k-study" data-dow="5" data-s="15:00" data-e="17:00"><input type="checkbox" data-wid="5-15:00" data-group="study" aria-label="Done: International Business Fri"><span class="when">Fri<br>15:00 – 17:00</span><span class="what"><span class="title">International Business study block</span><span class="sub">Project work or reading for Monday</span></span><span class="pill work">Study</span></label>
+    <label class="row k-gym" data-dow="5" data-s="19:00" data-e="20:00"><input type="checkbox" data-wid="5-19:00" data-group="gym" aria-label="Done: gym Fri"><span class="when">Fri<br>19:00 – 20:00</span><span class="what"><span class="title">Gym session</span></span><span class="pill warn">Gym</span></label>
+    <label class="row k-study" data-dow="6" data-s="11:00" data-e="13:00"><input type="checkbox" data-wid="6-11:00" data-group="study" aria-label="Done: Spanish Sat"><span class="when">Sat<br>11:00 – 13:00</span><span class="what"><span class="title">Spanish study block</span><span class="sub">Textbook exercises + Wayground quizzes · speak out loud for the oral final</span></span><span class="pill work">Study</span></label>
+    <label class="row k-study" data-dow="6" data-s="15:00" data-e="17:00"><input type="checkbox" data-wid="6-15:00" data-group="study" aria-label="Done: Catch-up Sat"><span class="when">Sat<br>15:00 – 17:00</span><span class="what"><span class="title">Catch-up study block</span><span class="sub">Whichever subject is behind this week</span></span><span class="pill work">Study</span></label>
+    <label class="row k-gym" data-dow="6" data-s="19:00" data-e="20:00"><input type="checkbox" data-wid="6-19:00" data-group="gym" aria-label="Done: gym Sat"><span class="when">Sat<br>19:00 – 20:00</span><span class="what"><span class="title">Gym session</span></span><span class="pill warn">Gym</span></label>
+    <div class="row k-free" data-dow="7" data-s="18:00" data-e="18:30"><span class="nobox"></span><span class="when">Sun<br>18:00 – 18:30</span><span class="what"><span class="title">Rest day</span><span class="sub">30 minutes of Spanish vocabulary and pack the bag for Monday</span></span><span class="pill off">Rest</span></div>
+  </section>
+
+  <section class="panel">
+    <header><span class="label">What to focus on, period by period</span></header>
+    <div class="row"><span class="nobox"></span><span class="when">Wed 18 Nov –<br>Sun 13 Dec</span><span class="what"><span class="title">Normal weeks · Alphabet project in the Business blocks</span><span class="sub">By Sun 22 Nov: executive summary slides · by Sun 29 Nov: strategy since COVID · by Sun 6 Dec: valuation (comparables, acquisitions, DCF) · Wed 9 – Sat 12 Dec: conclusions and rehearsal with Sofie · Mon 14 Dec: present and upload</span></span><span class="pill work">Project</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Thu 10 Dec</span><span class="what"><span class="title">Spanish make-up class 12:00 – 15:00, room M001</span><span class="sub">It replaces that Thursday's Spanish study block · move English to 16:00 – 18:00</span></span><span class="pill work">Make-up</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Tue 15 Dec –<br>Sun 20 Dec</span><span class="what"><span class="title">Review week</span><span class="sub">Use every block to write a one-page summary per subject before the break</span></span><span class="pill ok">Review</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 21 Dec –<br>Fri 8 Jan</span><span class="what"><span class="title">Winter break · light plan</span><span class="sub">One 2-hour block a day, five days a week, rotating the four subjects · keep speaking Spanish for the oral final</span></span><span class="pill off">Break</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Sat 9 Jan –<br>Fri 22 Jan</span><span class="what"><span class="title">Finals revision</span><span class="sub">Back to the full weekly plan · practice tests and past assignments · re-order the blocks around the exam dates once Schiller announces them</span></span><span class="pill warn">Finals</span></div>
+  </section>
+
+  <section class="panel">
+    <header><span class="label">Weekly totals</span><span class="tag">Study blocks only, classes not counted</span></header>
+    <div class="totals">
+      <div class="tile"><div class="n">6 hours</div><div class="k">Computer Science</div><div class="s">Mon, Wed, Fri</div></div>
+      <div class="tile"><div class="n">4 hours</div><div class="k">Spanish</div><div class="s">Thu, Sat</div></div>
+      <div class="tile"><div class="n">4 hours</div><div class="k">English Composition</div><div class="s">Tue, Thu</div></div>
+      <div class="tile"><div class="n">4 hours</div><div class="k">International Business</div><div class="s">Wed, Fri</div></div>
+    </div>
+  </section>
+
+  </div>
 
   <section class="panel">
     <header><span class="label">Weekly timetable</span><span class="tag">Fall 2026 · classes on Monday and Tuesday only</span></header>
@@ -253,7 +301,21 @@
   var boxes = Array.prototype.slice.call(document.querySelectorAll('input[data-id]'));
   var done = {};
   try { done = JSON.parse(localStorage.getItem('study-done') || '{}') || {}; } catch (e) {}
+  var WSTART = '2026-11-16', WEND = '2027-01-22';
+  function weekKey() { var d = new Date(spain({ year: 'numeric', month: '2-digit', day: '2-digit' }, 'en-CA') + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); }
+  var wboxes = Array.prototype.slice.call(document.querySelectorAll('input[data-wid]')), wk = null;
+  function loadWeek() {
+    var k = weekKey(); if (k === wk) return; wk = k;
+    wboxes.forEach(function (b) { b.checked = !!done['w' + b.dataset.wid + '@' + wk]; });
+  }
   function summary() {
+    var today = spain({ year: 'numeric', month: '2-digit', day: '2-digit' }, 'en-CA');
+    if (today >= WSTART) {
+      var w = { study: [0, 0], gym: [0, 0] };
+      wboxes.forEach(function (b) { w[b.dataset.group][1]++; if (b.checked) w[b.dataset.group][0]++; });
+      document.getElementById('summary').textContent = 'This week: Study ' + w.study[0] + '/' + w.study[1] + ' · Gym ' + w.gym[0] + '/' + w.gym[1];
+      return;
+    }
     var c = { study: [0, 0], gym: [0, 0] };
     boxes.forEach(function (b) { c[b.dataset.group][1]++; if (b.checked) c[b.dataset.group][0]++; });
     document.getElementById('summary').textContent = 'Study ' + c.study[0] + '/' + c.study[1] + ' · Gym ' + c.gym[0] + '/' + c.gym[1];
@@ -263,8 +325,10 @@
     b.checked = !!done[b.dataset.id];
     b.addEventListener('change', function () { if (b.checked) done[b.dataset.id] = 1; else delete done[b.dataset.id]; save(); });
   });
-  document.getElementById('clear').onclick = function () { done = {}; boxes.forEach(function (b) { b.checked = false; }); save(); };
-  summary();
+  wboxes.forEach(function (b) {
+    b.addEventListener('change', function () { var k = 'w' + b.dataset.wid + '@' + wk; if (b.checked) done[k] = 1; else delete done[k]; save(); });
+  });
+  document.getElementById('clear').onclick = function () { done = {}; boxes.forEach(function (b) { b.checked = false; }); wboxes.forEach(function (b) { b.checked = false; }); save(); };
 
   function spain(o, loc) { return new Intl.DateTimeFormat(loc || 'en-GB', Object.assign({ timeZone: 'Europe/Madrid' }, o)).format(new Date()); }
   function tick() {
@@ -280,11 +344,16 @@
       r.classList.toggle('past', e <= now); r.classList.toggle('now', on);
       if (on) cur = r; else if (!nxt && s > now) nxt = r;
     });
+    loadWeek(); summary();
+    var fd = document.getElementById('fourday'), wkp = document.getElementById('weekly');
+    if (today >= '2026-11-16' && fd.compareDocumentPosition(wkp) & 4) fd.parentNode.insertBefore(wkp, fd);
+    var dow = (new Date(today + 'T12:00:00Z').getUTCDay() + 6) % 7 + 1, hm = now.slice(11), inRange = today >= '2026-11-18' && today <= WEND;
+    document.querySelectorAll('.row[data-dow]').forEach(function (r) { r.classList.toggle('now', inRange && +r.dataset.dow === dow && r.dataset.s <= hm && hm < r.dataset.e); });
     document.querySelectorAll('.day').forEach(function (d) { d.classList.toggle('is-today', d.dataset.day === today); });
     document.querySelectorAll('[data-countdown]').forEach(function (el) {
       var n = Math.round((Date.parse(el.dataset.countdown) - Date.parse(today)) / 864e5);
-      if (n < 0) { el.className = 'pill off'; }
-      el.textContent = n > 1 ? 'In ' + n + ' days' : n === 1 ? 'Tomorrow' : n === 0 ? 'Today' : 'Done';
+      if (n < 0 && !el.dataset.after) { el.className = 'pill off'; }
+      el.textContent = n > 1 ? 'In ' + n + ' days' : n === 1 ? 'Tomorrow' : n === 0 ? 'Today' : (el.dataset.after || 'Done');
     });
     function nm(r) { return r.querySelector('.title').textContent; }
     var all = Array.prototype.slice.call(document.querySelectorAll('.row[data-start]')).filter(function (r) { return r.dataset.start.slice(11) !== '00:00'; });
