@@ -11,5 +11,8 @@
   {"name": "CCleaner", "id": "Piriform.CCleaner", "category": "Utilities", "homepage": "https://www.ccleaner.com/ccleaner/download", "default": true},
   {"name": "BleachBit", "id": "BleachBit.BleachBit", "category": "Utilities", "homepage": "https://www.bleachbit.org/download/windows", "default": false},
   {"name": "UniGetUI", "id": "MartiCliment.UniGetUI", "category": "Utilities", "homepage": "https://www.marticliment.com/unigetui/", "default": false},
-  {"name": "Intel Driver & Support Assistant", "id": "Intel.IntelDriverAndSupportAssistant", "category": "Drivers", "homepage": "https://www.intel.com/content/www/us/en/support/detect.html", "default": false}
+  {"name": "Intel Driver & Support Assistant", "id": "Intel.IntelDriverAndSupportAssistant", "category": "Drivers", "homepage": "https://www.intel.com/content/www/us/en/support/detect.html", "default": false},
+  {"name": "Python 3.13", "id": "Python.Python.3.13", "category": "Runtimes", "homepage": "https://www.python.org/downloads/windows/", "default": false},
+  {"name": "Edge WebView2 Runtime", "id": "Microsoft.EdgeWebView2Runtime", "category": "Runtimes", "homepage": "https://developer.microsoft.com/microsoft-edge/webview2/", "default": false},
+  {"name": ".NET 10 Desktop Runtime (x64)", "id": "Microsoft.DotNet.DesktopRuntime.10", "category": "Runtimes", "homepage": "https://dotnet.microsoft.com/download/dotnet/10.0", "default": false}
 ]
