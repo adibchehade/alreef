@@ -409,7 +409,7 @@ function Start-MyApps {
     $detail.Margin = '2,0,0,0'
     [void]$AppPanel.Children.Add($detail)
 
-    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Utilities' = 0xE90F;
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Utilities' = 0xE90F;
                  'Runtimes' = 0xE943; 'Visual C++ Runtimes' = 0xEC7A }
 
     function Set-TileLook($sec) {
