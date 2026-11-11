@@ -228,6 +228,8 @@ function Start-MyApps {
               CornerRadius="16" Padding="14,6" VerticalAlignment="Center">
         <TextBlock x:Name="Summary" Text="Checking..." Foreground="#8B95A5" FontSize="12"/>
       </Border>
+      <Button x:Name="BtnRefreshTop" DockPanel.Dock="Right" Content="Refresh" Margin="0,0,10,0"
+              Padding="16,7" VerticalAlignment="Center" ToolTip="Re-check what's installed (F5)"/>
       <StackPanel VerticalAlignment="Center">
         <TextBlock Text="My Apps" FontSize="24" FontWeight="SemiBold"/>
         <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
@@ -269,10 +271,10 @@ function Start-MyApps {
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
-    $buttons = @($BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge)
+    $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge)
 
     # Open as large as the screen allows
     $wa = [System.Windows.SystemParameters]::WorkArea
@@ -344,8 +346,15 @@ function Start-MyApps {
 
         $barChars = '[{0}{1}]' -f [char]0x2588, [char]0x2592
         function Invoke-Winget([string[]]$WgArgs) {
-            $lines = & $sync.Winget @WgArgs 2>&1 | ForEach-Object { "$_" }
-            $code  = $LASTEXITCODE
+            $global:LASTEXITCODE = $null
+            try {
+                $lines = & $sync.Winget @WgArgs 2>&1 | ForEach-Object { "$_" }
+                $code  = $LASTEXITCODE
+            } catch {
+                $lines = @("winget failed to run: $($_.Exception.Message)")
+                $code  = -1
+            }
+            if ($null -eq $code) { $code = -1 }
             $clean = foreach ($l in $lines) {
                 $t = ($l -split "`r")[-1].Trim()
                 if ($t -and $t -notmatch '^[\-\\|/ ]+$' -and $t -notmatch $barChars) { $t }
@@ -357,6 +366,7 @@ function Start-MyApps {
 
         # Apps that aren't in winget are found through Windows' list of installed programs
         function Find-Uninstall([string]$name) {
+            if (-not $name) { return $null }
             $paths = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
                      'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
                      'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
@@ -370,7 +380,12 @@ function Start-MyApps {
             }
             $r = Invoke-Winget @('list', '--id', $t.Id, '-e', '--source', 'winget', '--accept-source-agreements')
             if ($r.Code -ne 0) { return 'Not installed' }
-            if ($r.Text -match '\bAvailable\b') { return 'Update available' }
+            $idRx = [regex]::Escape($t.Id)
+            $line = $r.Lines | Where-Object { $_ -match "(^|\s)$idRx(\s|$)" } | Select-Object -First 1
+            if (-not $line) { return 'Not installed' }
+            # after the ID come: installed version [, available version], source
+            $after = $line.Substring($line.IndexOf($t.Id) + $t.Id.Length)
+            if (([regex]::Matches($after, '\d+(\.\d+)+')).Count -ge 2) { return 'Update available' }
             'Installed'
         }
 
@@ -420,7 +435,7 @@ function Start-MyApps {
                 $sync.Progress = "($i of $n)"
 
                 # A card that covers several winget packages (e.g. Visual C++ x64 + x86)
-                if (@($t.Ids).Count) {
+                if (@($t.Ids | Where-Object { $_ }).Count) {
                     $verb = @{ install = 'install'; update = 'upgrade'; uninstall = 'uninstall' }[$t.Action]
                     if ($verb) {
                         $sync.Status[$t.Key] = @{ install = 'Installing...'; upgrade = 'Updating...'; uninstall = 'Removing...' }[$verb]
@@ -445,6 +460,12 @@ function Start-MyApps {
                 }
 
                 switch ($t.Action) {
+
+                    'wingetcheck' {
+                        $r = Invoke-Winget @('--version')
+                        if ($r.Code -eq 0) { Log "winget $($r.Lines -join ' ')" }
+                        else { Log "winget isn't working: $($r.Text)" }
+                    }
 
                     'status' { $sync.Status[$t.Key] = Get-State $t }
 
@@ -554,7 +575,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Ids = @($app.ids); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
@@ -605,6 +626,8 @@ function Start-MyApps {
     })
     $BtnUpdateAll.Add_Click({ Start-Work (@([pscustomobject]@{ Action = 'updateall' }) + (Get-StatusTasks)) })
     $BtnRefresh.Add_Click({   Start-Work (Get-StatusTasks) })
+    $BtnRefreshTop.Add_Click({ Start-Work (Get-StatusTasks) })
+    $win.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'F5') { Start-Work (Get-StatusTasks) } })
     $BtnRestore.Add_Click({   Start-Work @([pscustomobject]@{ Action = 'restore' }) })
     $BtnEdge.Add_Click({
         if (Confirm-Action "Remove Microsoft Edge?`n`nWebView2 stays installed because other apps need it.") {
@@ -620,7 +643,7 @@ function Start-MyApps {
     })
     $win.Add_Loaded({
         $LogBox.AppendText("Loaded $($apps.Count) apps. Checking what's installed...`r`n")
-        Start-Work (Get-StatusTasks)
+        Start-Work (@([pscustomobject]@{ Action = 'wingetcheck' }) + (Get-StatusTasks))
     })
 
     $timer.Start()
