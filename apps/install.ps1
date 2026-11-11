@@ -479,6 +479,7 @@ function Start-MyApps {
         Job      = $null
         Winget   = $wingetExe
         RepoRaw  = $RepoRaw
+        ScriptUrl = $ScriptUrl
     })
 
     $Worker = {
@@ -658,6 +659,36 @@ function Start-MyApps {
                 }
 
                 switch ($t.Action) {
+
+                    'shortcut' {
+                        # A scheduled task that runs My Apps with admin rights, plus shortcuts that start it: no UAC prompt
+                        try {
+                            $tn = "MyApps-$env:USERNAME"
+                            if (-not (Get-ScheduledTask -TaskName $tn -ErrorAction SilentlyContinue)) {
+                                $arg = "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command `"irm '$($sync.ScriptUrl)' | iex`""
+                                $act = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $arg
+                                $pri = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
+                                $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+                                Register-ScheduledTask -TaskName $tn -Action $act -Principal $pri -Settings $set -Description 'Opens My Apps (alreef.es/t) with admin rights' -Force -ErrorAction Stop | Out-Null
+                                $new = $true
+                            }
+                            $shell = New-Object -ComObject WScript.Shell
+                            $places = @((Join-Path ([Environment]::GetFolderPath('Programs')) 'My Apps.lnk'),
+                                        (Join-Path ([Environment]::GetFolderPath('Desktop'))  'My Apps.lnk'))
+                            foreach ($lp in $places) {
+                                if (Test-Path $lp) { continue }
+                                $l = $shell.CreateShortcut($lp)
+                                $l.TargetPath   = "$env:SystemRoot\System32\schtasks.exe"
+                                $l.Arguments    = "/run /tn `"$tn`""
+                                $l.IconLocation = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0"
+                                $l.WindowStyle  = 7
+                                $l.Description  = 'My Apps installer'
+                                $l.Save()
+                                $new = $true
+                            }
+                            if ($new) { Log 'Shortcut ready: "My Apps" on the desktop and in the Start menu (opens with no UAC prompt).' }
+                        } catch { Log "Couldn't create the My Apps shortcut: $($_.Exception.Message)" }
+                    }
 
                     'wingetcheck' {
                         $r = Invoke-Winget @('--version')
@@ -879,7 +910,7 @@ function Start-MyApps {
     })
     $win.Add_Loaded({
         $LogBox.AppendText("Loaded $($apps.Count) apps. Checking what's installed...`r`n")
-        Start-Work (@([pscustomobject]@{ Action = 'wingetcheck' }) + (Get-StatusTasks))
+        Start-Work (@([pscustomobject]@{ Action = 'wingetcheck' }, [pscustomobject]@{ Action = 'shortcut' }) + (Get-StatusTasks))
     })
 
     $timer.Start()
