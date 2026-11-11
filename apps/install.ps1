@@ -269,6 +269,8 @@ function Start-MyApps {
 
     <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+        <TextBlock x:Name="LinkExpand"   Text="Expand all"   Foreground="#2A94D6" Cursor="Hand" Margin="0,0,16,0"/>
+        <TextBlock x:Name="LinkCollapse" Text="Collapse all" Foreground="#2A94D6" Cursor="Hand" Margin="0,0,28,0"/>
         <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#2A94D6" Cursor="Hand" Margin="0,0,16,0"/>
         <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#2A94D6" Cursor="Hand"/>
       </StackPanel>
@@ -279,7 +281,7 @@ function Start-MyApps {
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT)
@@ -299,21 +301,52 @@ function Start-MyApps {
     }
     $workingColors = @('#60B4E8', '#0B2F66')
 
-    # ---------- App rows (two columns per category) ----------
+    # ---------- App rows (collapsible sections, two columns of cards) ----------
     $rows = @{}
+    $sections = @()
+    $accent = '#2A94D6'; $accentHover = '#60B4E8'
+    $cardBg = '#11234B'; $cardBorder = '#1A3260'; $cardHoverBg = '#17306A'
+
+    function Set-Section($sec, [bool]$open) {
+        $sec.Grid.Visibility = if ($open) { 'Visible' } else { 'Collapsed' }
+        $sec.Arrow.RenderTransform.Angle = if ($open) { 0 } else { -90 }
+    }
+
     foreach ($cat in ($apps | ForEach-Object { $_.category } | Select-Object -Unique)) {
-        $hdr = New-Object Windows.Controls.TextBlock
-        $hdr.Text = "$cat".ToUpper(); $hdr.FontSize = 11; $hdr.FontWeight = 'SemiBold'
-        $hdr.Foreground = '#2A94D6'; $hdr.Margin = '4,14,0,6'
-        [void]$AppPanel.Children.Add($hdr)
+        $catApps = @($apps | Where-Object { $_.category -eq $cat })
 
         $grid = New-Object Windows.Controls.Primitives.UniformGrid
         $grid.Columns = 2
+
+        # Clickable header: chevron + name + count
+        $hdr = New-Object Windows.Controls.StackPanel
+        $hdr.Orientation = 'Horizontal'; $hdr.Margin = '4,14,0,6'; $hdr.Cursor = 'Hand'; $hdr.Background = 'Transparent'
+        $hdr.ToolTip = 'Click to collapse or expand'
+        $arrow = New-Object Windows.Shapes.Path
+        $arrow.Data = [Windows.Media.Geometry]::Parse('M1,1 L5,5 L9,1')
+        $arrow.Stroke = $accent; $arrow.StrokeThickness = 1.8
+        $arrow.StrokeStartLineCap = 'Round'; $arrow.StrokeEndLineCap = 'Round'; $arrow.StrokeLineJoin = 'Round'
+        $arrow.Width = 10; $arrow.Height = 6; $arrow.Margin = '0,0,9,0'; $arrow.VerticalAlignment = 'Center'
+        $arrow.RenderTransformOrigin = '0.5,0.5'; $arrow.RenderTransform = New-Object Windows.Media.RotateTransform 0
+        $title = New-Object Windows.Controls.TextBlock
+        $title.Text = "$cat".ToUpper(); $title.FontSize = 11; $title.FontWeight = 'SemiBold'; $title.Foreground = $accent
+        $cnt = New-Object Windows.Controls.TextBlock
+        $cnt.Text = "$($catApps.Count)"; $cnt.FontSize = 11; $cnt.Foreground = '#8FA3C4'; $cnt.Margin = '8,0,0,0'
+        [void]$hdr.Children.Add($arrow); [void]$hdr.Children.Add($title); [void]$hdr.Children.Add($cnt)
+
+        $sec = @{ Grid = $grid; Arrow = $arrow; Title = $title }
+        $sections += $sec
+        $hdr.Tag = $sec
+        $hdr.Add_MouseLeftButtonUp({ Set-Section $this.Tag ($this.Tag.Grid.Visibility -ne 'Visible') })
+        $hdr.Add_MouseEnter({ $this.Tag.Title.Foreground = $accentHover; $this.Tag.Arrow.Stroke = $accentHover })
+        $hdr.Add_MouseLeave({ $this.Tag.Title.Foreground = $accent; $this.Tag.Arrow.Stroke = $accent })
+
+        [void]$AppPanel.Children.Add($hdr)
         [void]$AppPanel.Children.Add($grid)
 
-        foreach ($a in @($apps | Where-Object { $_.category -eq $cat })) {
+        foreach ($a in $catApps) {
             $card = New-Object Windows.Controls.Border
-            $card.Background = '#11234B'; $card.BorderBrush = '#1A3260'; $card.BorderThickness = '1'
+            $card.Background = $cardBg; $card.BorderBrush = $cardBorder; $card.BorderThickness = '1'
             $card.CornerRadius = '10'; $card.Padding = '12,9'; $card.Margin = '4'
             $dock = New-Object Windows.Controls.DockPanel
 
@@ -331,6 +364,12 @@ function Start-MyApps {
             [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
             $card.Child = $dock
+            # Hover highlight, and clicking anywhere on the card ticks it
+            $card.Cursor = 'Hand'
+            $card.Tag = $cb
+            $card.Add_MouseEnter({ $this.Background = $cardHoverBg; $this.BorderBrush = $accent })
+            $card.Add_MouseLeave({ $this.Background = $cardBg; $this.BorderBrush = $cardBorder })
+            $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
             [void]$grid.Children.Add($card)
             $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; Pill = $pill; App = $a }
         }
@@ -737,6 +776,8 @@ function Start-MyApps {
     })
     $LinkAll.Add_MouseLeftButtonUp({  foreach ($r in $rows.Values) { $r.Check.IsChecked = $true } })
     $LinkNone.Add_MouseLeftButtonUp({ foreach ($r in $rows.Values) { $r.Check.IsChecked = $false } })
+    $LinkExpand.Add_MouseLeftButtonUp({   foreach ($sec in $sections) { Set-Section $sec $true } })
+    $LinkCollapse.Add_MouseLeftButtonUp({ foreach ($sec in $sections) { Set-Section $sec $false } })
 
     $win.Add_Closing({
         param($sender, $e)
