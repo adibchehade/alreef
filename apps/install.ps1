@@ -59,6 +59,30 @@ function Start-MyApps {
         $wingetExe = Find-Winget
     }
     if (-not $wingetExe) {
+        # Windows Server / LTSC: install winget and its dependencies straight from Microsoft's GitHub release
+        Write-Host 'Installing winget and its dependencies from Microsoft GitHub (Windows Server / LTSC)...' -ForegroundColor Cyan
+        try {
+            $ProgressPreference = 'SilentlyContinue'
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $tmp = Join-Path $env:TEMP 'winget-setup'
+            New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+            $rel = 'https://github.com/microsoft/winget-cli/releases/latest/download'
+            Invoke-WebRequest "$rel/DesktopAppInstaller_Dependencies.zip" -OutFile "$tmp\deps.zip" -UseBasicParsing -ErrorAction Stop
+            Invoke-WebRequest "$rel/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile "$tmp\winget.msixbundle" -UseBasicParsing -ErrorAction Stop
+            Expand-Archive "$tmp\deps.zip" "$tmp\deps" -Force
+            $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } elseif ([Environment]::Is64BitOperatingSystem) { 'x64' } else { 'x86' }
+            Get-ChildItem "$tmp\deps" -Recurse -Filter *.appx |
+                Where-Object { $_.FullName -match "\\$arch\\" -or $_.Name -match "_$arch" } |
+                ForEach-Object {
+                    Write-Host "  dependency: $($_.Name)" -ForegroundColor DarkGray
+                    try { Add-AppxPackage -Path $_.FullName -ErrorAction Stop } catch { Write-Host "    $($_.Exception.Message)" -ForegroundColor DarkGray }
+                }
+            Add-AppxPackage -Path "$tmp\winget.msixbundle" -ErrorAction Stop
+        } catch { Write-Host "Direct install failed: $($_.Exception.Message)" -ForegroundColor Red }
+        $env:Path += ";$env:LOCALAPPDATA\Microsoft\WindowsApps"
+        $wingetExe = Find-Winget
+    }
+    if (-not $wingetExe) {
         [Windows.MessageBox]::Show("winget could not be installed automatically.`n`nDownload App Installer from https://aka.ms/getwinget, open it, then run this again.", 'My Apps') | Out-Null
         Start-Process 'https://aka.ms/getwinget'
         return
