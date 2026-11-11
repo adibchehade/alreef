@@ -472,7 +472,7 @@ function Start-MyApps {
     $detail.Margin = '2,0,0,0'
     [void]$AppPanel.Children.Add($detail)
 
-    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Utilities' = 0xE90F;
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Utilities' = 0xE90F;
                  'Runtimes' = 0xE943; 'Visual C++ Runtimes' = 0xEC7A }
 
     function Set-TileLook($sec) {
@@ -654,7 +654,7 @@ function Start-MyApps {
 
         function Get-State($t) {
             if ($t.Portable) {
-                if (Test-Path (Join-Path (Get-PortableDir $t) $t.Exe)) { return 'Installed' } else { return 'Not installed' }
+                if (Get-PortableExe $t) { return 'Installed' } else { return 'Not installed' }
             }
             if (-not $t.Id) {
                 if (Find-Uninstall $t.Detect) { return 'Installed' } else { return 'Not installed' }
@@ -709,33 +709,71 @@ function Start-MyApps {
             Start-Sleep -Milliseconds 500
         }
 
+        # The app's .exe inside its folder (zip apps may keep it in a subfolder)
+        function Get-PortableExe($t) {
+            $dir = Get-PortableDir $t
+            if (-not (Test-Path $dir)) { return $null }
+            $direct = Join-Path $dir $t.Exe
+            if (Test-Path $direct) { return $direct }
+            $f = Get-ChildItem $dir -Recurse -Filter $t.Exe -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($f) { $f.FullName } else { $null }
+        }
+
         function Install-Portable($t) {
             $dir = Get-PortableDir $t
-            $tmp = Join-Path $env:TEMP $t.Exe
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $url = $t.Portable
+            if ($url -like 'github:*') {
+                # Newest GitHub release (pre-releases included) that has a matching file
+                $repo = $url.Substring(7)
+                Log "Looking up the latest $($t.Name) release on GitHub ($repo)..."
+                try {
+                    $rels = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=15" -Headers @{ 'User-Agent' = 'SoftservTools' } -UseBasicParsing -ErrorAction Stop
+                    $asset = @($rels) | ForEach-Object { $_.assets } | Where-Object { $_.name -match $t.Asset } | Select-Object -First 1
+                } catch { Log "$($t.Name): couldn't reach GitHub: $($_.Exception.Message)"; return }
+                if (-not $asset) { Log "$($t.Name): no Windows download found in the latest releases."; return }
+                $url = $asset.browser_download_url
+                Log "$($t.Name): found $($asset.name)"
+            }
+            $isZip = $url -match '\.zip($|\?)'
+            $tmp = Join-Path $env:TEMP $(if ($isZip) { (($t.Name -replace '[^\w]', '') + '.zip') } else { $t.Exe })
             Log "Downloading $($t.Name)..."
             try {
-                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Invoke-WebRequest -Uri $t.Portable -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+                Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
             } catch { Log "$($t.Name): download failed: $($_.Exception.Message)"; return }
-            $sig = Get-AuthenticodeSignature $tmp
-            if ($sig.Status -eq 'Valid') {
-                $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
-                Log "$($t.Name): signed by $signer."
-            } elseif ($sig.Status -eq 'NotSigned') {
-                Log "$($t.Name): not digitally signed (normal for this portable build); using the official download link."
+
+            if ($isZip) {
+                Log "$($t.Name): zip from the project's official release page; extracting..."
+                Stop-Portable $t
+                if (Test-Path $dir) { Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue }
+                New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                try { Expand-Archive -Path $tmp -DestinationPath $dir -Force -ErrorAction Stop }
+                catch { Log "$($t.Name): couldn't extract: $($_.Exception.Message)"; return }
+                finally { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
             } else {
-                Log "$($t.Name): the file's signature is broken ($($sig.Status)), so it was not installed."
-                Remove-Item $tmp -Force -ErrorAction SilentlyContinue
-                return
+                $sig = Get-AuthenticodeSignature $tmp
+                if ($sig.Status -eq 'Valid') {
+                    $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
+                    Log "$($t.Name): signed by $signer."
+                } elseif ($sig.Status -eq 'NotSigned') {
+                    Log "$($t.Name): not digitally signed (normal for this portable build); using the official download link."
+                } else {
+                    Log "$($t.Name): the file's signature is broken ($($sig.Status)), so it was not installed."
+                    Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+                    return
+                }
+                Stop-Portable $t
+                New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                Move-Item $tmp (Join-Path $dir $t.Exe) -Force
             }
-            Stop-Portable $t
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-            Move-Item $tmp (Join-Path $dir $t.Exe) -Force
+
+            $exe = Get-PortableExe $t
+            if (-not $exe) { Log "$($t.Name): $($t.Exe) wasn't found after installing."; return }
             $shell = New-Object -ComObject WScript.Shell
             foreach ($lnkPath in (Get-PortableLinks $t)) {
                 $lnk = $shell.CreateShortcut($lnkPath)
-                $lnk.TargetPath = Join-Path $dir $t.Exe
-                $lnk.WorkingDirectory = $dir
+                $lnk.TargetPath = $exe
+                $lnk.WorkingDirectory = Split-Path $exe
                 $lnk.Save()
             }
             Log "$($t.Name): installed to $dir, with Start menu and desktop shortcuts."
@@ -1097,7 +1135,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $app.portable; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
