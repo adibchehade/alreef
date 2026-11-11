@@ -33,10 +33,10 @@ function Start-MyApps {
     # ---------- App list: local apps.json > GitHub apps.json > built-in fallback ----------
     $DefaultAppsJson = @'
 [
-  { "name": "LibreWolf", "id": "LibreWolf.LibreWolf",      "category": "Browsers",      "homepage": "https://librewolf.net",                       "default": true },
-  { "name": "Telegram",  "id": "Telegram.TelegramDesktop", "category": "Communication", "homepage": "https://desktop.telegram.org",                "default": true },
-  { "name": "7-Zip",     "id": "7zip.7zip",                "category": "Utilities",     "homepage": "https://www.7-zip.org",                       "default": true },
-  { "name": "CCleaner",  "id": "Piriform.CCleaner",        "category": "Utilities",     "homepage": "https://www.ccleaner.com/ccleaner/download", "default": true }
+  { "name": "LibreWolf", "id": "LibreWolf.LibreWolf",      "category": "Browsers",      "homepage": "https://librewolf.net",                       "default": false },
+  { "name": "Telegram",  "id": "Telegram.TelegramDesktop", "category": "Communication", "homepage": "https://desktop.telegram.org",                "default": false },
+  { "name": "7-Zip",     "id": "7zip.7zip",                "category": "Utilities",     "homepage": "https://www.7-zip.org",                       "default": false },
+  { "name": "CCleaner",  "id": "Piriform.CCleaner",        "category": "Utilities",     "homepage": "https://www.ccleaner.com/ccleaner/download", "default": false }
 ]
 '@
     $apps = $null
