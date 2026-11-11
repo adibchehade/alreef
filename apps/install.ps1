@@ -225,6 +225,7 @@ function Start-MyApps {
     $pillColors = @{
         'Installed'        = @('#3DDC97', '#14302A')
         'Update available' = @('#FFB547', '#3A2D14')
+        'Partly installed' = @('#FFB547', '#3A2D14')
         'Not installed'    = @('#8B95A5', '#222833')
     }
     $workingColors = @('#00ACFF', '#0E2C40')
@@ -257,7 +258,7 @@ function Start-MyApps {
 
             $cb = New-Object Windows.Controls.CheckBox
             $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default
-            $cb.ToolTip = $(if ($a.id) { $a.id } else { $a.installer })
+            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } else { $a.installer })
             [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
             $card.Child = $dock
@@ -357,6 +358,32 @@ function Start-MyApps {
             foreach ($t in $tasks) {
                 $i++
                 $sync.Progress = "($i of $n)"
+
+                # A card that covers several winget packages (e.g. Visual C++ x64 + x86)
+                if (@($t.Ids).Count) {
+                    $verb = @{ install = 'install'; update = 'upgrade'; uninstall = 'uninstall' }[$t.Action]
+                    if ($verb) {
+                        $sync.Status[$t.Key] = @{ install = 'Installing...'; upgrade = 'Updating...'; uninstall = 'Removing...' }[$verb]
+                        Log "$($t.Name): $verb..."
+                        foreach ($gid in $t.Ids) {
+                            $wa = @($verb, '--id', $gid, '-e', '--source', 'winget', '--silent', '--accept-source-agreements')
+                            if ($verb -ne 'uninstall') { $wa += '--accept-package-agreements' }
+                            $r = Invoke-Winget $wa
+                            if ($r.Code -eq 0)                           { Log "    $($gid): done." }
+                            elseif ($r.Code -in $UP_TO_DATE, $ALREADY)  { Log "    $($gid): already up to date." }
+                            elseif ($r.Code -eq $NOT_FOUND)             { Log "    $($gid): not installed." }
+                            else                                         { Log-Failure "    $gid" $r }
+                        }
+                    }
+                    $states = @(foreach ($gid in $t.Ids) { Get-State ([pscustomobject]@{ Id = $gid }) })
+                    $missing = @($states | Where-Object { $_ -eq 'Not installed' }).Count
+                    $sync.Status[$t.Key] = if ($missing -eq $states.Count) { 'Not installed' }
+                                           elseif ($missing)                 { 'Partly installed' }
+                                           elseif ($states -contains 'Update available') { 'Update available' }
+                                           else                              { 'Installed' }
+                    continue
+                }
+
                 switch ($t.Action) {
 
                     'status' { $sync.Status[$t.Key] = Get-State $t }
@@ -467,7 +494,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $app.installer; Scope = $app.scope; Override = $app.override; Ids = @($app.ids); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
