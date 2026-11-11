@@ -1,0 +1,11 @@
+[
+  { "name": "LibreWolf",                        "id": "LibreWolf.LibreWolf",                  "category": "Browsers",      "homepage": "https://librewolf.net",                                         "default": true  },
+  { "name": "Brave",                            "id": "Brave.Brave",                          "category": "Browsers",      "homepage": "https://brave.com/download/",                                   "default": false },
+  { "name": "Ungoogled Chromium",               "id": "eloston.ungoogled-chromium",           "category": "Browsers",      "homepage": "https://ungoogled-software.github.io/ungoogled-chromium-binaries/", "default": false },
+  { "name": "Telegram",                         "id": "Telegram.TelegramDesktop",             "category": "Communication", "homepage": "https://desktop.telegram.org",                                  "default": true  },
+  { "name": "7-Zip",                            "id": "7zip.7zip",                            "category": "Utilities",     "homepage": "https://www.7-zip.org",                                         "default": true  },
+  { "name": "CCleaner",                         "id": "Piriform.CCleaner",                    "category": "Utilities",     "homepage": "https://www.ccleaner.com/ccleaner/download",                    "default": true  },
+  { "name": "BleachBit",                        "id": "BleachBit.BleachBit",                  "category": "Utilities",     "homepage": "https://www.bleachbit.org/download/windows",                    "default": false },
+  { "name": "UniGetUI",                         "id": "MartiCliment.UniGetUI",                "category": "Utilities",     "homepage": "https://www.marticliment.com/unigetui/",                        "default": false },
+  { "name": "Intel Driver & Support Assistant", "id": "Intel.IntelDriverAndSupportAssistant", "category": "Drivers",       "homepage": "https://www.intel.com/content/www/us/en/support/detect.html",   "default": false }
+]
