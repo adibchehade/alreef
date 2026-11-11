@@ -56,94 +56,212 @@ function Start-MyApps {
     [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="My Apps" Width="820" Height="700" MinWidth="640" MinHeight="540"
-        WindowStartupLocation="CenterScreen" Background="#1E1F24" Foreground="#E8E8EC"
-        FontFamily="Segoe UI" FontSize="13">
+        Title="My Apps" Width="1060" Height="940" MinWidth="760" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Background="#12151B" Foreground="#E6EAF0"
+        FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True">
   <Window.Resources>
     <Style TargetType="Button">
+      <Setter Property="Foreground" Value="#E6EAF0"/>
+      <Setter Property="Background" Value="#1E242E"/>
+      <Setter Property="BorderBrush" Value="#2C3440"/>
+      <Setter Property="Padding" Value="16,9"/>
       <Setter Property="Margin" Value="0,0,8,8"/>
-      <Setter Property="Padding" Value="14,7"/>
-      <Setter Property="Background" Value="#2D2F37"/>
-      <Setter Property="Foreground" Value="#E8E8EC"/>
-      <Setter Property="BorderBrush" Value="#3C3F49"/>
       <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="9" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="BorderBrush" Value="#00ACFF"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
+    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Background" Value="#00ACFF"/>
+      <Setter Property="BorderBrush" Value="#00ACFF"/>
+      <Setter Property="Foreground" Value="#04131E"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style x:Key="Danger" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Foreground" Value="#FF8A93"/>
+    </Style>
+
     <Style TargetType="CheckBox">
-      <Setter Property="Foreground" Value="#E8E8EC"/>
-      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="#E6EAF0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="Box" Width="18" Height="18" CornerRadius="5" BorderThickness="1.5"
+                      BorderBrush="#4A5466" Background="Transparent" VerticalAlignment="Center">
+                <Path x:Name="Tick" Data="M3,8 L6.5,11.5 L12.5,4.5" Stroke="#04131E" StrokeThickness="2.2"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"/>
+              </Border>
+              <ContentPresenter Margin="11,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="#00ACFF"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Box" Property="Background" Value="#00ACFF"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="#00ACFF"/>
+                <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="8"/>
+      <Setter Property="MinWidth" Value="8"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Track x:Name="PART_Track" IsDirectionReversed="True">
+              <Track.Thumb>
+                <Thumb>
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Border CornerRadius="4" Background="#353E4C"/>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+            </Track>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
   </Window.Resources>
-  <Grid Margin="18">
+
+  <Grid Margin="24,20,24,18">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
-      <RowDefinition Height="170"/>
+      <RowDefinition Height="130"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock Text="My Apps" FontSize="22" FontWeight="SemiBold"/>
-      <TextBlock Text="Tick the apps, then choose an action. Everything comes from the official winget source."
-                 Foreground="#9A9CA8" Margin="0,2,0,0"/>
-    </StackPanel>
+    <DockPanel Grid.Row="0" Margin="0,0,0,16">
+      <Border Width="44" Height="44" CornerRadius="12" Background="#00ACFF" Margin="0,0,14,0" VerticalAlignment="Center">
+        <Path Data="M22,11 L22,27 M15,21 L22,28 L29,21 M14,33 L30,33" Stroke="#04131E" StrokeThickness="2.6"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+      </Border>
+      <Border DockPanel.Dock="Right" Background="#1A1F27" BorderBrush="#2C3440" BorderThickness="1"
+              CornerRadius="16" Padding="14,6" VerticalAlignment="Center">
+        <TextBlock x:Name="Summary" Text="Checking..." Foreground="#8B95A5" FontSize="12"/>
+      </Border>
+      <StackPanel VerticalAlignment="Center">
+        <TextBlock Text="My Apps" FontSize="24" FontWeight="SemiBold"/>
+        <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
+                   Foreground="#8B95A5" Margin="0,2,0,0"/>
+      </StackPanel>
+    </DockPanel>
 
-    <Border Grid.Row="1" Background="#26282F" CornerRadius="8" Padding="14,6,14,10">
-      <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel x:Name="AppPanel"/>
+    <Border Grid.Row="1" Background="#171B22" BorderBrush="#232A35" BorderThickness="1" CornerRadius="14" Padding="14,4,8,12">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="AppPanel" Margin="0,0,6,0"/>
       </ScrollViewer>
     </Border>
 
-    <WrapPanel Grid.Row="2" Margin="0,12,0,4">
-      <Button x:Name="BtnInstall"   Content="Install selected" Background="#3B6FE0" BorderBrush="#3B6FE0" Foreground="White"/>
+    <WrapPanel Grid.Row="2" Margin="0,16,0,6">
+      <Button x:Name="BtnInstall"   Content="Install selected" Style="{StaticResource Primary}"/>
       <Button x:Name="BtnUpdate"    Content="Update selected"/>
-      <Button x:Name="BtnUninstall" Content="Uninstall selected"/>
+      <Button x:Name="BtnUninstall" Content="Uninstall selected" Style="{StaticResource Danger}"/>
       <Button x:Name="BtnUpdateAll" Content="Update everything on this PC"/>
       <Button x:Name="BtnRefresh"   Content="Refresh status"/>
       <Button x:Name="BtnRestore"   Content="Create restore point"/>
-      <Button x:Name="BtnEdge"      Content="Remove Edge"/>
+      <Button x:Name="BtnEdge"      Content="Remove Edge" Style="{StaticResource Danger}"/>
     </WrapPanel>
 
-    <TextBox Grid.Row="3" x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap"
-             VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12"
-             Background="#14151A" Foreground="#C9CBD3" BorderBrush="#3C3F49" Padding="8"/>
+    <Border Grid.Row="3" Background="#0D1015" BorderBrush="#232A35" BorderThickness="1" CornerRadius="12" Padding="4">
+      <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+               FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="#AEB7C4"
+               BorderThickness="0" Padding="8,6"/>
+    </Border>
 
-    <DockPanel Grid.Row="4" Margin="0,8,0,0">
+    <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#7AA2F7" Cursor="Hand" Margin="0,0,14,0"/>
-        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#7AA2F7" Cursor="Hand"/>
+        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#00ACFF" Cursor="Hand" Margin="0,0,16,0"/>
+        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#00ACFF" Cursor="Hand"/>
       </StackPanel>
-      <TextBlock x:Name="StatusText" Text="Ready" Foreground="#9A9CA8"/>
+      <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#3DDC97" Margin="0,0,8,0" VerticalAlignment="Center"/>
+      <TextBlock x:Name="StatusText" Text="Ready" Foreground="#8B95A5"/>
     </DockPanel>
   </Grid>
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge)
 
-    # ---------- App rows ----------
+    # Open as large as the screen allows
+    $wa = [System.Windows.SystemParameters]::WorkArea
+    $win.Width  = [Math]::Min(1060, $wa.Width  - 40)
+    $win.Height = [Math]::Min(1000, $wa.Height - 40)
+
+    # Status pill colours: text, background
+    $pillColors = @{
+        'Installed'        = @('#3DDC97', '#14302A')
+        'Update available' = @('#FFB547', '#3A2D14')
+        'Not installed'    = @('#8B95A5', '#222833')
+    }
+    $workingColors = @('#00ACFF', '#0E2C40')
+
+    # ---------- App rows (two columns per category) ----------
     $rows = @{}
     foreach ($cat in ($apps | ForEach-Object { $_.category } | Select-Object -Unique)) {
         $hdr = New-Object Windows.Controls.TextBlock
         $hdr.Text = "$cat".ToUpper(); $hdr.FontSize = 11; $hdr.FontWeight = 'SemiBold'
-        $hdr.Foreground = '#7F8290'; $hdr.Margin = '0,10,0,4'
+        $hdr.Foreground = '#00ACFF'; $hdr.Margin = '4,14,0,6'
         [void]$AppPanel.Children.Add($hdr)
 
+        $grid = New-Object Windows.Controls.Primitives.UniformGrid
+        $grid.Columns = 2
+        [void]$AppPanel.Children.Add($grid)
+
         foreach ($a in @($apps | Where-Object { $_.category -eq $cat })) {
+            $card = New-Object Windows.Controls.Border
+            $card.Background = '#1E242E'; $card.BorderBrush = '#262E3A'; $card.BorderThickness = '1'
+            $card.CornerRadius = '10'; $card.Padding = '12,9'; $card.Margin = '4'
             $dock = New-Object Windows.Controls.DockPanel
-            $dock.Margin = '0,3,0,3'
+
+            $pill = New-Object Windows.Controls.Border
+            $pill.CornerRadius = '10'; $pill.Padding = '9,2'; $pill.Background = $workingColors[1]
+            $pill.VerticalAlignment = 'Center'
             $st = New-Object Windows.Controls.TextBlock
-            $st.Text = 'checking...'; $st.Foreground = '#7F8290'
-            [Windows.Controls.DockPanel]::SetDock($st, 'Right')
+            $st.Text = 'checking'; $st.FontSize = 11; $st.Foreground = $workingColors[0]
+            $pill.Child = $st
+            [Windows.Controls.DockPanel]::SetDock($pill, 'Right')
+
             $cb = New-Object Windows.Controls.CheckBox
-            $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default; $cb.ToolTip = $(if ($a.id) { $a.id } else { $a.installer })
-            [void]$dock.Children.Add($st)
+            $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default
+            $cb.ToolTip = $(if ($a.id) { $a.id } else { $a.installer })
+            [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
-            [void]$AppPanel.Children.Add($dock)
-            $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; App = $a }
+            $card.Child = $dock
+            [void]$grid.Children.Add($card)
+            $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; Pill = $pill; App = $a }
         }
     }
 
@@ -363,18 +481,19 @@ function Start-MyApps {
             $s = $sync.Status[$id]; $lbl = $rows[$id].Status
             if ($lbl.Text -ne $s) {
                 $lbl.Text = $s
-                $lbl.Foreground = switch ($s) {
-                    'Installed'        { '#6CCB8A' }
-                    'Update available' { '#E5B567' }
-                    'Not installed'    { '#7F8290' }
-                    default            { '#7AA2F7' }
-                }
+                $c = if ($pillColors.ContainsKey($s)) { $pillColors[$s] } else { $workingColors }
+                $lbl.Foreground = $c[0]; $rows[$id].Pill.Background = $c[1]
             }
         }
 
         $busy = $sync.Busy
         foreach ($b in $buttons) { $b.IsEnabled = -not $busy }
         $StatusText.Text = if ($busy) { "Working... $($sync.Progress)" } else { 'Ready' }
+        $StatusDot.Fill  = if ($busy) { '#00ACFF' } else { '#3DDC97' }
+        $vals = @($rows.Values | ForEach-Object { $_.Status.Text })
+        $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
+        $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
+        $Summary.Text = "$($rows.Count) apps  |  $inst installed" + $(if ($upd) { "  |  $upd update" + $(if ($upd -gt 1) { 's' } else { '' }) } else { '' })
         if (-not $busy -and $sync.PS) {
             try { $sync.PS.EndInvoke($sync.Job) | Out-Null } catch {}
             $sync.PS.Dispose(); $sync.PS = $null
