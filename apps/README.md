@@ -1,4 +1,4 @@
-# SoftServe Tools
+# Softserv Tools
 
 A small Windows GUI that installs, updates and removes my usual apps with winget.
 

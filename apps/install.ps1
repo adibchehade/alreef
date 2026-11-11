@@ -1,5 +1,5 @@
 <#
-    SoftServe Tools - a small winget GUI to install, update and remove my usual apps.
+    Softserv Tools - a small winget GUI to install, update and remove my usual apps.
 
     Run from any PowerShell window:
         irm alreef.es/tools | iex
@@ -20,11 +20,11 @@ function Start-MyApps {
     if (-not ($isAdmin -and $isDesktop -and $isSta)) {
         $file = $PSCommandPath
         if (-not $file) {
-            $file = Join-Path $env:TEMP 'SoftServeTools-install.ps1'
+            $file = Join-Path $env:TEMP 'SoftservTools-install.ps1'
             try {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
                 Invoke-WebRequest -Uri $ScriptUrl -OutFile $file -UseBasicParsing -ErrorAction Stop
-            } catch { Write-Host "Couldn't download SoftServe Tools: $($_.Exception.Message)" -ForegroundColor Red; return }
+            } catch { Write-Host "Couldn't download Softserv Tools: $($_.Exception.Message)" -ForegroundColor Red; return }
         }
         Start-Process powershell.exe -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'RemoteSigned', '-STA', '-File', "`"$file`"")
         return
@@ -90,7 +90,7 @@ function Start-MyApps {
         $wingetExe = Find-Winget
     }
     if (-not $wingetExe) {
-        [Windows.MessageBox]::Show("winget could not be installed automatically.`n`nDownload App Installer from https://aka.ms/getwinget, open it, then run this again.", 'SoftServe Tools') | Out-Null
+        [Windows.MessageBox]::Show("winget could not be installed automatically.`n`nDownload App Installer from https://aka.ms/getwinget, open it, then run this again.", 'Softserv Tools') | Out-Null
         Start-Process 'https://aka.ms/getwinget'
         return
     }
@@ -122,7 +122,7 @@ function Start-MyApps {
     [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SoftServe Tools" Width="1060" Height="940" MinWidth="760" MinHeight="600"
+        Title="Softserv Tools" Width="1060" Height="940" MinWidth="760" MinHeight="600"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource Bg}" Foreground="{DynamicResource Text}"
         FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True">
   <Window.Resources>
@@ -239,7 +239,7 @@ function Start-MyApps {
               Padding="16,7" VerticalAlignment="Center" ToolTip="Re-check what's installed (F5)"/>
       <StackPanel x:Name="ThemePicker" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0"/>
       <StackPanel VerticalAlignment="Center">
-        <TextBlock Text="SoftServe Tools" FontSize="24" FontWeight="SemiBold"/>
+        <TextBlock Text="Softserv Tools" FontSize="24" FontWeight="SemiBold"/>
         <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
                    Foreground="{DynamicResource Muted}" Margin="0,2,0,0"/>
       </StackPanel>
@@ -326,7 +326,7 @@ function Start-MyApps {
                                          '#0067C0','#0A84E0','#FFFFFF','#39404A','#9AA1AB','#C5CAD1','#C42B1C',
                                          '#11703A','#DCF5E5','#8A5300','#FCEFD3','#5B6370','#ECEEF1','#0067C0','#E1EEFB')
     }
-    $themeReg = 'HKCU:\Software\SoftServeTools'
+    $themeReg = 'HKCU:\Software\SoftservTools'
 
     function Get-AutoTheme {
         $light = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -ErrorAction SilentlyContinue).AppsUseLightTheme
@@ -379,7 +379,9 @@ function Start-MyApps {
         [void]$ThemePicker.Children.Add($sw)
     }
     $saved = (Get-ItemProperty $themeReg -ErrorAction SilentlyContinue).Theme
-    if (-not $saved) { $saved = (Get-ItemProperty 'HKCU:\Software\MyApps' -ErrorAction SilentlyContinue).Theme }
+    foreach ($oldKey in 'HKCU:\Software\SoftServeTools', 'HKCU:\Software\MyApps') {
+        if (-not $saved) { $saved = (Get-ItemProperty $oldKey -ErrorAction SilentlyContinue).Theme }
+    }
     Set-Theme $(if ($saved) { $saved } else { 'auto' })
 
     # ---------- App rows (collapsible sections, two columns of cards) ----------
@@ -672,7 +674,7 @@ function Start-MyApps {
                         # Keep a local copy in a folder only admins can change, and a task that runs it with admin rights.
                         # No hidden window, no download-and-run in the task: just a normal script file.
                         try {
-                            $dir   = Join-Path $env:ProgramData 'SoftServeTools'
+                            $dir   = Join-Path $env:ProgramData 'SoftservTools'
                             $local = Join-Path $dir 'install.ps1'
                             New-Item -ItemType Directory -Path $dir -Force | Out-Null
                             & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
@@ -685,7 +687,7 @@ function Start-MyApps {
                                 Move-Item $tmp $local -Force
                             } else { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
 
-                            $tn  = "SoftServeTools-$env:USERNAME"
+                            $tn  = "SoftservTools-$env:USERNAME"
                             $arg = "-NoProfile -ExecutionPolicy RemoteSigned -WindowStyle Minimized -File `"$local`""
                             $act = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument $arg
                             $pri = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
@@ -693,29 +695,30 @@ function Start-MyApps {
                             $old = Get-ScheduledTask -TaskName $tn -ErrorAction SilentlyContinue
                             $isNew = -not $old -or ($old.Actions[0].Arguments -ne $arg)
                             Register-ScheduledTask -TaskName $tn -Action $act -Principal $pri -Settings $set `
-                                -Description 'Opens SoftServe Tools (from C:\ProgramData\SoftServeTools) with admin rights' -Force -ErrorAction Stop | Out-Null
+                                -Description 'Opens Softserv Tools (from C:\ProgramData\SoftservTools) with admin rights' -Force -ErrorAction Stop | Out-Null
 
-                            # Clean up the old "My Apps" task, shortcuts and folder
-                            Unregister-ScheduledTask -TaskName "MyApps-$env:USERNAME" -Confirm:$false -ErrorAction SilentlyContinue
-                            foreach ($oldLnk in @((Join-Path ([Environment]::GetFolderPath('Programs')) 'My Apps.lnk'),
-                                                  (Join-Path ([Environment]::GetFolderPath('Desktop'))  'My Apps.lnk'))) {
-                                Remove-Item $oldLnk -Force -ErrorAction SilentlyContinue
+                            # Clean up the task, shortcuts and folder from older names (My Apps, SoftServe Tools)
+                            foreach ($oldName in @(@('MyApps', 'My Apps'), @('SoftServeTools', 'SoftServe Tools'))) {
+                                Unregister-ScheduledTask -TaskName "$($oldName[0])-$env:USERNAME" -Confirm:$false -ErrorAction SilentlyContinue
+                                foreach ($folder in 'Programs', 'Desktop') {
+                                    Remove-Item (Join-Path ([Environment]::GetFolderPath($folder)) "$($oldName[1]).lnk") -Force -ErrorAction SilentlyContinue
+                                }
+                                Remove-Item (Join-Path $env:ProgramData $oldName[0]) -Recurse -Force -ErrorAction SilentlyContinue
                             }
-                            Remove-Item (Join-Path $env:ProgramData 'MyApps') -Recurse -Force -ErrorAction SilentlyContinue
 
                             $shell = New-Object -ComObject WScript.Shell
-                            foreach ($lp in @((Join-Path ([Environment]::GetFolderPath('Programs')) 'SoftServe Tools.lnk'),
-                                              (Join-Path ([Environment]::GetFolderPath('Desktop'))  'SoftServe Tools.lnk'))) {
+                            foreach ($lp in @((Join-Path ([Environment]::GetFolderPath('Programs')) 'Softserv Tools.lnk'),
+                                              (Join-Path ([Environment]::GetFolderPath('Desktop'))  'Softserv Tools.lnk'))) {
                                 $l = $shell.CreateShortcut($lp)
                                 $l.TargetPath   = "$env:SystemRoot\System32\schtasks.exe"
                                 $l.Arguments    = "/run /tn `"$tn`""
                                 $l.IconLocation = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0"
                                 $l.WindowStyle  = 7
-                                $l.Description  = 'SoftServe Tools installer'
+                                $l.Description  = 'Softserv Tools installer'
                                 $l.Save()
                             }
-                            if ($isNew) { Log 'Shortcut ready: "SoftServe Tools" on the desktop and in the Start menu (no UAC prompt).' }
-                        } catch { Log "Couldn't set up the SoftServe Tools shortcut: $($_.Exception.Message)" }
+                            if ($isNew) { Log 'Shortcut ready: "Softserv Tools" on the desktop and in the Start menu (no UAC prompt).' }
+                        } catch { Log "Couldn't set up the Softserv Tools shortcut: $($_.Exception.Message)" }
                     }
 
                     'wingetcheck' {
@@ -820,7 +823,7 @@ function Start-MyApps {
                         try {
                             Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction Stop
                             $w = $null
-                            Checkpoint-Computer -Description 'SoftServe Tools' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop -WarningVariable w -WarningAction SilentlyContinue
+                            Checkpoint-Computer -Description 'Softserv Tools' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop -WarningVariable w -WarningAction SilentlyContinue
                             if ($w) { Log "Restore point: $w" } else { Log 'Restore point created.' }
                         } catch { Log "Restore point failed: $($_.Exception.Message)" }
                     }
@@ -867,7 +870,7 @@ function Start-MyApps {
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
     function Confirm-Action($text) {
-        [Windows.MessageBox]::Show($win, $text, 'SoftServe Tools', 'YesNo', 'Question') -eq 'Yes'
+        [Windows.MessageBox]::Show($win, $text, 'Softserv Tools', 'YesNo', 'Question') -eq 'Yes'
     }
 
     # ---------- UI refresh timer ----------
