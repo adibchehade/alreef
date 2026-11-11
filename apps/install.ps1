@@ -139,11 +139,11 @@ function Start-MyApps {
             $st.Text = 'checking...'; $st.Foreground = '#7F8290'
             [Windows.Controls.DockPanel]::SetDock($st, 'Right')
             $cb = New-Object Windows.Controls.CheckBox
-            $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default; $cb.ToolTip = $a.id
+            $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default; $cb.ToolTip = $(if ($a.id) { $a.id } else { $a.installer })
             [void]$dock.Children.Add($st)
             [void]$dock.Children.Add($cb)
             [void]$AppPanel.Children.Add($dock)
-            $rows[$a.id] = @{ Check = $cb; Status = $st; App = $a }
+            $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; App = $a }
         }
     }
 
@@ -173,11 +173,55 @@ function Start-MyApps {
             [pscustomobject]@{ Code = $code; Lines = @($clean); Text = (@($clean) -join "`n") }
         }
 
-        function Get-State([string]$id) {
-            $r = Invoke-Winget @('list', '--id', $id, '-e', '--source', 'winget', '--accept-source-agreements')
+        $ProgressPreference = 'SilentlyContinue'   # makes downloads much faster in Windows PowerShell
+
+        # Apps that aren't in winget are found through Windows' list of installed programs
+        function Find-Uninstall([string]$name) {
+            $paths = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+                     'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+                     'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
+            Get-ItemProperty $paths -ErrorAction SilentlyContinue |
+                Where-Object { $_.DisplayName -like "*$name*" } | Select-Object -First 1
+        }
+
+        function Get-State($t) {
+            if (-not $t.Id) {
+                if (Find-Uninstall $t.Detect) { return 'Installed' } else { return 'Not installed' }
+            }
+            $r = Invoke-Winget @('list', '--id', $t.Id, '-e', '--source', 'winget', '--accept-source-agreements')
             if ($r.Code -ne 0) { return 'Not installed' }
             if ($r.Text -match '\bAvailable\b') { return 'Update available' }
             'Installed'
+        }
+
+        # Download a vendor's installer, refuse it unless it carries a valid digital signature, then run it
+        function Install-Direct($t) {
+            $file = Join-Path $env:TEMP ([IO.Path]::GetFileName(([uri]$t.Installer).AbsolutePath))
+            Log "Downloading $($t.Name)..."
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $t.Installer -OutFile $file -UseBasicParsing -ErrorAction Stop
+            } catch { Log "$($t.Name): download failed: $($_.Exception.Message)"; return }
+            $sig = Get-AuthenticodeSignature $file
+            if ($sig.Status -ne 'Valid') {
+                Log "$($t.Name): the installer is not validly signed ($($sig.Status)), so it was not run."
+                Remove-Item $file -Force -ErrorAction SilentlyContinue
+                return
+            }
+            $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
+            Log "$($t.Name): signed by $signer. Running the installer - finish its setup window."
+            Start-Process -FilePath $file -Wait
+            Remove-Item $file -Force -ErrorAction SilentlyContinue
+            if (Find-Uninstall $t.Detect) { Log "$($t.Name): installed." } else { Log "$($t.Name): setup closed, but it doesn't show as installed." }
+        }
+
+        function Uninstall-Direct($t) {
+            $u = Find-Uninstall $t.Detect
+            if (-not $u) { Log "$($t.Name): not installed."; return }
+            $cmd = if ($u.QuietUninstallString) { $u.QuietUninstallString } else { $u.UninstallString }
+            Log "Uninstalling $($t.Name)..."
+            Start-Process -FilePath cmd.exe -ArgumentList "/c `"$cmd`"" -Wait
+            if (Find-Uninstall $t.Detect) { Log "$($t.Name): still installed." } else { Log "$($t.Name): removed." }
         }
 
         function Log-Failure($name, $r) {
@@ -196,11 +240,12 @@ function Start-MyApps {
                 $sync.Progress = "($i of $n)"
                 switch ($t.Action) {
 
-                    'status' { $sync.Status[$t.Id] = Get-State $t.Id }
+                    'status' { $sync.Status[$t.Key] = Get-State $t }
 
                     'install' {
+                        $sync.Status[$t.Key] = 'Installing...'
+                        if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Installing $($t.Name)..."
-                        $sync.Status[$t.Id] = 'Installing...'
                         $r = Invoke-Winget @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
                                              '--accept-package-agreements', '--accept-source-agreements')
                         if ($r.Text -match 'hash does not match') {
@@ -210,12 +255,13 @@ function Start-MyApps {
                         elseif ($r.Code -eq 0) { Log "$($t.Name): installed." }
                         elseif ($r.Code -in $UP_TO_DATE, $ALREADY) { Log "$($t.Name): already installed and up to date." }
                         else { Log-Failure $t.Name $r }
-                        $sync.Status[$t.Id] = Get-State $t.Id
+                        $sync.Status[$t.Key] = Get-State $t
                     }
 
                     'update' {
+                        $sync.Status[$t.Key] = 'Updating...'
+                        if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Updating $($t.Name)..."
-                        $sync.Status[$t.Id] = 'Updating...'
                         $r = Invoke-Winget @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
                                              '--accept-package-agreements', '--accept-source-agreements')
                         if ($r.Text -match 'hash does not match') {
@@ -226,17 +272,18 @@ function Start-MyApps {
                         elseif ($r.Code -eq $UP_TO_DATE) { Log "$($t.Name): already up to date." }
                         elseif ($r.Code -eq $NOT_FOUND)  { Log "$($t.Name): not installed, nothing to update." }
                         else { Log-Failure $t.Name $r }
-                        $sync.Status[$t.Id] = Get-State $t.Id
+                        $sync.Status[$t.Key] = Get-State $t
                     }
 
                     'uninstall' {
+                        $sync.Status[$t.Key] = 'Removing...'
+                        if ($t.Installer) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Uninstalling $($t.Name)..."
-                        $sync.Status[$t.Id] = 'Removing...'
                         $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--source', 'winget', '--silent', '--accept-source-agreements')
                         if ($r.Code -eq 0)              { Log "$($t.Name): removed." }
                         elseif ($r.Code -eq $NOT_FOUND) { Log "$($t.Name): not installed." }
                         else { Log-Failure $t.Name $r }
-                        $sync.Status[$t.Id] = Get-State $t.Id
+                        $sync.Status[$t.Key] = Get-State $t
                     }
 
                     'updateall' {
@@ -292,8 +339,10 @@ function Start-MyApps {
         $sync.Job = $ps.BeginInvoke()
     }
 
+    function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
-        [pscustomobject]@{ Action = $action; Id = $app.id; Name = $app.name; Url = $app.homepage }
+        [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
+                           Url = $app.homepage; Installer = $app.installer; Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
