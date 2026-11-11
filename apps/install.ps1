@@ -116,13 +116,13 @@ function Start-MyApps {
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="My Apps" Width="1060" Height="940" MinWidth="760" MinHeight="600"
-        WindowStartupLocation="CenterScreen" Background="#08122B" Foreground="#E6EEF8"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource Bg}" Foreground="{DynamicResource Text}"
         FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True">
   <Window.Resources>
     <Style TargetType="Button">
-      <Setter Property="Foreground" Value="#E6EEF8"/>
-      <Setter Property="Background" Value="#11234B"/>
-      <Setter Property="BorderBrush" Value="#1E3566"/>
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+      <Setter Property="Background" Value="{DynamicResource Btn}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BtnBorder}"/>
       <Setter Property="Padding" Value="16,9"/>
       <Setter Property="Margin" Value="0,0,8,8"/>
       <Setter Property="Cursor" Value="Hand"/>
@@ -135,7 +135,7 @@ function Start-MyApps {
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Bd" Property="BorderBrush" Value="#2A94D6"/>
+                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentText}"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
                 <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
@@ -149,36 +149,36 @@ function Start-MyApps {
       </Setter>
     </Style>
     <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-      <Setter Property="Background" Value="#0077C3"/>
-      <Setter Property="BorderBrush" Value="#0077C3"/>
-      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+      <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     <Style x:Key="Danger" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-      <Setter Property="Foreground" Value="#FF8A93"/>
+      <Setter Property="Foreground" Value="{DynamicResource Danger}"/>
     </Style>
 
     <Style TargetType="CheckBox">
-      <Setter Property="Foreground" Value="#E6EEF8"/>
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
             <StackPanel Orientation="Horizontal" Background="Transparent">
               <Border x:Name="Box" Width="18" Height="18" CornerRadius="5" BorderThickness="1.5"
-                      BorderBrush="#3D5A8C" Background="Transparent" VerticalAlignment="Center">
-                <Path x:Name="Tick" Data="M3,8 L6.5,11.5 L12.5,4.5" Stroke="#FFFFFF" StrokeThickness="2.2"
+                      BorderBrush="{DynamicResource CheckBorder}" Background="Transparent" VerticalAlignment="Center">
+                <Path x:Name="Tick" Data="M3,8 L6.5,11.5 L12.5,4.5" Stroke="{DynamicResource OnAccent}" StrokeThickness="2.2"
                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"/>
               </Border>
               <ContentPresenter Margin="11,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Box" Property="BorderBrush" Value="#2A94D6"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentText}"/>
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Box" Property="Background" Value="#0077C3"/>
-                <Setter TargetName="Box" Property="BorderBrush" Value="#0077C3"/>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource Accent}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Accent}"/>
                 <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
               </Trigger>
             </ControlTemplate.Triggers>
@@ -198,7 +198,7 @@ function Start-MyApps {
                 <Thumb>
                   <Thumb.Template>
                     <ControlTemplate TargetType="Thumb">
-                      <Border CornerRadius="4" Background="#2A4373"/>
+                      <Border CornerRadius="4" Background="{DynamicResource Thumb}"/>
                     </ControlTemplate>
                   </Thumb.Template>
                 </Thumb>
@@ -220,24 +220,25 @@ function Start-MyApps {
     </Grid.RowDefinitions>
 
     <DockPanel Grid.Row="0" Margin="0,0,0,16">
-      <Border Width="44" Height="44" CornerRadius="12" Background="#0077C3" Margin="0,0,14,0" VerticalAlignment="Center">
-        <Path Data="M22,11 L22,27 M15,21 L22,28 L29,21 M14,33 L30,33" Stroke="#FFFFFF" StrokeThickness="2.6"
+      <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource Accent}" Margin="0,0,14,0" VerticalAlignment="Center">
+        <Path Data="M22,11 L22,27 M15,21 L22,28 L29,21 M14,33 L30,33" Stroke="{DynamicResource OnAccent}" StrokeThickness="2.6"
               StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
       </Border>
-      <Border DockPanel.Dock="Right" Background="#0C1A3A" BorderBrush="#1E3566" BorderThickness="1"
+      <Border DockPanel.Dock="Right" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1"
               CornerRadius="16" Padding="14,6" VerticalAlignment="Center">
-        <TextBlock x:Name="Summary" Text="Checking..." Foreground="#8FA3C4" FontSize="12"/>
+        <TextBlock x:Name="Summary" Text="Checking..." Foreground="{DynamicResource Muted}" FontSize="12"/>
       </Border>
       <Button x:Name="BtnRefreshTop" DockPanel.Dock="Right" Content="Refresh" Margin="0,0,10,0"
               Padding="16,7" VerticalAlignment="Center" ToolTip="Re-check what's installed (F5)"/>
+      <StackPanel x:Name="ThemePicker" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0"/>
       <StackPanel VerticalAlignment="Center">
         <TextBlock Text="My Apps" FontSize="24" FontWeight="SemiBold"/>
         <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
-                   Foreground="#8FA3C4" Margin="0,2,0,0"/>
+                   Foreground="{DynamicResource Muted}" Margin="0,2,0,0"/>
       </StackPanel>
     </DockPanel>
 
-    <Border Grid.Row="1" Background="#0C1A3A" BorderBrush="#1A2D55" BorderThickness="1" CornerRadius="14" Padding="14,4,8,12">
+    <Border Grid.Row="1" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="14" Padding="14,4,8,12">
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="AppPanel" Margin="0,0,6,0"/>
       </ScrollViewer>
@@ -252,7 +253,7 @@ function Start-MyApps {
         <Button x:Name="BtnRefresh"   Content="Refresh status"/>
       </WrapPanel>
       <WrapPanel>
-        <TextBlock Text="WINDOWS" Foreground="#2A94D6" FontSize="11" FontWeight="SemiBold"
+        <TextBlock Text="WINDOWS" Foreground="{DynamicResource AccentText}" FontSize="11" FontWeight="SemiBold"
                    VerticalAlignment="Center" Margin="2,0,14,8"/>
         <Button x:Name="BtnRestore" Content="Create restore point"/>
         <Button x:Name="BtnScripts" Content="Allow PowerShell scripts" ToolTip="Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"/>
@@ -261,27 +262,27 @@ function Start-MyApps {
       </WrapPanel>
     </StackPanel>
 
-    <Border Grid.Row="3" Background="#050C1E" BorderBrush="#1A2D55" BorderThickness="1" CornerRadius="12" Padding="4">
+    <Border Grid.Row="3" Background="{DynamicResource LogBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="4">
       <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-               FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="#B4C3DA"
+               FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="{DynamicResource LogText}"
                BorderThickness="0" Padding="8,6"/>
     </Border>
 
     <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-        <TextBlock x:Name="LinkExpand"   Text="Expand all"   Foreground="#2A94D6" Cursor="Hand" Margin="0,0,16,0"/>
-        <TextBlock x:Name="LinkCollapse" Text="Collapse all" Foreground="#2A94D6" Cursor="Hand" Margin="0,0,28,0"/>
-        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#2A94D6" Cursor="Hand" Margin="0,0,16,0"/>
-        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#2A94D6" Cursor="Hand"/>
+        <TextBlock x:Name="LinkExpand"   Text="Expand all"   Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
+        <TextBlock x:Name="LinkCollapse" Text="Collapse all" Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,28,0"/>
+        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
+        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="{DynamicResource AccentText}" Cursor="Hand"/>
       </StackPanel>
-      <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#3DDC97" Margin="0,0,8,0" VerticalAlignment="Center"/>
-      <TextBlock x:Name="StatusText" Text="Ready" Foreground="#8FA3C4"/>
+      <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource OkFg}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+      <TextBlock x:Name="StatusText" Text="Ready" Foreground="{DynamicResource Muted}"/>
     </DockPanel>
   </Grid>
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT)
@@ -292,24 +293,86 @@ function Start-MyApps {
     $win.Height = [Math]::Min(1000, $wa.Height - 40)
     $win.WindowState = 'Maximized'   # open full screen; Restore Down returns to the size above
 
-    # Status pill colours: text, background
-    $pillColors = @{
-        'Installed'        = @('#3DDC97', '#14302A')
-        'Update available' = @('#FFB547', '#3A2D14')
-        'Partly installed' = @('#FFB547', '#3A2D14')
-        'Not installed'    = @('#8FA3C4', '#16264A')
+    # ---------- Themes ----------
+    function Use-Res($el, $prop, [string]$key) { $el.SetResourceReference($prop, $key) }
+    $FG   = [Windows.Controls.TextBlock]::ForegroundProperty
+    $BG   = [Windows.Controls.Border]::BackgroundProperty
+    $BRD  = [Windows.Controls.Border]::BorderBrushProperty
+    $STRK = [Windows.Shapes.Shape]::StrokeProperty
+    $FILL = [Windows.Shapes.Shape]::FillProperty
+
+    $keys = 'Bg','Panel','PanelBorder','Card','CardBorder','CardHover','Btn','BtnBorder','Text','Muted','Accent','OnAccent',
+            'AccentText','AccentHover','LogBg','LogText','CheckBorder','Thumb','Danger',
+            'OkFg','OkBg','WarnFg','WarnBg','OffFg','OffBg','WorkFg','WorkBg'
+    function New-Theme([string]$label, [string[]]$v) { $t = [ordered]@{ Label = $label }; for ($i = 0; $i -lt $keys.Count; $i++) { $t[$keys[$i]] = $v[$i] }; $t }
+    $themes = [ordered]@{
+        graphite = New-Theme 'Graphite' @('#111317','#15181D','#23272F','#1B1E24','#2A2F38','#22262E','#1B1E24','#2E333D','#ECEEF2','#9AA3B2','#0077C3','#FFFFFF',
+                                         '#3AA0E0','#6CBBEA','#0B0D10','#B8BFCA','#4A515E','#3A404B','#FF8A93',
+                                         '#4ADE80','#153024','#FBBF24','#3A2E12','#9AA3B2','#23272F','#6CBBEA','#13293B')
+        navy     = New-Theme 'LiberNT navy' @('#08122B','#0C1A3A','#1A2D55','#11234B','#1A3260','#17306A','#11234B','#1E3566','#E6EEF8','#8FA3C4','#0077C3','#FFFFFF',
+                                         '#2A94D6','#60B4E8','#050C1E','#B4C3DA','#3D5A8C','#2A4373','#FF8A93',
+                                         '#3DDC97','#14302A','#FFB547','#3A2D14','#8FA3C4','#16264A','#60B4E8','#0B2F66')
+        teal     = New-Theme 'Midnight teal' @('#0B1416','#0F1B1D','#1C2E31','#132124','#1F3337','#18292D','#132124','#24393D','#E6F2F1','#94A9AC','#14B8A6','#042F2B',
+                                         '#2DD4BF','#5EEAD4','#071012','#B3C7C9','#3B5458','#2A4246','#FF8A93',
+                                         '#86EFAC','#1B2E1E','#FCD34D','#3A3014','#94A9AC','#1A2A2D','#5EEAD4','#0F3532')
+        light    = New-Theme 'Windows light' @('#F3F4F6','#FAFAFB','#E1E4E8','#FFFFFF','#E1E4E8','#EEF5FC','#FFFFFF','#D5D9DF','#1B1F24','#5B6370','#0067C0','#FFFFFF',
+                                         '#0067C0','#0A84E0','#FFFFFF','#39404A','#9AA1AB','#C5CAD1','#C42B1C',
+                                         '#11703A','#DCF5E5','#8A5300','#FCEFD3','#5B6370','#ECEEF1','#0067C0','#E1EEFB')
     }
-    $workingColors = @('#60B4E8', '#0B2F66')
+    $themeReg = 'HKCU:\Software\MyApps'
+
+    function Get-AutoTheme {
+        $light = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -ErrorAction SilentlyContinue).AppsUseLightTheme
+        if ($light -eq 1) { 'light' } else { 'graphite' }
+    }
+    function New-Brush([string]$hex) { New-Object Windows.Media.SolidColorBrush ([Windows.Media.ColorConverter]::ConvertFromString($hex)) }
+
+    function Set-Theme([string]$name) {
+        if ($name -ne 'auto' -and -not $themes.Contains($name)) { $name = 'auto' }
+        $script:themeChoice = $name
+        $t = $themes[$(if ($name -eq 'auto') { Get-AutoTheme } else { $name })]
+        foreach ($k in $keys) { $win.Resources[$k] = New-Brush $t[$k] }
+        foreach ($sw in $ThemePicker.Children) {
+            $sw.BorderThickness = if ($sw.Tag -eq $name) { '2' } else { '1' }
+            Use-Res $sw $BRD $(if ($sw.Tag -eq $name) { 'AccentText' } else { 'BtnBorder' })
+        }
+        try {
+            New-Item -Path $themeReg -Force -ErrorAction Stop | Out-Null
+            Set-ItemProperty -Path $themeReg -Name Theme -Value $name -ErrorAction Stop
+        } catch {}
+    }
+
+    # Swatches: Auto + one per theme
+    foreach ($name in @('auto') + @($themes.Keys)) {
+        $sw = New-Object Windows.Controls.Border
+        $sw.Width = 26; $sw.Height = 26; $sw.CornerRadius = '13'; $sw.Margin = '0,0,6,0'; $sw.Cursor = 'Hand'; $sw.Tag = $name
+        if ($name -eq 'auto') {
+            $sw.Background = New-Brush '#80808080'
+            $sw.ToolTip = 'Auto: follows your Windows light/dark setting'
+            $tb = New-Object Windows.Controls.TextBlock
+            $tb.Text = 'A'; $tb.FontSize = 11; $tb.FontWeight = 'SemiBold'; $tb.HorizontalAlignment = 'Center'; $tb.VerticalAlignment = 'Center'
+            Use-Res $tb $FG 'Text'
+            $sw.Child = $tb
+        } else {
+            $sw.Background = New-Brush $themes[$name].Bg
+            $sw.ToolTip = $themes[$name].Label
+            $dot = New-Object Windows.Shapes.Ellipse
+            $dot.Width = 10; $dot.Height = 10; $dot.Fill = New-Brush $themes[$name].Accent
+            $sw.Child = $dot
+        }
+        $sw.Add_MouseLeftButtonUp({ Set-Theme $this.Tag })
+        [void]$ThemePicker.Children.Add($sw)
+    }
+    $saved = (Get-ItemProperty $themeReg -ErrorAction SilentlyContinue).Theme
+    Set-Theme $(if ($saved) { $saved } else { 'auto' })
 
     # ---------- App rows (collapsible sections, two columns of cards) ----------
     $rows = @{}
     $sections = @()
-    $accent = '#2A94D6'; $accentHover = '#60B4E8'
-    $cardBg = '#11234B'; $cardBorder = '#1A3260'; $cardHoverBg = '#17306A'
 
     function Set-Pinned($sec, [bool]$pin) {
         $sec.Pinned = $pin
-        $sec.Count.Foreground = if ($pin) { '#2A94D6' } else { '#8FA3C4' }
+        Use-Res $sec.Count $FG $(if ($pin) { 'AccentText' } else { 'Muted' })
         Set-Section $sec $pin
     }
     function Set-Section($sec, [bool]$open) {
@@ -328,14 +391,14 @@ function Start-MyApps {
         $hdr.Orientation = 'Horizontal'; $hdr.Margin = '4,14,0,6'; $hdr.Cursor = 'Hand'; $hdr.Background = 'Transparent'
         $arrow = New-Object Windows.Shapes.Path
         $arrow.Data = [Windows.Media.Geometry]::Parse('M1,1 L5,5 L9,1')
-        $arrow.Stroke = $accent; $arrow.StrokeThickness = 1.8
+        Use-Res $arrow $STRK 'AccentText'; $arrow.StrokeThickness = 1.8
         $arrow.StrokeStartLineCap = 'Round'; $arrow.StrokeEndLineCap = 'Round'; $arrow.StrokeLineJoin = 'Round'
         $arrow.Width = 10; $arrow.Height = 6; $arrow.Margin = '0,0,9,0'; $arrow.VerticalAlignment = 'Center'
         $arrow.RenderTransformOrigin = '0.5,0.5'; $arrow.RenderTransform = New-Object Windows.Media.RotateTransform 0
         $title = New-Object Windows.Controls.TextBlock
-        $title.Text = "$cat".ToUpper(); $title.FontSize = 11; $title.FontWeight = 'SemiBold'; $title.Foreground = $accent
+        $title.Text = "$cat".ToUpper(); $title.FontSize = 11; $title.FontWeight = 'SemiBold'; Use-Res $title $FG 'AccentText'
         $cnt = New-Object Windows.Controls.TextBlock
-        $cnt.Text = "$($catApps.Count)"; $cnt.FontSize = 11; $cnt.Foreground = '#8FA3C4'; $cnt.Margin = '8,0,0,0'
+        $cnt.Text = "$($catApps.Count)"; $cnt.FontSize = 11; Use-Res $cnt $FG 'Muted'; $cnt.Margin = '8,0,0,0'
         [void]$hdr.Children.Add($arrow); [void]$hdr.Children.Add($title); [void]$hdr.Children.Add($cnt)
 
         # Section = header + cards in one box, so hovering anywhere over it keeps it open
@@ -362,20 +425,20 @@ function Start-MyApps {
 
         $box.Add_MouseEnter({ Set-Section $this.Tag $true })   # hover opens; it stays open
         $hdr.Add_MouseLeftButtonUp({ Set-Section $this.Tag ($this.Tag.Grid.Visibility -ne 'Visible') })
-        $hdr.Add_MouseEnter({ $this.Tag.Title.Foreground = $accentHover; $this.Tag.Arrow.Stroke = $accentHover })
-        $hdr.Add_MouseLeave({ $this.Tag.Title.Foreground = $accent; $this.Tag.Arrow.Stroke = $accent })
+        $hdr.Add_MouseEnter({ Use-Res $this.Tag.Title $FG 'AccentHover'; Use-Res $this.Tag.Arrow $STRK 'AccentHover' })
+        $hdr.Add_MouseLeave({ Use-Res $this.Tag.Title $FG 'AccentText'; Use-Res $this.Tag.Arrow $STRK 'AccentText' })
 
         foreach ($a in $catApps) {
             $card = New-Object Windows.Controls.Border
-            $card.Background = $cardBg; $card.BorderBrush = $cardBorder; $card.BorderThickness = '1'
+            Use-Res $card $BG 'Card'; Use-Res $card $BRD 'CardBorder'; $card.BorderThickness = '1'
             $card.CornerRadius = '10'; $card.Padding = '12,9'; $card.Margin = '4'
             $dock = New-Object Windows.Controls.DockPanel
 
             $pill = New-Object Windows.Controls.Border
-            $pill.CornerRadius = '10'; $pill.Padding = '9,2'; $pill.Background = $workingColors[1]
+            $pill.CornerRadius = '10'; $pill.Padding = '9,2'; Use-Res $pill $BG 'WorkBg'
             $pill.VerticalAlignment = 'Center'
             $st = New-Object Windows.Controls.TextBlock
-            $st.Text = 'checking'; $st.FontSize = 11; $st.Foreground = $workingColors[0]
+            $st.Text = 'checking'; $st.FontSize = 11; Use-Res $st $FG 'WorkFg'
             $pill.Child = $st
             [Windows.Controls.DockPanel]::SetDock($pill, 'Right')
 
@@ -389,8 +452,8 @@ function Start-MyApps {
             $card.Cursor = 'Hand'
             $card.Tag = $cb
             [void]$sec.Checks.Add($cb)
-            $card.Add_MouseEnter({ $this.Background = $cardHoverBg; $this.BorderBrush = $accent })
-            $card.Add_MouseLeave({ $this.Background = $cardBg; $this.BorderBrush = $cardBorder })
+            $card.Add_MouseEnter({ Use-Res $this $BG 'CardHover'; Use-Res $this $BRD 'AccentText' })
+            $card.Add_MouseLeave({ Use-Res $this $BG 'Card'; Use-Res $this $BRD 'CardBorder' })
             $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
             [void]$grid.Children.Add($card)
             $rows[$(if ($a.id) { $a.id } else { "direct:$($a.name)" })] = @{ Check = $cb; Status = $st; Pill = $pill; App = $a }
@@ -753,15 +816,15 @@ function Start-MyApps {
             $s = $sync.Status[$id]; $lbl = $rows[$id].Status
             if ($lbl.Text -ne $s) {
                 $lbl.Text = $s
-                $c = if ($pillColors.ContainsKey($s)) { $pillColors[$s] } else { $workingColors }
-                $lbl.Foreground = $c[0]; $rows[$id].Pill.Background = $c[1]
+                $k = switch ($s) { 'Installed' { 'Ok' } 'Update available' { 'Warn' } 'Partly installed' { 'Warn' } 'Not installed' { 'Off' } default { 'Work' } }
+                Use-Res $lbl $FG "$($k)Fg"; Use-Res $rows[$id].Pill $BG "$($k)Bg"
             }
         }
 
         $busy = $sync.Busy
         foreach ($b in $buttons) { $b.IsEnabled = -not $busy }
         $StatusText.Text = if ($busy) { "Working... $($sync.Progress)" } else { 'Ready' }
-        $StatusDot.Fill  = if ($busy) { '#2A94D6' } else { '#3DDC97' }
+        Use-Res $StatusDot $FILL $(if ($busy) { 'AccentText' } else { 'OkFg' })
         $vals = @($rows.Values | ForEach-Object { $_.Status.Text })
         $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
         $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
