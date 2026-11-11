@@ -9,6 +9,8 @@
   {"name": "Telegram", "id": "Telegram.TelegramDesktop", "category": "Communication", "homepage": "https://desktop.telegram.org", "default": false},
   {"name": "Claude", "id": "Anthropic.Claude", "category": "Communication", "homepage": "https://claude.ai/download", "default": false},
   {"name": "9Proxy", "installer": "https://static.9proxy-cdn.net/download/latest/windows/9proxy-windows-installer.exe", "detect": "9proxy", "category": "Network", "homepage": "https://9proxy.com", "default": false},
+  {"name": "Proxifier", "id": "VentoByte.Proxifier", "category": "Network", "homepage": "https://www.proxifier.com/download/", "default": false},
+  {"name": "OpenVPN", "id": "OpenVPNTechnologies.OpenVPN", "category": "Network", "homepage": "https://openvpn.net/community-downloads/", "default": false},
   {"name": "7-Zip", "id": "7zip.7zip", "category": "Utilities", "homepage": "https://www.7-zip.org", "default": false},
   {"name": "CCleaner", "id": "Piriform.CCleaner", "category": "Utilities", "homepage": "https://www.ccleaner.com/ccleaner/download", "default": false},
   {"name": "BleachBit", "id": "BleachBit.BleachBit", "category": "Utilities", "homepage": "https://www.bleachbit.org/download/windows", "default": false},
