@@ -777,27 +777,33 @@ function Start-MyApps {
             Log "Uninstalling $($t.Name)..."
             $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--silent', '--accept-source-agreements')
             if ($r.Code -eq 0) { Log "$($t.Name): removed."; return }
-            if ($r.Code -ne $NOT_FOUND) {
+            if ($r.Code -eq $USER_SCOPE) {
+                Log "$($t.Name): it was installed for your Windows user only, so winget won't remove it as admin. Using its own uninstaller instead..."
+            } elseif ($r.Code -ne $NOT_FOUND) {
                 Log-Failure $t.Name $r
                 Log "$($t.Name): trying again with its normal uninstall window..."
-                $r = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--accept-source-agreements')
-                if ($r.Code -eq 0) { Log "$($t.Name): removed."; return }
+                $r2 = Invoke-Winget @('uninstall', '--id', $t.Id, '-e', '--accept-source-agreements')
+                if ($r2.Code -eq 0) { Log "$($t.Name): removed."; return }
             }
-            $u = Find-Uninstall $t.Name
+            # Look it up in Windows' program list: the name winget reported first ("Found Chromium [...]"), then ours
+            $names = New-Object System.Collections.ArrayList
+            foreach ($ln in $r.Lines) { if ($ln -match '^Found (.+?) \[') { [void]$names.Add($Matches[1].Trim()) } }
+            [void]$names.Add($t.Detect); [void]$names.Add($t.Name)
+            $u = $null
+            foreach ($nm in ($names | Where-Object { $_ } | Select-Object -Unique)) { $u = Find-Uninstall $nm; if ($u) { break } }
             if (-not $u) { Log "$($t.Name): winget and Windows' program list don't show it as installed."; return }
             Log "$($t.Name): using its own uninstaller ($($u.DisplayName))..."
             Invoke-Uninstaller $u ''
-            if (Find-Uninstall $t.Name) { Log "$($t.Name): still installed - finish or check its uninstall window." } else { Log "$($t.Name): removed." }
+            Start-Sleep -Seconds 2
+            if (Find-Uninstall $u.DisplayName) { Log "$($t.Name): still installed - finish or check its uninstall window." } else { Log "$($t.Name): removed." }
         }
 
-        function Log-Failure($name, $r) {
-            Log ('{0}: failed (code 0x{1:X8}).' -f $name, $r.Code)
-            $r.Lines | Select-Object -Last 3 | ForEach-Object { Log "    $_" }
-        }
+        function Log-Failure($name, $r) { Log ('{0}: failed (code 0x{1:X8}).' -f $name, $r.Code) }
 
         $UP_TO_DATE  = -1978335189   # 0x8A15002B no applicable update
         $NOT_FOUND   = -1978335212   # 0x8A150014 no installed package found
         $ALREADY     = -1978335135   # 0x8A150061 already installed
+        $USER_SCOPE  = -1978335107   # 0x8A15007D installed for one user; winget won't touch it from an admin session
 
         try {
             $i = 0; $n = @($tasks).Count
@@ -971,6 +977,7 @@ function Start-MyApps {
                         }
                         elseif ($r.Code -eq 0)          { Log "$($t.Name): updated." }
                         elseif ($r.Code -eq $UP_TO_DATE) { Log "$($t.Name): already up to date." }
+                        elseif ($r.Code -eq $USER_SCOPE) { Log "$($t.Name): installed for your user only, so it can't be updated from here. It usually updates itself; or Uninstall and Install it again here to install it for all users." }
                         elseif ($r.Code -eq $NOT_FOUND)  { Log "$($t.Name): not installed, nothing to update." }
                         else { Log-Failure $t.Name $r }
                         $sync.Status[$t.Key] = Get-State $t
