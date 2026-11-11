@@ -25,10 +25,45 @@ function Start-MyApps {
 
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        [Windows.MessageBox]::Show('winget was not found. Install "App Installer" from the Microsoft Store, then run this again.', 'My Apps') | Out-Null
+    # ---------- Make sure winget exists (installs it automatically if missing) ----------
+    function Find-Winget {
+        $c = Get-Command winget.exe -ErrorAction SilentlyContinue
+        if ($c) { return $c.Source }
+        try {
+            $p = Resolve-Path "$env:ProgramFiles\WindowsApps\Microsoft.DesktopAppInstaller_*_8wekyb3d8bbwe\winget.exe" -ErrorAction Stop |
+                 Sort-Object { try { [version](($_.Path -split '_')[1]) } catch { [version]'0.0' } } -Descending |
+                 Select-Object -First 1
+            if ($p) { return $p.Path }
+        } catch {}
+        $null
+    }
+
+    $wingetExe = Find-Winget
+    if (-not $wingetExe) {
+        Write-Host 'winget not found - registering App Installer...' -ForegroundColor Cyan
+        try { Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe -ErrorAction Stop } catch {}
+        $wingetExe = Find-Winget
+    }
+    if (-not $wingetExe) {
+        Write-Host 'Installing winget from Microsoft (one time, about a minute)...' -ForegroundColor Cyan
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $ProgressPreference = 'SilentlyContinue'
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope AllUsers | Out-Null
+            Install-Module -Name Microsoft.WinGet.Client -Repository PSGallery -Force -Scope AllUsers -AllowClobber
+            Import-Module Microsoft.WinGet.Client -Force
+            Repair-WinGetPackageManager -AllUsers -Latest -Force
+        } catch { Write-Host "winget setup failed: $($_.Exception.Message)" -ForegroundColor Red }
+        $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') +
+                    ";$env:LOCALAPPDATA\Microsoft\WindowsApps"
+        $wingetExe = Find-Winget
+    }
+    if (-not $wingetExe) {
+        [Windows.MessageBox]::Show("winget could not be installed automatically.`n`nDownload App Installer from https://aka.ms/getwinget, open it, then run this again.", 'My Apps') | Out-Null
+        Start-Process 'https://aka.ms/getwinget'
         return
     }
+    Write-Host "Using winget: $wingetExe" -ForegroundColor DarkGray
 
     # ---------- App list: local apps.json > GitHub apps.json > built-in fallback ----------
     $DefaultAppsJson = @'
@@ -275,6 +310,7 @@ function Start-MyApps {
         Progress = ''
         PS       = $null
         Job      = $null
+        Winget   = $wingetExe
     })
 
     $Worker = {
@@ -284,7 +320,7 @@ function Start-MyApps {
 
         $barChars = '[{0}{1}]' -f [char]0x2588, [char]0x2592
         function Invoke-Winget([string[]]$WgArgs) {
-            $lines = & winget @WgArgs 2>&1 | ForEach-Object { "$_" }
+            $lines = & $sync.Winget @WgArgs 2>&1 | ForEach-Object { "$_" }
             $code  = $LASTEXITCODE
             $clean = foreach ($l in $lines) {
                 $t = ($l -split "`r")[-1].Trim()
