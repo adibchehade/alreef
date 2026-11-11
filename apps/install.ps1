@@ -116,13 +116,13 @@ function Start-MyApps {
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="My Apps" Width="1060" Height="940" MinWidth="760" MinHeight="600"
-        WindowStartupLocation="CenterScreen" Background="#12151B" Foreground="#E6EAF0"
+        WindowStartupLocation="CenterScreen" Background="#08122B" Foreground="#E6EEF8"
         FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True">
   <Window.Resources>
     <Style TargetType="Button">
-      <Setter Property="Foreground" Value="#E6EAF0"/>
-      <Setter Property="Background" Value="#1E242E"/>
-      <Setter Property="BorderBrush" Value="#2C3440"/>
+      <Setter Property="Foreground" Value="#E6EEF8"/>
+      <Setter Property="Background" Value="#11234B"/>
+      <Setter Property="BorderBrush" Value="#1E3566"/>
       <Setter Property="Padding" Value="16,9"/>
       <Setter Property="Margin" Value="0,0,8,8"/>
       <Setter Property="Cursor" Value="Hand"/>
@@ -135,7 +135,7 @@ function Start-MyApps {
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Bd" Property="BorderBrush" Value="#00ACFF"/>
+                <Setter TargetName="Bd" Property="BorderBrush" Value="#2A94D6"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
                 <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
@@ -149,9 +149,9 @@ function Start-MyApps {
       </Setter>
     </Style>
     <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-      <Setter Property="Background" Value="#00ACFF"/>
-      <Setter Property="BorderBrush" Value="#00ACFF"/>
-      <Setter Property="Foreground" Value="#04131E"/>
+      <Setter Property="Background" Value="#0077C3"/>
+      <Setter Property="BorderBrush" Value="#0077C3"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     <Style x:Key="Danger" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -159,26 +159,26 @@ function Start-MyApps {
     </Style>
 
     <Style TargetType="CheckBox">
-      <Setter Property="Foreground" Value="#E6EAF0"/>
+      <Setter Property="Foreground" Value="#E6EEF8"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
             <StackPanel Orientation="Horizontal" Background="Transparent">
               <Border x:Name="Box" Width="18" Height="18" CornerRadius="5" BorderThickness="1.5"
-                      BorderBrush="#4A5466" Background="Transparent" VerticalAlignment="Center">
-                <Path x:Name="Tick" Data="M3,8 L6.5,11.5 L12.5,4.5" Stroke="#04131E" StrokeThickness="2.2"
+                      BorderBrush="#3D5A8C" Background="Transparent" VerticalAlignment="Center">
+                <Path x:Name="Tick" Data="M3,8 L6.5,11.5 L12.5,4.5" Stroke="#FFFFFF" StrokeThickness="2.2"
                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"/>
               </Border>
               <ContentPresenter Margin="11,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Box" Property="BorderBrush" Value="#00ACFF"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="#2A94D6"/>
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Box" Property="Background" Value="#00ACFF"/>
-                <Setter TargetName="Box" Property="BorderBrush" Value="#00ACFF"/>
+                <Setter TargetName="Box" Property="Background" Value="#0077C3"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="#0077C3"/>
                 <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
               </Trigger>
             </ControlTemplate.Triggers>
@@ -198,7 +198,7 @@ function Start-MyApps {
                 <Thumb>
                   <Thumb.Template>
                     <ControlTemplate TargetType="Thumb">
-                      <Border CornerRadius="4" Background="#353E4C"/>
+                      <Border CornerRadius="4" Background="#2A4373"/>
                     </ControlTemplate>
                   </Thumb.Template>
                 </Thumb>
@@ -220,61 +220,69 @@ function Start-MyApps {
     </Grid.RowDefinitions>
 
     <DockPanel Grid.Row="0" Margin="0,0,0,16">
-      <Border Width="44" Height="44" CornerRadius="12" Background="#00ACFF" Margin="0,0,14,0" VerticalAlignment="Center">
-        <Path Data="M22,11 L22,27 M15,21 L22,28 L29,21 M14,33 L30,33" Stroke="#04131E" StrokeThickness="2.6"
+      <Border Width="44" Height="44" CornerRadius="12" Background="#0077C3" Margin="0,0,14,0" VerticalAlignment="Center">
+        <Path Data="M22,11 L22,27 M15,21 L22,28 L29,21 M14,33 L30,33" Stroke="#FFFFFF" StrokeThickness="2.6"
               StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
       </Border>
-      <Border DockPanel.Dock="Right" Background="#1A1F27" BorderBrush="#2C3440" BorderThickness="1"
+      <Border DockPanel.Dock="Right" Background="#0C1A3A" BorderBrush="#1E3566" BorderThickness="1"
               CornerRadius="16" Padding="14,6" VerticalAlignment="Center">
-        <TextBlock x:Name="Summary" Text="Checking..." Foreground="#8B95A5" FontSize="12"/>
+        <TextBlock x:Name="Summary" Text="Checking..." Foreground="#8FA3C4" FontSize="12"/>
       </Border>
       <Button x:Name="BtnRefreshTop" DockPanel.Dock="Right" Content="Refresh" Margin="0,0,10,0"
               Padding="16,7" VerticalAlignment="Center" ToolTip="Re-check what's installed (F5)"/>
       <StackPanel VerticalAlignment="Center">
         <TextBlock Text="My Apps" FontSize="24" FontWeight="SemiBold"/>
         <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
-                   Foreground="#8B95A5" Margin="0,2,0,0"/>
+                   Foreground="#8FA3C4" Margin="0,2,0,0"/>
       </StackPanel>
     </DockPanel>
 
-    <Border Grid.Row="1" Background="#171B22" BorderBrush="#232A35" BorderThickness="1" CornerRadius="14" Padding="14,4,8,12">
+    <Border Grid.Row="1" Background="#0C1A3A" BorderBrush="#1A2D55" BorderThickness="1" CornerRadius="14" Padding="14,4,8,12">
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="AppPanel" Margin="0,0,6,0"/>
       </ScrollViewer>
     </Border>
 
-    <WrapPanel Grid.Row="2" Margin="0,16,0,6">
-      <Button x:Name="BtnInstall"   Content="Install selected" Style="{StaticResource Primary}"/>
-      <Button x:Name="BtnUpdate"    Content="Update selected"/>
-      <Button x:Name="BtnUninstall" Content="Uninstall selected" Style="{StaticResource Danger}"/>
-      <Button x:Name="BtnUpdateAll" Content="Update everything on this PC"/>
-      <Button x:Name="BtnRefresh"   Content="Refresh status"/>
-      <Button x:Name="BtnRestore"   Content="Create restore point"/>
-      <Button x:Name="BtnEdge"      Content="Remove Edge" Style="{StaticResource Danger}"/>
-    </WrapPanel>
+    <StackPanel Grid.Row="2" Margin="0,16,0,6">
+      <WrapPanel>
+        <Button x:Name="BtnInstall"   Content="Install selected" Style="{StaticResource Primary}"/>
+        <Button x:Name="BtnUpdate"    Content="Update selected"/>
+        <Button x:Name="BtnUninstall" Content="Uninstall selected" Style="{StaticResource Danger}"/>
+        <Button x:Name="BtnUpdateAll" Content="Update everything on this PC"/>
+        <Button x:Name="BtnRefresh"   Content="Refresh status"/>
+      </WrapPanel>
+      <WrapPanel>
+        <TextBlock Text="WINDOWS" Foreground="#2A94D6" FontSize="11" FontWeight="SemiBold"
+                   VerticalAlignment="Center" Margin="2,0,14,8"/>
+        <Button x:Name="BtnRestore" Content="Create restore point"/>
+        <Button x:Name="BtnScripts" Content="Allow PowerShell scripts" ToolTip="Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"/>
+        <Button x:Name="BtnLiberNT" Content="Apply LiberNT look" ToolTip="Wallpaper, dark mode, blue accent, clean taskbar, desktop icons"/>
+        <Button x:Name="BtnEdge"    Content="Remove Edge" Style="{StaticResource Danger}"/>
+      </WrapPanel>
+    </StackPanel>
 
-    <Border Grid.Row="3" Background="#0D1015" BorderBrush="#232A35" BorderThickness="1" CornerRadius="12" Padding="4">
+    <Border Grid.Row="3" Background="#050C1E" BorderBrush="#1A2D55" BorderThickness="1" CornerRadius="12" Padding="4">
       <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-               FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="#AEB7C4"
+               FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="#B4C3DA"
                BorderThickness="0" Padding="8,6"/>
     </Border>
 
     <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#00ACFF" Cursor="Hand" Margin="0,0,16,0"/>
-        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#00ACFF" Cursor="Hand"/>
+        <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="#2A94D6" Cursor="Hand" Margin="0,0,16,0"/>
+        <TextBlock x:Name="LinkNone" Text="Select none" Foreground="#2A94D6" Cursor="Hand"/>
       </StackPanel>
       <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#3DDC97" Margin="0,0,8,0" VerticalAlignment="Center"/>
-      <TextBlock x:Name="StatusText" Text="Ready" Foreground="#8B95A5"/>
+      <TextBlock x:Name="StatusText" Text="Ready" Foreground="#8FA3C4"/>
     </DockPanel>
   </Grid>
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
-    $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge)
+    $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT)
 
     # Open as large as the screen allows
     $wa = [System.Windows.SystemParameters]::WorkArea
@@ -287,16 +295,16 @@ function Start-MyApps {
         'Installed'        = @('#3DDC97', '#14302A')
         'Update available' = @('#FFB547', '#3A2D14')
         'Partly installed' = @('#FFB547', '#3A2D14')
-        'Not installed'    = @('#8B95A5', '#222833')
+        'Not installed'    = @('#8FA3C4', '#16264A')
     }
-    $workingColors = @('#00ACFF', '#0E2C40')
+    $workingColors = @('#60B4E8', '#0B2F66')
 
     # ---------- App rows (two columns per category) ----------
     $rows = @{}
     foreach ($cat in ($apps | ForEach-Object { $_.category } | Select-Object -Unique)) {
         $hdr = New-Object Windows.Controls.TextBlock
         $hdr.Text = "$cat".ToUpper(); $hdr.FontSize = 11; $hdr.FontWeight = 'SemiBold'
-        $hdr.Foreground = '#00ACFF'; $hdr.Margin = '4,14,0,6'
+        $hdr.Foreground = '#2A94D6'; $hdr.Margin = '4,14,0,6'
         [void]$AppPanel.Children.Add($hdr)
 
         $grid = New-Object Windows.Controls.Primitives.UniformGrid
@@ -305,7 +313,7 @@ function Start-MyApps {
 
         foreach ($a in @($apps | Where-Object { $_.category -eq $cat })) {
             $card = New-Object Windows.Controls.Border
-            $card.Background = '#1E242E'; $card.BorderBrush = '#262E3A'; $card.BorderThickness = '1'
+            $card.Background = '#11234B'; $card.BorderBrush = '#1A3260'; $card.BorderThickness = '1'
             $card.CornerRadius = '10'; $card.Padding = '12,9'; $card.Margin = '4'
             $dock = New-Object Windows.Controls.DockPanel
 
@@ -337,6 +345,7 @@ function Start-MyApps {
         PS       = $null
         Job      = $null
         Winget   = $wingetExe
+        RepoRaw  = $RepoRaw
     })
 
     $Worker = {
@@ -528,6 +537,33 @@ function Start-MyApps {
                         Log 'Update everything: finished.'
                     }
 
+                    'execpolicy' {
+                        Log 'Allowing PowerShell scripts for this user (RemoteSigned)...'
+                        try { Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction Stop } catch {}
+                        $cu = Get-ExecutionPolicy -Scope CurrentUser
+                        if ("$cu" -eq 'RemoteSigned') { Log 'Done: your own .ps1 scripts now run; downloaded ones must be signed.' }
+                        else { Log "Could not change it (CurrentUser is $cu). A Group Policy may be controlling it." }
+                        foreach ($gp in 'MachinePolicy', 'UserPolicy') {
+                            $v = Get-ExecutionPolicy -Scope $gp
+                            if ("$v" -ne 'Undefined') { Log "    Note: $gp is set to $v, which overrides this." }
+                        }
+                    }
+
+                    'libernt' {
+                        try {
+                            $dir = Join-Path $env:TEMP 'libernt'
+                            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                            $f = Join-Path $dir 'libernt-look.ps1'
+                            Log 'Downloading the LiberNT look script...'
+                            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                            Invoke-WebRequest -Uri "$($sync.RepoRaw)/libernt-look.ps1" -OutFile $f -UseBasicParsing -ErrorAction Stop
+                            Log 'Applying the LiberNT look (Explorer restarts once)...'
+                            $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $f 2>&1 | ForEach-Object { "$_" }
+                            $out | Where-Object { $_ } | Select-Object -Last 6 | ForEach-Object { Log "    $_" }
+                            if ($LASTEXITCODE -eq 0) { Log 'LiberNT look applied.' } else { Log "LiberNT script ended with code $LASTEXITCODE." }
+                        } catch { Log "LiberNT look failed: $($_.Exception.Message)" }
+                    }
+
                     'restore' {
                         Log 'Creating a restore point...'
                         try {
@@ -604,7 +640,7 @@ function Start-MyApps {
         $busy = $sync.Busy
         foreach ($b in $buttons) { $b.IsEnabled = -not $busy }
         $StatusText.Text = if ($busy) { "Working... $($sync.Progress)" } else { 'Ready' }
-        $StatusDot.Fill  = if ($busy) { '#00ACFF' } else { '#3DDC97' }
+        $StatusDot.Fill  = if ($busy) { '#2A94D6' } else { '#3DDC97' }
         $vals = @($rows.Values | ForEach-Object { $_.Status.Text })
         $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
         $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
@@ -627,6 +663,12 @@ function Start-MyApps {
     $BtnUpdateAll.Add_Click({ Start-Work (@([pscustomobject]@{ Action = 'updateall' }) + (Get-StatusTasks)) })
     $BtnRefresh.Add_Click({   Start-Work (Get-StatusTasks) })
     $BtnRefreshTop.Add_Click({ Start-Work (Get-StatusTasks) })
+    $BtnScripts.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'execpolicy' }) })
+    $BtnLiberNT.Add_Click({
+        if (Confirm-Action "Apply the LiberNT look to this account?`n`nWallpaper, dark mode, blue accent, clean taskbar and desktop icons. Explorer restarts once.") {
+            Start-Work @([pscustomobject]@{ Action = 'libernt' })
+        }
+    })
     $win.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'F5') { Start-Work (Get-StatusTasks) } })
     $BtnRestore.Add_Click({   Start-Work @([pscustomobject]@{ Action = 'restore' }) })
     $BtnEdge.Add_Click({

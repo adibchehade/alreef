@@ -19,6 +19,8 @@ It asks for admin rights (UAC), then opens the window.
 - **Update everything on this PC** (`winget upgrade --all`)
 - **Create restore point** before big changes
 - **Remove Edge** (keeps WebView2, which other apps need)
+- **Allow PowerShell scripts** (`Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`)
+- **Apply LiberNT look** (runs `libernt-look.ps1`: wallpaper, dark mode, blue accent, clean taskbar). The same script can also bake the look into a Tiny11 ISO: `.\libernt-look.ps1 -Iso C:\path\tiny11.iso`
 - Uses only the official `winget` source, so a broken Microsoft Store source doesn't block it
 - If a vendor's file fails winget's checksum (as CCleaner often does), it opens the official download page
 
