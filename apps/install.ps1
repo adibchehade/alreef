@@ -222,7 +222,7 @@ function Start-MyApps {
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
-      <RowDefinition Height="130"/>
+      <RowDefinition Height="200"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
@@ -341,14 +341,18 @@ function Start-MyApps {
         <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
         <TextBlock x:Name="LinkNone" Text="Select none" Foreground="{DynamicResource AccentText}" Cursor="Hand"/>
       </StackPanel>
-      <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource OkFg}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-      <TextBlock x:Name="StatusText" Text="Ready" Foreground="{DynamicResource Muted}"/>
+      <StackPanel Orientation="Horizontal">
+        <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource OkFg}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+        <TextBlock x:Name="StatusText" Text="Ready" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+        <ProgressBar x:Name="BusyBar" Width="140" Height="4" Margin="14,0,0,0" IsIndeterminate="True" Visibility="Collapsed"
+                     VerticalAlignment="Center" BorderThickness="0" Foreground="{DynamicResource Accent}" Background="{DynamicResource PanelBorder}"/>
+      </StackPanel>
     </DockPanel>
   </Grid>
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp','BusyBar') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT, $BtnRdp)
@@ -597,6 +601,10 @@ function Start-MyApps {
         Status   = [hashtable]::Synchronized(@{})
         Busy     = $false
         Progress = ''
+        StatusBusy = $false
+        StatusProgress = ''
+        SPS      = $null
+        SJob     = $null
         PS       = $null
         Job      = $null
         Winget   = $wingetExe
@@ -605,25 +613,30 @@ function Start-MyApps {
     })
 
     $Worker = {
-        param($sync, $tasks)
+        param($sync, $tasks, $mode)
+        $progKey = if ($mode -eq 'status') { 'StatusProgress' } else { 'Progress' }
 
         function Log([string]$m) { $sync.Log.Enqueue(('[{0:HH:mm:ss}] {1}' -f (Get-Date), $m)) }
 
         $barChars = '[{0}{1}]' -f [char]0x2588, [char]0x2592
-        function Invoke-Winget([string[]]$WgArgs) {
+        function Invoke-Winget([string[]]$WgArgs, [switch]$Quiet) {
+            $clean = New-Object System.Collections.ArrayList
             $global:LASTEXITCODE = $null
+            if (-not $Quiet) { Log "    > winget $($WgArgs -join ' ')" }
             try {
-                $lines = & $sync.Winget @WgArgs 2>&1 | ForEach-Object { "$_" }
-                $code  = $LASTEXITCODE
+                & $sync.Winget @WgArgs 2>&1 | ForEach-Object {
+                    $ln = ("$_" -split "`r")[-1].Trim()
+                    if ($ln -and $ln -notmatch '^[\-\\|/ ]+$' -and $ln -notmatch $barChars) {
+                        [void]$clean.Add($ln)
+                        if (-not $Quiet) { $sync.Log.Enqueue("             $ln") }   # live output, like a console
+                    }
+                }
+                $code = $LASTEXITCODE
             } catch {
-                $lines = @("winget failed to run: $($_.Exception.Message)")
-                $code  = -1
+                [void]$clean.Add("winget failed to run: $($_.Exception.Message)")
+                $code = -1
             }
             if ($null -eq $code) { $code = -1 }
-            $clean = foreach ($l in $lines) {
-                $t = ($l -split "`r")[-1].Trim()
-                if ($t -and $t -notmatch '^[\-\\|/ ]+$' -and $t -notmatch $barChars) { $t }
-            }
             [pscustomobject]@{ Code = $code; Lines = @($clean); Text = (@($clean) -join "`n") }
         }
 
@@ -646,7 +659,7 @@ function Start-MyApps {
             if (-not $t.Id) {
                 if (Find-Uninstall $t.Detect) { return 'Installed' } else { return 'Not installed' }
             }
-            $r = Invoke-Winget @('list', '--id', $t.Id, '-e', '--source', 'winget', '--accept-source-agreements')
+            $r = Invoke-Winget @('list', '--id', $t.Id, '-e', '--source', 'winget', '--accept-source-agreements') -Quiet
             if ($r.Code -ne 0) { return 'Not installed' }
             $idRx = [regex]::Escape($t.Id)
             $line = $r.Lines | Where-Object { $_ -match "(^|\s)$idRx(\s|$)" } | Select-Object -First 1
@@ -790,7 +803,7 @@ function Start-MyApps {
             $i = 0; $n = @($tasks).Count
             foreach ($t in $tasks) {
                 $i++
-                $sync.Progress = "($i of $n)"
+                $sync[$progKey] = "($i of $n)"
 
                 # A card that covers several winget packages (e.g. Visual C++ x64 + x86)
                 if (@($t.Ids | Where-Object { $_ }).Count) {
@@ -872,12 +885,55 @@ function Start-MyApps {
                     }
 
                     'wingetcheck' {
-                        $r = Invoke-Winget @('--version')
+                        $r = Invoke-Winget @('--version') -Quiet
                         if ($r.Code -eq 0) { Log "winget $($r.Lines -join ' ')" }
                         else { Log "winget isn't working: $($r.Text)" }
                     }
 
                     'status' { $sync.Status[$t.Key] = Get-State $t }
+
+                    'statusall' {
+                        # Two winget calls for everything, instead of one per app
+                        $items = @($t.Items)
+                        $installed = $null
+                        $tmp = Join-Path $env:TEMP ("sst-export-{0}.json" -f [guid]::NewGuid().ToString('N'))
+                        $sync.StatusProgress = '(reading installed apps)'
+                        $null = Invoke-Winget @('export', '-o', $tmp, '--source', 'winget', '--include-versions', '--accept-source-agreements') -Quiet
+                        if (Test-Path $tmp) {
+                            try {
+                                $installed = @{}
+                                foreach ($src in @((Get-Content $tmp -Raw | ConvertFrom-Json).Sources)) {
+                                    foreach ($pk in @($src.Packages)) { $installed[("$($pk.PackageIdentifier)").ToLower()] = $true }
+                                }
+                            } catch { $installed = $null }
+                            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+                        }
+                        $upLines = @()
+                        if ($installed) {
+                            $sync.StatusProgress = '(checking for updates)'
+                            $upLines = (Invoke-Winget @('upgrade', '--source', 'winget', '--include-unknown', '--accept-source-agreements') -Quiet).Lines
+                        }
+                        function Get-FastState([string]$id) {
+                            if (-not $installed.ContainsKey($id.ToLower())) { return 'Not installed' }
+                            $rx = "(^|\s)$([regex]::Escape($id))(\s|$)"
+                            if (@($upLines | Where-Object { $_ -match $rx }).Count) { 'Update available' } else { 'Installed' }
+                        }
+                        $j = 0
+                        foreach ($x in $items) {
+                            $j++; $sync.StatusProgress = "($j of $($items.Count))"
+                            $gids = @($x.Ids | Where-Object { $_ })
+                            if ($gids.Count) {
+                                $states = @(foreach ($gid in $gids) { if ($installed) { Get-FastState $gid } else { Get-State ([pscustomobject]@{ Id = $gid }) } })
+                                $missing = @($states | Where-Object { $_ -eq 'Not installed' }).Count
+                                $sync.Status[$x.Key] = if ($missing -eq $states.Count) { 'Not installed' }
+                                                       elseif ($missing) { 'Partly installed' }
+                                                       elseif ($states -contains 'Update available') { 'Update available' }
+                                                       else { 'Installed' }
+                            }
+                            elseif ($x.Id -and $installed) { $sync.Status[$x.Key] = Get-FastState $x.Id }
+                            else { $sync.Status[$x.Key] = Get-State $x }
+                        }
+                    }
 
                     'install' {
                         $sync.Status[$t.Key] = 'Installing...'
@@ -1003,18 +1059,32 @@ function Start-MyApps {
             }
         }
         catch { Log "Error: $($_.Exception.Message)" }
-        finally { $sync.Busy = $false; $sync.Progress = '' }
+        finally {
+            if ($mode -eq 'status') { $sync.StatusBusy = $false; $sync.StatusProgress = '' }
+            else { $sync.Busy = $false; $sync.Progress = '' }
+        }
     }
 
     function Start-Work($tasks) {
-        if ($sync.Busy) { return }
+        if ($sync.Busy) { $LogBox.AppendText("Still working on the previous task - wait for it to finish.`r`n"); $LogBox.ScrollToEnd(); return }
         $tasks = @($tasks)
         if ($tasks.Count -eq 0) { $LogBox.AppendText("Nothing selected.`r`n"); return }
         $sync.Busy = $true
         $ps = [powershell]::Create()
-        [void]$ps.AddScript($Worker).AddArgument($sync).AddArgument($tasks)
+        [void]$ps.AddScript($Worker).AddArgument($sync).AddArgument($tasks).AddArgument('work')
         $sync.PS  = $ps
         $sync.Job = $ps.BeginInvoke()
+    }
+
+    # Status checks run on their own, so the buttons stay usable while they run
+    function Start-Status {
+        if ($sync.StatusBusy) { return }
+        $sync.StatusBusy = $true
+        $ps = [powershell]::Create()
+        $job = @([pscustomobject]@{ Action = 'statusall'; Items = @(Get-StatusTasks) })
+        [void]$ps.AddScript($Worker).AddArgument($sync).AddArgument($job).AddArgument('status')
+        $sync.SPS  = $ps
+        $sync.SJob = $ps.BeginInvoke()
     }
 
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
@@ -1048,8 +1118,14 @@ function Start-MyApps {
 
         $busy = $sync.Busy
         foreach ($b in $buttons) { $b.IsEnabled = -not $busy }
-        $StatusText.Text = if ($busy) { "Working... $($sync.Progress)" } else { 'Ready' }
-        Use-Res $StatusDot $FILL $(if ($busy) { 'AccentText' } else { 'OkFg' })
+        $sBusy = $sync.StatusBusy
+        $StatusText.Text = if ($busy) { "Working... $($sync.Progress)" } elseif ($sBusy) { "Checking installed apps... $($sync.StatusProgress)" } else { 'Ready' }
+        Use-Res $StatusDot $FILL $(if ($busy -or $sBusy) { 'AccentText' } else { 'OkFg' })
+        $BusyBar.Visibility = if ($busy -or $sBusy) { 'Visible' } else { 'Collapsed' }
+        if (-not $sBusy -and $sync.SPS) {
+            try { $sync.SPS.EndInvoke($sync.SJob) | Out-Null } catch {}
+            $sync.SPS.Dispose(); $sync.SPS = $null
+        }
         $vals = @($rows.Values | ForEach-Object { $_.Status.Text })
         $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
         $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
@@ -1065,6 +1141,7 @@ function Start-MyApps {
         if (-not $busy -and $sync.PS) {
             try { $sync.PS.EndInvoke($sync.Job) | Out-Null } catch {}
             $sync.PS.Dispose(); $sync.PS = $null
+            Start-Status   # re-check everything after each action, so the cards stay accurate
         }
     })
 
@@ -1077,9 +1154,9 @@ function Start-MyApps {
             Start-Work ($sel | ForEach-Object { New-Task 'uninstall' $_ })
         }
     })
-    $BtnUpdateAll.Add_Click({ Start-Work (@([pscustomobject]@{ Action = 'updateall' }) + (Get-StatusTasks)) })
-    $BtnRefresh.Add_Click({   Start-Work (Get-StatusTasks) })
-    $BtnRefreshTop.Add_Click({ Start-Work (Get-StatusTasks) })
+    $BtnUpdateAll.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'updateall' }) })
+    $BtnRefresh.Add_Click({   Start-Status })
+    $BtnRefreshTop.Add_Click({ Start-Status })
     $BtnScripts.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'execpolicy' }) })
     $BtnRdp.Add_Click({ Start-Work @([pscustomobject]@{ Action = 'rdpwarn' }) })
     $BtnLiberNT.Add_Click({
@@ -1087,7 +1164,7 @@ function Start-MyApps {
             Start-Work @([pscustomobject]@{ Action = 'libernt' })
         }
     })
-    $win.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'F5') { Start-Work (Get-StatusTasks) } })
+    $win.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'F5') { Start-Status } })
     $BtnRestore.Add_Click({   Start-Work @([pscustomobject]@{ Action = 'restore' }) })
     $BtnEdge.Add_Click({
         if (Confirm-Action "Remove Microsoft Edge?`n`nWebView2 stays installed because other apps need it.") {
@@ -1105,7 +1182,8 @@ function Start-MyApps {
     })
     $win.Add_Loaded({
         $LogBox.AppendText("Loaded $($apps.Count) apps. Checking what's installed...`r`n")
-        Start-Work (@([pscustomobject]@{ Action = 'wingetcheck' }, [pscustomobject]@{ Action = 'shortcut' }) + (Get-StatusTasks))
+        Start-Work @([pscustomobject]@{ Action = 'wingetcheck' }, [pscustomobject]@{ Action = 'shortcut' })
+        Start-Status
     })
 
     $timer.Start()
