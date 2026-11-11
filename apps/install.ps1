@@ -1149,7 +1149,7 @@ function Start-MyApps {
     $BtnInstall.Add_Click({ Start-Work (Get-Selected | ForEach-Object { New-Task 'install' $_ }) })
     $BtnUpdate.Add_Click({  Start-Work (Get-Selected | ForEach-Object { New-Task 'update'  $_ }) })
     $BtnUninstall.Add_Click({
-        $sel = Get-Selected
+        $sel = @(Get-Selected)   # @() keeps a single pick as a list, so .Count works
         if ($sel.Count -and (Confirm-Action ("Uninstall these apps?`n`n" + (($sel | ForEach-Object { $_.name }) -join "`n")))) {
             Start-Work ($sel | ForEach-Object { New-Task 'uninstall' $_ })
         }
