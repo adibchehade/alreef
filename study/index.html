@@ -45,7 +45,7 @@
   .today { display:none; margin-left:auto; background:var(--accent); color:var(--on-accent); font-size:11px; font-weight:600; padding:2px 10px; border-radius:10px; }
   .day.is-today { border-color:var(--accent-text); }
   .day.is-today .today { display:inline-block; }
-  .row { display:grid; grid-template-columns:18px 118px 1fr auto; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-border); border-radius:10px; padding:10px 14px; margin-top:6px; }
+  .row { display:grid; grid-template-columns:18px 122px 1fr auto; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-border); border-radius:10px; padding:10px 14px; margin-top:6px; }
   label.row:has(input) { cursor:pointer; }
   label.row:has(input):hover { background:var(--card-hover); }
   .row.now { border-color:var(--accent-text); box-shadow:inset 3px 0 0 var(--accent-text); background:var(--card-hover); }
@@ -69,6 +69,9 @@
   .tile .n { font-size:20px; font-weight:600; }
   .tile .k { font-weight:600; margin-top:2px; }
   .tile .s { color:var(--muted); font-size:12px; }
+  .group { margin:20px 2px 10px; font-size:16px; font-weight:600; }
+  .group span { display:block; font-size:13px; font-weight:400; color:var(--muted); margin-top:2px; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
   .status { display:flex; align-items:center; gap:8px; color:var(--muted); margin:10px 2px 0; flex-wrap:wrap; }
   .dot { width:8px; height:8px; border-radius:50%; background:var(--ok-fg); flex:0 0 8px; }
   .status .right { margin-left:auto; display:flex; gap:16px; }
@@ -82,6 +85,7 @@
     .row > .pill { grid-column:3; grid-row:2; }
     .row > input, .row > .nobox { grid-row:1 / 3; }
     .totals { grid-template-columns:repeat(2,1fr); }
+    .grid { grid-template-columns:1fr; }
   }
   @media print {
     html, html[data-theme] { color-scheme:light;
@@ -108,7 +112,7 @@
     <div class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7v14M13 7c-2-1.6-5-2-8-1.6v13c3-.4 6 0 8 1.6M13 7c2-1.6 5-2 8-1.6v13c-3-.4-6 0-8 1.6"/></svg></div>
     <div class="ttl">
       <h1>Ali's Study Plan</h1>
-      <p>Thu 12 – Sun 15 Nov · every day 2 h Spanish, 2 h Computer Science, gym and free time. Tick each block when it's done.</p>
+      <p>Fall 2026 at Schiller Madrid · exams, the 4-day study plan and classes until the end of the semester.</p>
     </div>
     <div class="tools">
       <div class="swatches" id="swatches" role="group" aria-label="Theme"></div>
@@ -119,11 +123,16 @@
   </div>
 
   <section class="panel">
-    <header><span class="label">Target exams</span></header>
-    <div class="row"><span class="nobox"></span><span class="when">Mon 16 Nov</span><span class="what"><span class="title">Spanish exam</span><span class="sub">SP 101 midterm · bring the laptop with Respondus LockDown Browser installed</span></span><span class="pill warn" data-countdown="2026-11-16">Exam</span></div>
-    <div class="row"><span class="nobox"></span><span class="when">Tue 17 Nov</span><span class="what"><span class="title">Computer Science exam</span></span><span class="pill warn" data-countdown="2026-11-17">Exam</span></div>
+    <header><span class="label">Exams &amp; deadlines</span><span class="tag">All four subjects</span></header>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 16 Nov<br>12:00</span><span class="what"><span class="title">Spanish midterm · SP101 Elementary Spanish I</span><span class="sub">In class with Belén Hereza, on Blackboard · bring the laptop with Respondus LockDown Browser installed and the practice test done · covers all 7 classes, no oral part</span></span><span class="pill warn" data-countdown="2026-11-16">Exam</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Tue 17 Nov<br>in class</span><span class="what"><span class="title">Computer Science exam</span><span class="sub">Tuesday class day (09:00 – 15:00) · exact time and room are not in the emails</span></span><span class="pill warn" data-countdown="2026-11-17">Exam</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 23 Nov<br>14:00</span><span class="what"><span class="title">Spring 2027 course registration opens</span><span class="sub">Student Portal · first come, first served · closes Sun 6 Dec 14:00</span></span><span class="pill work" data-countdown="2026-11-23">Deadline</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 14 Dec<br>in class</span><span class="what"><span class="title">International Business midterm project · GEB1350</span><span class="sub">Ali + Sofie Z. present <b>Alphabet</b> to Jose Velasco · upload to Blackboard the same day · executive summary (8–12 slides), strategy since COVID, valuation (comparable companies, comparable acquisitions, DCF), conclusions</span></span><span class="pill warn" data-countdown="2026-12-14">Exam</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">Mon 9 Nov</span><span class="what"><span class="title">English Composition midterm · EN113</span><span class="sub">Paper 1 "Describing and Reflecting" for Peter Bonney · submitted on Blackboard</span></span><span class="pill ok">Submitted</span></div>
+    <div class="row"><span class="nobox"></span><span class="when">By Fri 22 Jan</span><span class="what"><span class="title">Final exams · all subjects</span><span class="sub">Dates not announced yet · the term ends Fri 22 Jan 2027 · the Spanish final has an oral part</span></span><span class="pill off">Not announced</span></div>
   </section>
 
+  <h2 class="group">4-day study plan · Thu 12 – Sun 15 Nov <span>2 h Spanish + 2 h Computer Science + gym every day · tick each block when it's done</span></h2>
   <section class="panel day" data-day="2026-11-12">
     <header><span class="label">Thursday 12 November</span><span class="tag">Padrón appointment day</span><span class="today">Today</span></header>
     <label class="row k-travel" data-start="2026-11-12 08:30" data-end="2026-11-12 09:00"><span class="nobox"></span><span class="when">08:30 – 09:00</span><span class="what"><span class="title">Travel to the padrón appointment</span><span class="sub">OAC Tetuán, C/ Simancas 6 · leave the flat by 8:15, be there 8:45</span></span><span class="pill off">Travel</span></label>
@@ -169,13 +178,53 @@
   </section>
 
   <section class="panel">
-    <header><span class="label">Summary totals</span><span class="tag">Thu – Sun</span></header>
+    <header><span class="label">4-day plan totals</span><span class="tag">Thu – Sun</span></header>
     <div class="totals">
       <div class="tile"><div class="n">8 hours</div><div class="k">Spanish study</div><div class="s">2 hours a day</div></div>
       <div class="tile"><div class="n">8 hours</div><div class="k">Computer Science study</div><div class="s">2 hours a day</div></div>
       <div class="tile"><div class="n">4 sessions</div><div class="k">Gym</div><div class="s">1 hour a day</div></div>
       <div class="tile"><div class="n">18+ hours</div><div class="k">Free / personal time</div><div class="s">4–5+ hours a day</div></div>
     </div>
+  </section>
+
+
+  <section class="panel">
+    <header><span class="label">Weekly timetable</span><span class="tag">Fall 2026 · classes on Monday and Tuesday only</span></header>
+    <div class="grid">
+      <div class="tile"><div class="s">Monday · 12:00 – 15:00</div><div class="k">Spanish · SP101</div><div class="s">Elementary Spanish I · Belén Hereza</div></div>
+      <div class="tile"><div class="s">Monday · 15:00 – 18:00</div><div class="k">International Business · GEB1350</div><div class="s">Introduction to International Business · Jose Velasco</div></div>
+      <div class="tile"><div class="s">Tuesday · 09:00 – 15:00</div><div class="k">English Composition · EN113</div><div class="s">Peter Bonney · one of the two Tuesday slots</div></div>
+      <div class="tile"><div class="s">Tuesday · 09:00 – 15:00</div><div class="k">Computer Science</div><div class="s">The other Tuesday slot · course code not in the emails</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header><span class="label">Classes until the end of the semester</span><span class="tag">Rooms are shown where the teacher announced one</span></header>
+    <div class="row k-class" data-start="2026-11-11 15:00" data-end="2026-11-11 18:00"><span class="nobox"></span><span class="when">Wed 11 Nov<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350 · make-up class</span><span class="sub">Room <b>M1001</b> · replaces Mon 9 Nov (holiday) · Jose Velasco</span></span><span class="pill work">Make-up</span></div>
+    <div class="row k-class" data-start="2026-11-13 12:00" data-end="2026-11-13 15:00"><span class="nobox"></span><span class="when">Fri 13 Nov<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101 · make-up class</span><span class="sub">Room <b>M101</b> · replaces Mon 9 Nov · last class before the midterm · Belén Hereza</span></span><span class="pill work">Make-up</span></div>
+    <div class="row k-class" data-start="2026-11-16 12:00" data-end="2026-11-16 15:00"><span class="nobox"></span><span class="when">Mon 16 Nov<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101 · midterm</span><span class="sub">Midterm exam instead of class · laptop with LockDown Browser · leave when finished</span></span><span class="pill warn">Exam</span></div>
+    <div class="row k-class" data-start="2026-11-16 15:00" data-end="2026-11-16 18:00"><span class="nobox"></span><span class="when">Mon 16 Nov<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350</span><span class="sub">Jose Velasco</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-11-17 09:00" data-end="2026-11-17 15:00"><span class="nobox"></span><span class="when">Tue 17 Nov<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Computer Science exam today · Peter Bonney (English)</span></span><span class="pill warn">Exam</span></div>
+    <div class="row k-class" data-start="2026-11-23 12:00" data-end="2026-11-23 15:00"><span class="nobox"></span><span class="when">Mon 23 Nov<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101</span><span class="sub">Belén Hereza</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-11-23 15:00" data-end="2026-11-23 18:00"><span class="nobox"></span><span class="when">Mon 23 Nov<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350</span><span class="sub">Jose Velasco</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-11-24 09:00" data-end="2026-11-24 15:00"><span class="nobox"></span><span class="when">Tue 24 Nov<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Peter Bonney (English) · two classes, 09:00 – 12:00 and 12:00 – 15:00</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-11-30 12:00" data-end="2026-11-30 15:00"><span class="nobox"></span><span class="when">Mon 30 Nov<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101</span><span class="sub">Belén Hereza</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-11-30 15:00" data-end="2026-11-30 18:00"><span class="nobox"></span><span class="when">Mon 30 Nov<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350</span><span class="sub">Project presentations, day 1 (Ali presents on 14 Dec) · the teacher wrote "12:00 to 16:00" for this day, which overlaps Spanish — check the time with Jose Velasco</span></span><span class="pill warn">Check time</span></div>
+    <div class="row k-class" data-start="2026-12-01 09:00" data-end="2026-12-01 15:00"><span class="nobox"></span><span class="when">Tue 1 Dec<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Peter Bonney (English) · two classes, 09:00 – 12:00 and 12:00 – 15:00</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-free" data-start="2026-12-07 00:00" data-end="2026-12-07 23:59"><span class="nobox"></span><span class="when">Mon 7 Dec</span><span class="what"><span class="title">No classes · holiday</span><span class="sub">Spanish is made up on Thu 10 Dec · no International Business make-up announced yet</span></span><span class="pill off">Holiday</span></div>
+    <div class="row k-free" data-start="2026-12-08 00:00" data-end="2026-12-08 23:59"><span class="nobox"></span><span class="when">Tue 8 Dec</span><span class="what"><span class="title">No classes expected · public holiday</span><span class="sub">Inmaculada Concepción · no make-up announced for English or Computer Science</span></span><span class="pill off">Holiday</span></div>
+    <div class="row k-class" data-start="2026-12-10 12:00" data-end="2026-12-10 15:00"><span class="nobox"></span><span class="when">Thu 10 Dec<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101 · make-up class</span><span class="sub">Room <b>M001</b> · replaces Mon 7 Dec · moved from Wed 9 Dec · Belén Hereza</span></span><span class="pill work">Make-up</span></div>
+    <div class="row k-class" data-start="2026-12-14 12:00" data-end="2026-12-14 15:00"><span class="nobox"></span><span class="when">Mon 14 Dec<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101</span><span class="sub">Belén Hereza</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-class" data-start="2026-12-14 15:00" data-end="2026-12-14 18:00"><span class="nobox"></span><span class="when">Mon 14 Dec<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350 · project presentation</span><span class="sub"><b>Ali + Sofie Z. present Alphabet</b> · upload the project to Blackboard today · Jose Velasco</span></span><span class="pill warn">Presentation</span></div>
+    <div class="row k-class" data-start="2026-12-15 09:00" data-end="2026-12-15 15:00"><span class="nobox"></span><span class="when">Tue 15 Dec<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Peter Bonney (English) · two classes, 09:00 – 12:00 and 12:00 – 15:00</span></span><span class="pill ok">Class</span></div>
+    <div class="row k-free" data-start="2026-12-21 00:00" data-end="2027-01-08 23:59"><span class="nobox"></span><span class="when">Mon 21 Dec –<br>Fri 8 Jan</span><span class="what"><span class="title">Winter break</span><span class="sub">No classes · Schiller academic calendar</span></span><span class="pill off">Break</span></div>
+    <div class="row k-class" data-start="2027-01-11 12:00" data-end="2027-01-11 15:00"><span class="nobox"></span><span class="when">Mon 11 Jan<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-class" data-start="2027-01-11 15:00" data-end="2027-01-11 18:00"><span class="nobox"></span><span class="when">Mon 11 Jan<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-class" data-start="2027-01-12 09:00" data-end="2027-01-12 15:00"><span class="nobox"></span><span class="when">Tue 12 Jan<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-class" data-start="2027-01-18 12:00" data-end="2027-01-18 15:00"><span class="nobox"></span><span class="when">Mon 18 Jan<br>12:00 – 15:00</span><span class="what"><span class="title">Spanish · SP101</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-class" data-start="2027-01-18 15:00" data-end="2027-01-18 18:00"><span class="nobox"></span><span class="when">Mon 18 Jan<br>15:00 – 18:00</span><span class="what"><span class="title">International Business · GEB1350</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-class" data-start="2027-01-19 09:00" data-end="2027-01-19 15:00"><span class="nobox"></span><span class="when">Tue 19 Jan<br>09:00 – 15:00</span><span class="what"><span class="title">English Composition (EN113) + Computer Science</span><span class="sub">Expected weekly class · final exam dates not announced yet</span></span><span class="pill off">Expected</span></div>
+    <div class="row k-free" data-start="2027-01-22 00:00" data-end="2027-01-22 23:59"><span class="nobox"></span><span class="when">Fri 22 Jan</span><span class="what"><span class="title">End of the fall semester</span><span class="sub">Schiller academic calendar · Spring 2027 starts Mon 1 Feb</span></span><span class="pill off">End</span></div>
   </section>
 
   <div class="status">
@@ -234,11 +283,15 @@
     document.querySelectorAll('.day').forEach(function (d) { d.classList.toggle('is-today', d.dataset.day === today); });
     document.querySelectorAll('[data-countdown]').forEach(function (el) {
       var n = Math.round((Date.parse(el.dataset.countdown) - Date.parse(today)) / 864e5);
+      if (n < 0) { el.className = 'pill off'; }
       el.textContent = n > 1 ? 'In ' + n + ' days' : n === 1 ? 'Tomorrow' : n === 0 ? 'Today' : 'Done';
     });
     function nm(r) { return r.querySelector('.title').textContent; }
+    var all = Array.prototype.slice.call(document.querySelectorAll('.row[data-start]')).filter(function (r) { return r.dataset.start.slice(11) !== '00:00'; });
+    cur = all.filter(function (r) { return r.dataset.start <= now && now < r.dataset.end; })[0] || null;
+    nxt = all.filter(function (r) { return r.dataset.start > now; }).sort(function (a, b) { return a.dataset.start < b.dataset.start ? -1 : 1; })[0] || null;
     var st = cur ? 'Now: ' + nm(cur) + ' (until ' + (cur.dataset.end.slice(11) === '23:59' ? 'bedtime' : cur.dataset.end.slice(11)) + ')'
-           : nxt ? 'Next: ' + nm(nxt) + ' · ' + (nxt.dataset.start.slice(0, 10) === today ? 'today ' : new Date(nxt.dataset.start.slice(0, 10) + 'T12:00').toLocaleDateString('en-GB', { weekday: 'short' }) + ' ') + nxt.dataset.start.slice(11)
+           : nxt ? 'Next: ' + nm(nxt) + ' · ' + (nxt.dataset.start.slice(0, 10) === today ? 'today ' : new Date(nxt.dataset.start.slice(0, 10) + 'T12:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ') + nxt.dataset.start.slice(11)
            : 'Plan finished';
     document.getElementById('statustext').textContent = st;
   }
