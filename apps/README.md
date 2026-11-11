@@ -7,7 +7,7 @@ A small Windows GUI that installs, updates and removes my usual apps with winget
 Open PowerShell and paste:
 
 ```powershell
-irm https://raw.githubusercontent.com/adibchehade/alreef/main/apps/install.ps1 | iex
+irm alreef.es/tools | iex
 ```
 
 It asks for admin rights (UAC), then opens the window.

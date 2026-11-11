@@ -2,7 +2,7 @@
     My Apps - a small winget GUI to install, update and remove my usual apps.
 
     Run from any PowerShell window:
-        irm https://raw.githubusercontent.com/adibchehade/alreef/main/apps/install.ps1 | iex
+        irm alreef.es/tools | iex
 
     The app list lives in apps.json next to this script (edit it on GitHub to add apps).
 #>
