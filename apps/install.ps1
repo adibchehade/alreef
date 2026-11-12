@@ -130,7 +130,7 @@ function Start-MyApps {
       <Setter Property="Foreground" Value="{DynamicResource Text}"/>
       <Setter Property="Background" Value="{DynamicResource Btn}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource BtnBorder}"/>
-      <Setter Property="Padding" Value="16,9"/>
+      <Setter Property="Padding" Value="13,6"/>
       <Setter Property="Margin" Value="0,0,8,8"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -222,7 +222,7 @@ function Start-MyApps {
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
-      <RowDefinition Height="200"/>
+      <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
@@ -328,7 +328,7 @@ function Start-MyApps {
       </StackPanel>
     </Border>
 
-    <Border Grid.Row="3" Background="{DynamicResource LogBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="4">
+    <Border x:Name="LogPanel" Grid.Row="3" Height="78" Background="{DynamicResource LogBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="4">
       <TextBox x:Name="LogBox" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                FontFamily="Cascadia Mono, Consolas" FontSize="12" Background="Transparent" Foreground="{DynamicResource LogText}"
                BorderThickness="0" Padding="8,6"/>
@@ -336,6 +336,7 @@ function Start-MyApps {
 
     <DockPanel Grid.Row="4" Margin="2,10,2,0">
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+        <TextBlock x:Name="LinkLog"      Text="Bigger log"   Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0" ToolTip="Show more or fewer log lines"/>
         <TextBlock x:Name="LinkExpand"   Text="Show all apps"   Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,28,0"/>
         <TextBlock x:Name="LinkCollapse" Text="" Visibility="Collapsed"/>
         <TextBlock x:Name="LinkAll"  Text="Select all"  Foreground="{DynamicResource AccentText}" Cursor="Hand" Margin="0,0,16,0"/>
@@ -352,7 +353,7 @@ function Start-MyApps {
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp','BusyBar') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp','BusyBar','LogPanel','LinkLog') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT, $BtnRdp)
@@ -517,7 +518,7 @@ function Start-MyApps {
 
         # The big tile
         $tile = New-Object Windows.Controls.Border
-        $tile.Width = 250; $tile.Height = 124; $tile.Margin = '6'; $tile.CornerRadius = '14'; $tile.Padding = '18,14'
+        $tile.Width = 250; $tile.Height = 98; $tile.Margin = '5'; $tile.CornerRadius = '14'; $tile.Padding = '16,10'
         $tile.Cursor = 'Hand'; $tile.BorderThickness = '1'
         $tsp = New-Object Windows.Controls.StackPanel
 
@@ -532,12 +533,12 @@ function Start-MyApps {
         $icon = New-Object Windows.Controls.TextBlock
         $g = if ($glyphs.ContainsKey($cat)) { $glyphs[$cat] } else { 0xE71D }
         $icon.Text = [string][char]$g
-        $icon.FontFamily = 'Segoe Fluent Icons, Segoe MDL2 Assets'; $icon.FontSize = 26
+        $icon.FontFamily = 'Segoe Fluent Icons, Segoe MDL2 Assets'; $icon.FontSize = 22
         Use-Res $icon $FG 'AccentText'
         [void]$top.Children.Add($badge); [void]$top.Children.Add($icon)
 
         $tt = New-Object Windows.Controls.TextBlock
-        $tt.Text = "$cat"; $tt.FontSize = 17; $tt.FontWeight = 'SemiBold'; $tt.Margin = '0,12,0,2'; $tt.TextTrimming = 'CharacterEllipsis'
+        $tt.Text = "$cat"; $tt.FontSize = 17; $tt.FontWeight = 'SemiBold'; $tt.Margin = '0,6,0,1'; $tt.TextTrimming = 'CharacterEllipsis'
         Use-Res $tt $FG 'Text'
         $sub = New-Object Windows.Controls.TextBlock
         $sub.Text = "$($catApps.Count) apps"; $sub.FontSize = 12
@@ -1233,6 +1234,15 @@ function Start-MyApps {
     $LinkAll.Add_MouseLeftButtonUp({  foreach ($r in $rows.Values) { $r.Check.IsChecked = $true } })
     $LinkNone.Add_MouseLeftButtonUp({ foreach ($r in $rows.Values) { $r.Check.IsChecked = $false } })
     $LinkExpand.Add_MouseLeftButtonUp({ Show-AllApps })
+    # Log size: Small (default) -> Big -> Hidden -> Small
+    $LinkLog.Add_MouseLeftButtonUp({
+        switch ([int]$LogPanel.Height) {
+            78      { $LogPanel.Height = 260; $LogPanel.Visibility = 'Visible';   $LinkLog.Text = 'Hide log' }
+            260     { $LogPanel.Height = 0;   $LogPanel.Visibility = 'Collapsed'; $LinkLog.Text = 'Show log' }
+            default { $LogPanel.Height = 78;  $LogPanel.Visibility = 'Visible';   $LinkLog.Text = 'Bigger log' }
+        }
+        $LogBox.ScrollToEnd()
+    })
 
 
     $win.Add_Closing({
