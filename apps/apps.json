@@ -15,6 +15,8 @@
   {"name": "Claude", "id": "Anthropic.Claude", "category": "Communication", "homepage": "https://claude.ai/download", "default": false},
   {"name": "Internet Download Manager", "id": "Tonec.InternetDownloadManager", "category": "Downloads", "homepage": "https://www.internetdownloadmanager.com/download.html", "default": false},
   {"name": "Mister Download Manager", "githubinstaller": "anefzaoui/misterdownloadmanager", "asset": "-setup\\.exe$", "args": "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /ALLUSERS", "detect": "Mister Download Manager", "category": "Downloads", "homepage": "https://github.com/anefzaoui/misterdownloadmanager/releases", "default": false},
+  {"name": "AB Download Manager", "id": "amir1376.ABDownloadManager", "category": "Downloads", "homepage": "https://abdownloadmanager.com", "default": false},
+  {"name": "Free Download Manager", "id": "SoftDeluxe.FreeDownloadManager", "category": "Downloads", "homepage": "https://www.freedownloadmanager.org", "default": false},
   {"name": "9Proxy", "installer": "https://static.9proxy-cdn.net/download/latest/windows/9proxy-windows-installer.exe", "detect": "9proxy", "category": "Network", "homepage": "https://9proxy.com", "default": false},
   {"name": "Proxifier", "id": "VentoByte.Proxifier", "category": "Network", "homepage": "https://www.proxifier.com/download/", "default": false},
   {"name": "OpenVPN", "id": "OpenVPNTechnologies.OpenVPN", "category": "Network", "homepage": "https://openvpn.net/community-downloads/", "default": false},
