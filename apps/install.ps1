@@ -472,7 +472,7 @@ function Start-MyApps {
     $detail.Margin = '2,0,0,0'
     [void]$AppPanel.Children.Add($detail)
 
-    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Utilities' = 0xE90F;
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Downloads' = 0xE896; 'Utilities' = 0xE90F;
                  'Runtimes' = 0xE943; 'Visual C++ Runtimes' = 0xEC7A }
 
     function Set-TileLook($sec) {
@@ -672,21 +672,30 @@ function Start-MyApps {
 
         # Download a vendor's installer, refuse it unless it carries a valid digital signature, then run it
         function Install-Direct($t) {
-            $fname = [IO.Path]::GetFileName(([uri]$t.Installer).AbsolutePath)
+            $src = $t.Installer
+            $fromGitHub = $src -like 'github:*'
+            if ($fromGitHub) {
+                $src = Get-GitHubAsset $src.Substring(7) $t.Asset $t.Name
+                if (-not $src) { return }
+            }
+            $fname = [IO.Path]::GetFileName(([uri]$src).AbsolutePath)
             if ([IO.Path]::GetExtension($fname) -notin '.exe', '.msi') { $fname = ($t.Name -replace '[^\w]', '') + '-setup.exe' }
             $file = Join-Path $env:TEMP $fname
             Log "Downloading $($t.Name)..."
             try {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Invoke-WebRequest -Uri $t.Installer -OutFile $file -UseBasicParsing -ErrorAction Stop
+                Invoke-WebRequest -Uri $src -OutFile $file -UseBasicParsing -ErrorAction Stop
             } catch { Log "$($t.Name): download failed: $($_.Exception.Message)"; return }
             $sig = Get-AuthenticodeSignature $file
-            if ($sig.Status -ne 'Valid') {
+            if ($sig.Status -eq 'Valid') {
+                $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
+            } elseif ($fromGitHub -and $sig.Status -eq 'NotSigned') {
+                $signer = 'nobody (not code-signed; downloaded from the project''s official GitHub release)'
+            } else {
                 Log "$($t.Name): the installer is not validly signed ($($sig.Status)), so it was not run."
                 Remove-Item $file -Force -ErrorAction SilentlyContinue
                 return
             }
-            $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
             if ($t.Args) {
                 Log "$($t.Name): signed by $signer. Installing silently..."
                 Start-Process -FilePath $file -ArgumentList $t.Args -Wait
@@ -709,6 +718,19 @@ function Start-MyApps {
             Start-Sleep -Milliseconds 500
         }
 
+        # Newest GitHub release (pre-releases included) with a file matching the pattern
+        function Get-GitHubAsset([string]$repo, [string]$pattern, [string]$name) {
+            Log "Looking up the latest $name release on GitHub ($repo)..."
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            try {
+                $rels = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=15" -Headers @{ 'User-Agent' = 'SoftservTools' } -UseBasicParsing -ErrorAction Stop
+            } catch { Log "$($name): couldn't reach GitHub: $($_.Exception.Message)"; return $null }
+            $asset = @($rels) | Where-Object { -not $_.draft } | ForEach-Object { $_.assets } | Where-Object { $_.name -match $pattern } | Select-Object -First 1
+            if (-not $asset) { Log "$($name): no Windows download found in the latest releases."; return $null }
+            Log "$($name): found $($asset.name)"
+            $asset.browser_download_url
+        }
+
         # The app's .exe inside its folder (zip apps may keep it in a subfolder)
         function Get-PortableExe($t) {
             $dir = Get-PortableDir $t
@@ -724,16 +746,8 @@ function Start-MyApps {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             $url = $t.Portable
             if ($url -like 'github:*') {
-                # Newest GitHub release (pre-releases included) that has a matching file
-                $repo = $url.Substring(7)
-                Log "Looking up the latest $($t.Name) release on GitHub ($repo)..."
-                try {
-                    $rels = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=15" -Headers @{ 'User-Agent' = 'SoftservTools' } -UseBasicParsing -ErrorAction Stop
-                    $asset = @($rels) | ForEach-Object { $_.assets } | Where-Object { $_.name -match $t.Asset } | Select-Object -First 1
-                } catch { Log "$($t.Name): couldn't reach GitHub: $($_.Exception.Message)"; return }
-                if (-not $asset) { Log "$($t.Name): no Windows download found in the latest releases."; return }
-                $url = $asset.browser_download_url
-                Log "$($t.Name): found $($asset.name)"
+                $url = Get-GitHubAsset $url.Substring(7) $t.Asset $t.Name
+                if (-not $url) { return }
             }
             $isZip = $url -match '\.zip($|\?)'
             $tmp = Join-Path $env:TEMP $(if ($isZip) { (($t.Name -replace '[^\w]', '') + '.zip') } else { $t.Exe })
@@ -1135,7 +1149,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $app.installer; Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
