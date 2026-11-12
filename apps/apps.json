@@ -1,5 +1,5 @@
 [
-  {"name": "Epic Privacy Browser", "category": "Browsers", "homepage": "https://www.epicbrowser.com", "default": false, "detect": "Epic Privacy Browser", "installer": "https://cdn.epicbrowser.com/winsetup/EpicSetup.exe"},
+  {"name": "Epic Privacy Browser", "category": "Browsers", "homepage": "https://www.epicbrowser.com/", "default": false, "detect": "Epic Privacy Browser", "installer": "https://cdn.epicbrowser.com/winsetup/EpicSetup.exe", "mirrors": ["https://cdn.epicbrowser.com/epicsetup.exe"], "args": "/silent /install"},
   {"name": "LibreWolf", "id": "LibreWolf.LibreWolf", "category": "Browsers", "homepage": "https://librewolf.net", "default": false},
   {"name": "Brave", "id": "Brave.Brave", "category": "Browsers", "homepage": "https://brave.com/download/", "default": false},
   {"name": "Ungoogled Chromium", "id": "eloston.ungoogled-chromium", "category": "Browsers", "homepage": "https://ungoogled-software.github.io/ungoogled-chromium-binaries/", "default": false},

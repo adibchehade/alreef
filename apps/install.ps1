@@ -683,10 +683,21 @@ function Start-MyApps {
             if ([IO.Path]::GetExtension($fname) -notin '.exe', '.msi') { $fname = ($t.Name -replace '[^\w]', '') + '-setup.exe' }
             $file = Join-Path $env:TEMP $fname
             Log "Downloading $($t.Name)..."
-            try {
-                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Invoke-WebRequest -Uri $src -OutFile $file -UseBasicParsing -ErrorAction Stop
-            } catch { Log "$($t.Name): download failed: $($_.Exception.Message)"; return }
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $ok = $false
+            foreach ($u in @($src) + @($t.Mirrors | Where-Object { $_ })) {
+                try {
+                    Invoke-WebRequest -Uri $u -OutFile $file -UseBasicParsing -ErrorAction Stop
+                    $ok = $true; break
+                } catch { Log "$($t.Name): download failed from $(([uri]$u).Host): $($_.Exception.Message)" }
+            }
+            if (-not $ok) {
+                if ($t.Url) {
+                    Log "$($t.Name): opening its official page instead - download and run it there, then press Refresh."
+                    Start-Process $t.Url
+                }
+                return
+            }
             $sig = Get-AuthenticodeSignature $file
             if ($sig.Status -eq 'Valid') {
                 $signer = $sig.SignerCertificate.Subject -replace '^CN="?([^,"]+).*', '$1'
@@ -1160,7 +1171,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Page = $app.page; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Page = $app.page; Mirrors = @($app.mirrors); Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
