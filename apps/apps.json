@@ -1,4 +1,5 @@
 [
+  {"name": "Epic Privacy Browser", "id": "HiddenReflex.EpicBrowser", "category": "Browsers", "homepage": "https://www.epicbrowser.com", "default": false},
   {"name": "LibreWolf", "id": "LibreWolf.LibreWolf", "category": "Browsers", "homepage": "https://librewolf.net", "default": false},
   {"name": "Brave", "id": "Brave.Brave", "category": "Browsers", "homepage": "https://brave.com/download/", "default": false},
   {"name": "Ungoogled Chromium", "id": "eloston.ungoogled-chromium", "category": "Browsers", "homepage": "https://ungoogled-software.github.io/ungoogled-chromium-binaries/", "default": false},
@@ -11,6 +12,7 @@
   {"name": "RoxyBrowser", "id": "RoxyBrowser.RoxyBrowser", "category": "Antidetect Browsers", "homepage": "https://roxybrowser.com", "default": false},
   {"name": "Camoufox", "github": "daijro/camoufox", "asset": "win\\.x86_64\\.zip$", "exe": "camoufox.exe", "category": "Antidetect Browsers", "homepage": "https://github.com/daijro/camoufox/releases", "default": false},
   {"name": "ShardBrowser", "portable": "https://github.com/ProxyShard/ShardBrowser/releases/latest/download/ShardBrowser-Launcher-portable-win-x64.exe", "exe": "ShardBrowser-Launcher-portable-win-x64.exe", "category": "Antidetect Browsers", "homepage": "https://github.com/ProxyShard/ShardBrowser/releases", "default": false},
+  {"name": "Multilogin", "page": "https://multilogin.com/download/", "detect": "Multilogin", "category": "Antidetect Browsers", "homepage": "https://multilogin.com/download/", "default": false},
   {"name": "Telegram", "id": "Telegram.TelegramDesktop", "category": "Communication", "homepage": "https://desktop.telegram.org", "default": false},
   {"name": "Claude", "id": "Anthropic.Claude", "category": "Communication", "homepage": "https://claude.ai/download", "default": false},
   {"name": "Internet Download Manager", "id": "Tonec.InternetDownloadManager", "category": "Downloads", "homepage": "https://www.internetdownloadmanager.com/download.html", "default": false},

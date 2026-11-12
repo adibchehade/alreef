@@ -578,7 +578,7 @@ function Start-MyApps {
 
             $cb = New-Object Windows.Controls.CheckBox
             $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default
-            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } else { $a.installer })
+            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } elseif ($a.page) { $a.page } else { $a.installer })
             [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
             $card.Child = $dock
@@ -997,6 +997,11 @@ function Start-MyApps {
                     'install' {
                         $sync.Status[$t.Key] = 'Installing...'
                         if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Page) {
+                            Log "$($t.Name): its maker only offers the installer on their website. Opening $($t.Page) - download and run it, then press Refresh."
+                            Start-Process $t.Page
+                            $sync.Status[$t.Key] = Get-State $t; break
+                        }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Installing $($t.Name)..."
                         $wa = @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
@@ -1017,6 +1022,11 @@ function Start-MyApps {
                     'update' {
                         $sync.Status[$t.Key] = 'Updating...'
                         if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Page) {
+                            Log "$($t.Name): its maker only offers the installer on their website. Opening $($t.Page) - download and run it, then press Refresh."
+                            Start-Process $t.Page
+                            $sync.Status[$t.Key] = Get-State $t; break
+                        }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Log "Updating $($t.Name)..."
                         $wa = @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
@@ -1039,7 +1049,7 @@ function Start-MyApps {
                     'uninstall' {
                         $sync.Status[$t.Key] = 'Removing...'
                         if ($t.Portable)  { Uninstall-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
-                        if ($t.Installer) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Installer -or $t.Page) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Uninstall-Winget $t
                         $sync.Status[$t.Key] = Get-State $t
                     }
@@ -1150,7 +1160,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Page = $app.page; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
