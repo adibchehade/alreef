@@ -473,8 +473,8 @@ function Start-MyApps {
     $detail.Margin = '2,0,0,0'
     [void]$AppPanel.Children.Add($detail)
 
-    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Downloads' = 0xE896; 'Utilities' = 0xE90F;
-                 'Runtimes' = 0xE943; 'Visual C++ Runtimes' = 0xEC7A }
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Downloads' = 0xE896; 'Developer' = 0xE943; 'Utilities' = 0xE90F;
+                 'Runtimes' = 0xE7B8; 'Visual C++ Runtimes' = 0xEC7A }
 
     function Set-TileLook($sec) {
         $active = [object]::ReferenceEquals($sec, $script:activeSec)
