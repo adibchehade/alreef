@@ -473,7 +473,7 @@ function Start-MyApps {
     $detail.Margin = '2,0,0,0'
     [void]$AppPanel.Children.Add($detail)
 
-    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Downloads' = 0xE896; 'Developer' = 0xE943; 'Utilities' = 0xE90F;
+    $glyphs = @{ 'Browsers' = 0xE774; 'Communication' = 0xE8BD; 'Network' = 0xE701; 'Security' = 0xEA18; 'Remote Desktop' = 0xE8AF; 'Antidetect Browsers' = 0xE716; 'Downloads' = 0xE896; 'Developer' = 0xE943; 'Streaming' = 0xE8B2; 'Utilities' = 0xE90F;
                  'Runtimes' = 0xE7B8; 'Visual C++ Runtimes' = 0xEC7A }
 
     function Set-TileLook($sec) {
@@ -578,7 +578,7 @@ function Start-MyApps {
 
             $cb = New-Object Windows.Controls.CheckBox
             $cb.Content = $a.name; $cb.IsChecked = [bool]$a.default
-            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } elseif ($a.page) { $a.page } else { $a.installer })
+            $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } elseif ($a.page) { $a.page } elseif ($a.store) { "Microsoft Store: $($a.store)" } elseif ($a.web) { $a.web } else { $a.installer })
             [void]$dock.Children.Add($pill)
             [void]$dock.Children.Add($cb)
             $card.Child = $dock
@@ -657,6 +657,12 @@ function Start-MyApps {
             if ($t.Portable) {
                 if (Get-PortableExe $t) { return 'Installed' } else { return 'Not installed' }
             }
+            if ($t.Store) {
+                if (Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue) { return 'Installed' } else { return 'Not installed' }
+            }
+            if ($t.Web) {
+                if (Test-Path (Get-WebLinks $t)[0]) { return 'Installed' } else { return 'Not installed' }
+            }
             if (-not $t.Id) {
                 if (Find-Uninstall $t.Detect) { return 'Installed' } else { return 'Not installed' }
             }
@@ -728,6 +734,37 @@ function Start-MyApps {
         function Stop-Portable($t) {
             Get-Process -Name ([IO.Path]::GetFileNameWithoutExtension($t.Exe)) -ErrorAction SilentlyContinue | Stop-Process -Force
             Start-Sleep -Milliseconds 500
+        }
+
+        # Microsoft Store apps (through winget's msstore source)
+        function Install-Store($t) {
+            Log "Installing $($t.Name) from the Microsoft Store..."
+            $r = Invoke-Winget @('install', '--id', $t.Store, '--source', 'msstore', '--accept-package-agreements', '--accept-source-agreements')
+            if ($r.Code -eq 0 -or (Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue)) { Log "$($t.Name): installed." ; return }
+            Log-Failure $t.Name $r
+            Log "$($t.Name): opening it in the Microsoft Store instead - click Get there."
+            Start-Process "ms-windows-store://pdp/?ProductId=$($t.Store)"
+        }
+        function Uninstall-Store($t) {
+            $pk = Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue
+            if (-not $pk) { Log "$($t.Name): not installed."; return }
+            Log "Uninstalling $($t.Name)..."
+            try { $pk | Remove-AppxPackage -ErrorAction Stop; Log "$($t.Name): removed." }
+            catch { Log "$($t.Name): couldn't remove it: $($_.Exception.Message)" }
+        }
+
+        # Websites as apps: Start menu and desktop shortcuts that open the site in your default browser
+        function Get-WebLinks($t) {
+            @((Join-Path ([Environment]::GetFolderPath('Programs')) "$($t.Name).url"),
+              (Join-Path ([Environment]::GetFolderPath('Desktop'))  "$($t.Name).url"))
+        }
+        function Install-Web($t) {
+            foreach ($lp in (Get-WebLinks $t)) { Set-Content -Path $lp -Value "[InternetShortcut]`r`nURL=$($t.Web)`r`n" -Encoding ASCII }
+            Log "$($t.Name): added Start menu and desktop shortcuts to $($t.Web) (it has no Windows app; it opens in your browser)."
+        }
+        function Uninstall-Web($t) {
+            Get-WebLinks $t | Where-Object { Test-Path $_ } | Remove-Item -Force -ErrorAction SilentlyContinue
+            Log "$($t.Name): shortcuts removed."
         }
 
         # Newest GitHub release (pre-releases included) with a file matching the pattern
@@ -1007,6 +1044,8 @@ function Start-MyApps {
 
                     'install' {
                         $sync.Status[$t.Key] = 'Installing...'
+                        if ($t.Store)     { Install-Store $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Web)       { Install-Web $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Page) {
                             Log "$($t.Name): its maker only offers the installer on their website. Opening $($t.Page) - download and run it, then press Refresh."
@@ -1032,6 +1071,8 @@ function Start-MyApps {
 
                     'update' {
                         $sync.Status[$t.Key] = 'Updating...'
+                        if ($t.Store)     { Install-Store $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Web)       { Install-Web $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Portable)  { Install-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Page) {
                             Log "$($t.Name): its maker only offers the installer on their website. Opening $($t.Page) - download and run it, then press Refresh."
@@ -1059,6 +1100,8 @@ function Start-MyApps {
 
                     'uninstall' {
                         $sync.Status[$t.Key] = 'Removing...'
+                        if ($t.Store)     { Uninstall-Store $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if ($t.Web)       { Uninstall-Web $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Portable)  { Uninstall-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer -or $t.Page) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
                         Uninstall-Winget $t
@@ -1171,7 +1214,7 @@ function Start-MyApps {
     function Get-AppKey($app) { if ($app.id) { $app.id } else { "direct:$($app.name)" } }
     function New-Task($action, $app) {
         [pscustomobject]@{ Action = $action; Key = (Get-AppKey $app); Id = $app.id; Name = $app.name
-                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Page = $app.page; Mirrors = @($app.mirrors); Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
+                           Url = $app.homepage; Installer = $(if ($app.githubinstaller) { "github:$($app.githubinstaller)" } else { $app.installer }); Args = $app.args; UninstallArgs = $app.uninstallargs; Portable = $(if ($app.github) { "github:$($app.github)" } else { $app.portable }); Asset = $app.asset; Page = $app.page; Mirrors = @($app.mirrors); Store = $app.store; Appx = $app.appx; Web = $app.web; Exe = $app.exe; Scope = $app.scope; Override = $app.override; Ids = @($app.ids | Where-Object { $_ }); Detect = $(if ($app.detect) { $app.detect } else { $app.name }) }
     }
     function Get-Selected { @($rows.Values | Where-Object { $_.Check.IsChecked } | ForEach-Object { $_.App }) }
     function Get-StatusTasks { @($apps | ForEach-Object { New-Task 'status' $_ }) }
