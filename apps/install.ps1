@@ -12,6 +12,22 @@ function Start-MyApps {
     $ScriptUrl = "$RepoRaw/install.ps1"
     $AppsUrl   = "$RepoRaw/apps.json"
 
+    # ---------- Started from the local copy (shortcut)? Get the latest version first ----------
+    if ($PSCommandPath -and $PSCommandPath -like "$env:ProgramData\SoftservTools\*" -and -not $env:SST_FRESH) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $new = Join-Path $env:TEMP 'SoftservTools-latest.ps1'
+            Invoke-WebRequest -Uri "$ScriptUrl`?t=$([DateTime]::Now.Ticks)" -OutFile $new -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+            $ok = (Get-Item $new).Length -gt 20000 -and (Select-String -Path $new -Pattern 'function Start-MyApps' -Quiet)
+            if ($ok -and (Get-FileHash $new).Hash -ne (Get-FileHash $PSCommandPath).Hash) {
+                Copy-Item $new $PSCommandPath -Force
+                $env:SST_FRESH = '1'
+                & $PSCommandPath
+                return
+            }
+        } catch {}
+    }
+
     # ---------- Relaunch as admin in Windows PowerShell (needed for installs, restore points, WPF) ----------
     $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
     $isAdmin   = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -1061,6 +1077,7 @@ function Start-MyApps {
                             $sync.Status[$t.Key] = Get-State $t; break
                         }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if (-not $t.Id) { Log "$($t.Name): this version of Softserv Tools doesn't know how to install it. Close and reopen Softserv Tools to get the latest version."; break }
                         Log "Installing $($t.Name)..."
                         $wa = @('install', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
                                 '--accept-package-agreements', '--accept-source-agreements')
@@ -1088,6 +1105,7 @@ function Start-MyApps {
                             $sync.Status[$t.Key] = Get-State $t; break
                         }
                         if ($t.Installer) { Install-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if (-not $t.Id) { Log "$($t.Name): this version of Softserv Tools doesn't know how to update it. Close and reopen Softserv Tools to get the latest version."; break }
                         Log "Updating $($t.Name)..."
                         $wa = @('upgrade', '--id', $t.Id, '-e', '--source', 'winget', '--silent',
                                 '--accept-package-agreements', '--accept-source-agreements')
@@ -1112,6 +1130,7 @@ function Start-MyApps {
                         if ($t.Web)       { Uninstall-Web $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Portable)  { Uninstall-Portable $t; $sync.Status[$t.Key] = Get-State $t; break }
                         if ($t.Installer -or $t.Page) { Uninstall-Direct $t; $sync.Status[$t.Key] = Get-State $t; break }
+                        if (-not $t.Id) { Log "$($t.Name): this version of Softserv Tools doesn't know how to uninstall it. Close and reopen Softserv Tools to get the latest version."; break }
                         Uninstall-Winget $t
                         $sync.Status[$t.Key] = Get-State $t
                     }
