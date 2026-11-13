@@ -658,7 +658,8 @@ function Start-MyApps {
                 if (Get-PortableExe $t) { return 'Installed' } else { return 'Not installed' }
             }
             if ($t.Store) {
-                if (Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue) { return 'Installed' } else { return 'Not installed' }
+                $has = if ($t.Appx) { Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue } else { Find-Uninstall $t.Detect }
+                if ($has) { return 'Installed' } else { return 'Not installed' }
             }
             if ($t.Web) {
                 if (Test-Path (Get-WebLinks $t)[0]) { return 'Installed' } else { return 'Not installed' }
@@ -740,12 +741,19 @@ function Start-MyApps {
         function Install-Store($t) {
             Log "Installing $($t.Name) from the Microsoft Store..."
             $r = Invoke-Winget @('install', '--id', $t.Store, '--source', 'msstore', '--accept-package-agreements', '--accept-source-agreements')
-            if ($r.Code -eq 0 -or (Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue)) { Log "$($t.Name): installed." ; return }
+            $has = if ($t.Appx) { Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue } else { Find-Uninstall $t.Detect }
+            if ($r.Code -eq 0 -or $has) { Log "$($t.Name): installed." ; return }
             Log-Failure $t.Name $r
+            if ($t.Installer) {
+                Log "$($t.Name): trying the maker's own installer instead..."
+                Install-Direct $t
+                return
+            }
             Log "$($t.Name): opening it in the Microsoft Store instead - click Get there."
             Start-Process "ms-windows-store://pdp/?ProductId=$($t.Store)"
         }
         function Uninstall-Store($t) {
+            if (-not $t.Appx) { Uninstall-Direct $t; return }
             $pk = Get-AppxPackage -Name $t.Appx -ErrorAction SilentlyContinue
             if (-not $pk) { Log "$($t.Name): not installed."; return }
             Log "Uninstalling $($t.Name)..."
