@@ -4,18 +4,12 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "=== coingecko purple-bitcoin"; curl -s -m 25 "https://api.coingecko.com/api/v3/coins/purple-bitcoin?localization=false&tickers=true&market_data=true&community_data=false&developer_data=false" | python3 -c "import sys,json
-          d=json.load(sys.stdin);print(d.get('symbol'),d.get('name'),'platforms',d.get('platforms'));m=d.get('market_data') or {};print('price',m.get('current_price',{}).get('usd'),'mcap',m.get('market_cap',{}).get('usd'),'vol',m.get('total_volume',{}).get('usd'),'chg24',m.get('price_change_percentage_24h'))
-          import collections;print('top tickers',[(t['market']['name'],t['base'][:12],t['target'][:8],round(t.get('converted_volume',{}).get('usd',0))) for t in sorted(d.get('tickers',[]),key=lambda t:-t.get('converted_volume',{}).get('usd',0))[:8]])"
-          for a in HfMbPyDdZH6QMaDDUokjYCkHxzjoGBMpgaUvpLWGbF5p 3SsNDRDp16sjV42RsAYfc83QuqRpjyLdMwSUmgMkFkpd; do
-            echo "=== dexscreener $a"; curl -s -m 25 -D /tmp/h "https://api.dexscreener.com/latest/dex/tokens/$a" -o /tmp/d; grep -i 'access-control-allow-origin' /tmp/h
-            python3 -c "import json;d=json.load(open('/tmp/d'));ps=sorted(d.get('pairs') or [],key=lambda p:-(p.get('liquidity') or {}).get('usd',0) if p.get('liquidity') else 0)
-          [print(p['chainId'],p['dexId'],p['pairAddress'],p['baseToken']['symbol'],p['baseToken']['name'],'$'+str(p.get('priceUsd')),'liq',(p.get('liquidity') or {}).get('usd'),'vol24',p['volume'].get('h24'),'chg',p.get('priceChange')) for p in ps[:3]]"
+      - shell: bash
+        run: |
+          P=ATH32pbLRupjq8YNUHQWaJbgBbGPRbrw2GZw5jdZXiRr
+          for q in "minute?aggregate=1&limit=3" "minute?aggregate=15&limit=3" "hour?aggregate=4&limit=3"; do
+            echo "=== geckoterminal $q"; curl -s -m 25 -H 'Accept: application/json' -D /tmp/h -o /tmp/g "https://api.geckoterminal.com/api/v2/networks/solana/pools/$P/ohlcv/$q&currency=usd&token=base" || true
+            head -1 /tmp/h; grep -i 'access-control-allow-origin' /tmp/h; head -c 400 /tmp/g; echo
           done
-          echo "=== geckoterminal pools"; curl -s -m 25 -D /tmp/h "https://api.geckoterminal.com/api/v2/networks/solana/tokens/HfMbPyDdZH6QMaDDUokjYCkHxzjoGBMpgaUvpLWGbF5p/pools?page=1" -o /tmp/g; grep -i 'access-control-allow-origin' /tmp/h
-          python3 -c "import json;d=json.load(open('/tmp/g'));[print(p['attributes']['address'],p['attributes']['name'],p['attributes']['reserve_in_usd']) for p in d.get('data',[])[:3]]"
-          P=$(python3 -c "import json;print(json.load(open('/tmp/g'))['data'][0]['attributes']['address'])")
-          echo "=== geckoterminal ohlcv $P"; curl -s -m 25 -D /tmp/h "https://api.geckoterminal.com/api/v2/networks/solana/pools/$P/ohlcv/minute?aggregate=15&limit=3&currency=usd" | head -c 500; echo; grep -i 'access-control-allow-origin' /tmp/h
-          echo "=== coinboss PBTC / PEPE"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?limit=500" | python3 -c "import sys,json;[print(r) for r in json.load(sys.stdin)['data'] if r['coin'] in ('PEPE','1000PEPE','KPEPE','PBTC')]"
+          echo "=== coinboss PBTC / PEPE"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?limit=500" | python3 -c "import sys,json;[print(r) for r in json.load(sys.stdin)['data'] if r['coin'] in ('PEPE','1000PEPE','KPEPE','PBTC')]" || true
           echo "=== hyperliquid kPEPE"; curl -s -m 25 -H 'Content-Type: application/json' -d '{"type":"candleSnapshot","req":{"coin":"kPEPE","interval":"1h","startTime":'$(( ($(date +%s)-7200)*1000 ))',"endTime":'$(( $(date +%s)*1000 ))'}}' https://api.hyperliquid.xyz/info | head -c 250; echo
