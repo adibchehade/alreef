@@ -53,7 +53,7 @@
   </h2>
   <div class="grid" id="lq"></div>
   <div class="note" id="hist-note"></div>
-  <div class="note">Prices: Binance (crypto) and Hyperliquid perps (Anthropic, S&amp;P 500). Liquidations: CoinBoss, futures/perps. Refreshes every 60 seconds. Not financial advice.</div>
+  <div class="note">Prices: Binance (crypto) and Hyperliquid perps (Anthropic, S&amp;P 500). Liquidations: CoinBoss, futures/perps (none available for the S&amp;P 500 from free sources). Refreshes every 60 seconds. Not financial advice.</div>
 </main>
 <script src="/crypto/lib.js"></script>
 <script>
@@ -65,7 +65,7 @@
   function drawLiq() {
     if (!L) return;
     const t = { l: 0, s: 0, t: 0 };
-    const cards = A.ASSETS.map(a => {
+    const cards = A.LIQ_ASSETS.map(a => {
       const x = L[a.sym][W]; t.l += x.long || 0; t.s += x.short || 0; t.t += x.total || 0;
       const sh = x.long !== null && x.short !== null && x.long + x.short > 0 ? x.long / (x.long + x.short) * 100 : 50;
       return `<div class="card"><div class="nm"><b>${a.name}</b><span>${a.sym}</span></div>
@@ -101,7 +101,7 @@
       if (a.price !== null) last[a.sym] = a.price;
     });
     drawLiq();
-    const liqOk = A.ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
+    const liqOk = A.LIQ_ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
     const s = $('status');
     s.className = 'status' + (liqOk && pxOk ? '' : ' err');
     s.textContent = (pxOk ? '' : 'Prices unavailable · ') + (liqOk ? '' : 'Liquidations unavailable · ') + 'Updated ' + A.spain({ hour: '2-digit', minute: '2-digit' });

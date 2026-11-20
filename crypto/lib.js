@@ -1,7 +1,8 @@
 // alreef.es crypto dashboard — shared data layer (free, keyless sources only)
 //  · Crypto prices: Binance public REST (fallback: data-api.binance.vision)
 //  · ANT / S&P 500 prices: Hyperliquid info API, "xyz" dex (markPx vs prevDayPx)
-//  · 24h liquidations: CoinBoss liquidations overview (live)
+//  · 24h liquidations: CoinBoss /api/liquidations/coins (per-coin, live, one request)
+//    S&P 500 has no free liquidation source (CoinBoss "SPX" is the SPX6900 memecoin), so price only
 //  · 7d / 30d liquidations: live 24h + previous days saved by the GitHub Action
 //    into /crypto/data/liquidations.json
 (function () {
@@ -11,12 +12,13 @@
     { sym: 'BNB', name: 'BNB',      src: 'binance' },
     { sym: 'SOL', name: 'Solana',   src: 'binance' },
     { sym: 'XRP', name: 'XRP',      src: 'binance' },
-    { sym: 'ANT', name: 'Anthropic', src: 'hl', hl: ['ANT', 'ANTHROPIC'] },
-    { sym: 'SPX', name: 'S&P 500',   src: 'hl', hl: ['SP500', 'SPX', 'US500', 'SPY', 'S&P500'] },
+    { sym: 'ANT', name: 'Anthropic', src: 'hl', hl: ['ANT'] },
+    { sym: 'SPX', name: 'S&P 500',   src: 'hl', hl: ['SP500'], noLiq: true },
   ];
+  const LIQ_ASSETS = ASSETS.filter(a => !a.noLiq);
   const BINANCE = ['https://api.binance.com', 'https://data-api.binance.vision'];
   const HL = 'https://api.hyperliquid.xyz/info';
-  const LIQ = c => `https://www.coinboss.com/api/liquidations/overview?coin=${c}`;
+  const LIQ = 'https://www.coinboss.com/api/liquidations/coins?limit=500';
   const HIST = '/crypto/data/liquidations.json';
 
   async function getJSON(url, opt = {}, ms = 12000) {
@@ -69,31 +71,17 @@
     });
   }
 
-  // CoinBoss returns windows (1h, 4h, 12h, 24h). Find the 24h block whatever the nesting.
-  function find24(o, depth = 0) {
-    if (!o || typeof o !== 'object' || depth > 5) return null;
-    if (Array.isArray(o)) {
-      const w = o.find(x => x && /^(24h|1d|day)$/i.test(String(x.window || x.period || x.interval || '')));
-      if (w) return w;
-      for (const x of o) { const r = find24(x, depth + 1); if (r) return r; }
-      return null;
-    }
-    for (const k of Object.keys(o)) if (/^(24h|h24|1d|day|last_?24h)$/i.test(k)) return o[k];
-    for (const k of Object.keys(o)) { const r = find24(o[k], depth + 1); if (r) return r; }
-    return null;
-  }
-  const pick = (o, ks) => { for (const k of ks) if (o && num(o[k]) !== null) return num(o[k]); return null; };
-  function parseLiq(o) {
-    if (!o) return null;
-    const long = pick(o, ['long_usd', 'longUsd', 'long_usd_total', 'longs_usd', 'long']);
-    const short = pick(o, ['short_usd', 'shortUsd', 'short_usd_total', 'shorts_usd', 'short']);
-    let total = pick(o, ['total_usd', 'totalUsd', 'total', 'usd']);
-    if (total === null && long !== null && short !== null) total = long + short;
-    return (long === null && short === null && total === null) ? null : { long, short, total };
-  }
-  async function liq24(sym) {
-    const d = await getJSON(LIQ(sym));
-    return d ? parseLiq(find24(d.data ?? d)) : null;
+  // CoinBoss /liquidations/coins → {range:'24h', data:[{coin, long_usd, short_usd, total_usd, cnt}]}
+  async function liq24All() {
+    const d = await getJSON(LIQ);
+    const out = {};
+    if (d && Array.isArray(d.data)) d.data.forEach(r => {
+      const c = String(r.coin || '').toUpperCase();
+      const long = num(r.long_usd), short = num(r.short_usd);
+      let total = num(r.total_usd); if (total === null && long !== null && short !== null) total = long + short;
+      out[c] = { long, short, total };
+    });
+    return out;
   }
 
   // 7d / 30d = today's live 24h + the previous (n-1) saved days.
@@ -108,14 +96,12 @@
   }
 
   async function liquidations() {
-    const [hist, lives] = await Promise.all([
-      getJSON(HIST + '?t=' + Date.now()),
-      Promise.all(ASSETS.map(a => liq24(a.sym))),
-    ]);
-    const H = (hist && hist.days) || hist || {};
+    const [hist, lives] = await Promise.all([getJSON(HIST + '?t=' + Date.now()), liq24All()]);
+    const H = (hist && hist.days) || {};
+    const ok = Object.keys(lives).length > 0;
     const out = {};
-    ASSETS.forEach((a, i) => {
-      const live = lives[i];
+    LIQ_ASSETS.forEach(a => {
+      const live = ok ? (lives[a.sym] || { long: 0, short: 0, total: 0 }) : null;
       out[a.sym] = { '24h': live ? { ...live, have: 1, need: 1 } : { long: null, short: null, total: null, have: 0, need: 1 },
                      '7d': windowSum(H, a.sym, live, 7), '30d': windowSum(H, a.sym, live, 30) };
     });
@@ -149,5 +135,5 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, prices, liquidations, fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
+  window.ALREEF = { ASSETS, LIQ_ASSETS, prices, liquidations, fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();

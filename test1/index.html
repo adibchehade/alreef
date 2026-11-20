@@ -60,7 +60,7 @@
     </table></div>
     <div class="note" id="hist-note"></div>
   </section>
-  <div class="note">Sources: Binance (crypto prices) · Hyperliquid xyz perps (Anthropic, S&amp;P 500) · CoinBoss (liquidations). ANT and SPX liquidations are for futures/perps. Not financial advice.</div>
+  <div class="note">Sources: Binance (crypto prices) · Hyperliquid xyz perps (Anthropic, S&amp;P 500) · CoinBoss (liquidations). Liquidations are futures/perps; none are available for the S&amp;P 500 from free sources. Not financial advice.</div>
 </main>
 <script src="/crypto/lib.js"></script>
 <script>
@@ -85,7 +85,7 @@
       if (a.price !== null) last[a.sym] = a.price;
     });
     const tot = { l: 0, s: 0, t: 0, w7: 0, w30: 0 };
-    $('lq').innerHTML = A.ASSETS.map(a => {
+    $('lq').innerHTML = A.LIQ_ASSETS.map(a => {
       const x = L[a.sym], d = x['24h'];
       tot.l += d.long || 0; tot.s += d.short || 0; tot.t += d.total || 0; tot.w7 += x['7d'].total || 0; tot.w30 += x['30d'].total || 0;
       const share = d.long !== null && d.short !== null && (d.long + d.short) > 0 ? d.long / (d.long + d.short) * 100 : null;
@@ -98,7 +98,7 @@
     $('hist-note').textContent = h.have < 7
       ? `7D / 30D build up from the daily log (saved 23:55 UTC): ${L.BTC['7d'].have} of 7 days and ${L.BTC['30d'].have} of 30 days so far.`
       : '';
-    const liqOk = A.ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
+    const liqOk = A.LIQ_ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
     const s = $('status');
     s.className = 'status' + (liqOk && pxOk ? '' : ' err');
     s.textContent = (pxOk ? '' : 'prices unavailable · ') + (liqOk ? '' : 'liquidations unavailable · ') + 'updated ' + A.spain();

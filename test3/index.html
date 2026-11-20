@@ -60,7 +60,7 @@
   <span>Block size = amount liquidated</span>
 </div>
 <div class="note" id="hist-note"></div>
-<div class="note">Prices: Binance (crypto), Hyperliquid perps (Anthropic, S&amp;P 500). Liquidations: CoinBoss, futures/perps. Refreshes every 60 seconds. Not financial advice.</div>
+<div class="note">Prices: Binance (crypto), Hyperliquid perps (Anthropic, S&amp;P 500). Liquidations: CoinBoss, futures/perps (none available for the S&amp;P 500 from free sources). Refreshes every 60 seconds. Not financial advice.</div>
 <script src="/crypto/lib.js"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
@@ -69,7 +69,7 @@
   const last = {};
   function draw() {
     if (!L) return;
-    const rows = A.ASSETS.map(a => ({ a, x: L[a.sym][W] }));
+    const rows = A.LIQ_ASSETS.map(a => ({ a, x: L[a.sym][W] }));
     const max = Math.max(1, ...rows.map(r => r.x.total || 0));
     const sum = rows.reduce((s, r) => s + (r.x.total || 0), 0);
     $('tot').textContent = A.fmtUSD(sum || null);
@@ -108,7 +108,7 @@
       if (a.price !== null) last[a.sym] = a.price;
     });
     draw();
-    const liqOk = A.ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
+    const liqOk = A.LIQ_ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
     const s = $('status');
     s.className = 'status' + (liqOk && pxOk ? '' : ' err');
     s.textContent = (pxOk ? '' : 'Prices unavailable · ') + (liqOk ? '' : 'Liquidations unavailable · ') + 'Updated ' + A.spain({ hour: '2-digit', minute: '2-digit' });
