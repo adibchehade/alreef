@@ -5,14 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          H='User-Agent: alreef-probe'
-          for u in "liquidations/overview?coin=BTC" "liquidations/overview?coin=SOL" "liquidations/overview?symbol=BTC" "liquidations/overview?coin=BTCUSDT" \
-                   "liquidations/coins" "liquidations/by-coin" "liquidations/coin?coin=BTC" "liquidations/summary?coin=BTC" "liquidations?coin=BTC&window=24h" \
-                   "liquidations/timeseries?coin=BTC&interval=1h" "liquidations/history?coin=BTC" "openapi.json" "docs/openapi.json"; do
-            echo "=== $u"; curl -s -m 20 -H "$H" -D /tmp/h -o /tmp/b "https://www.coinboss.com/api/$u"; head -1 /tmp/h; grep -i '^access-control' /tmp/h; head -c 1500 /tmp/b; echo
+          for q in "" "?range=24h" "?range=7d" "?range=30d" "?range=1h" "?window=7d" "?limit=500"; do
+            echo "=== coins$q"
+            curl -s -m 25 -H 'User-Agent: alreef-probe' "https://www.coinboss.com/api/liquidations/coins$q" | python3 -c "import sys,json
+          d=json.load(sys.stdin); rows=d.get('data') or []
+          print('range=',d.get('range'),'rows=',len(rows),'keys=',list(d.keys()))
+          want={'BTC','ETH','BNB','SOL','XRP','ANT'}
+          for r in rows:
+            c=str(r.get('coin',''))
+            if c in want or any(k in c.upper() for k in ('SP','500','SPX','US5','SPY','NDX','XYZ')): print(r)"
           done
-          echo "=== openapi liquidation paths"
-          curl -s -m 20 -H "$H" https://www.coinboss.com/api/openapi.json | python3 -c "import sys,json
-          try:
-            d=json.load(sys.stdin);[print(p, list(v.keys()), [x.get('name') for m in v.values() if isinstance(m,dict) for x in m.get('parameters',[])]) for p,v in d.get('paths',{}).items() if 'liq' in p.lower()]
-          except Exception as e: print('no openapi',e)"
