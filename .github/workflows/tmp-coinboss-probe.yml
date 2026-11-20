@@ -5,13 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for q in "" "?range=24h" "?range=7d" "?range=30d" "?range=1h" "?window=7d" "?limit=500"; do
-            echo "=== coins$q"
-            curl -s -m 25 -H 'User-Agent: alreef-probe' "https://www.coinboss.com/api/liquidations/coins$q" | python3 -c "import sys,json
-          d=json.load(sys.stdin); rows=d.get('data') or []
-          print('range=',d.get('range'),'rows=',len(rows),'keys=',list(d.keys()))
-          want={'BTC','ETH','BNB','SOL','XRP','ANT'}
-          for r in rows:
-            c=str(r.get('coin',''))
-            if c in want or any(k in c.upper() for k in ('SP','500','SPX','US5','SPY','NDX','XYZ')): print(r)"
-          done
+          echo "=== hyperliquid xyz universe"
+          curl -s -m 25 -H 'Content-Type: application/json' -d '{"type":"metaAndAssetCtxs","dex":"xyz"}' -D /tmp/h -o /tmp/hl https://api.hyperliquid.xyz/info; head -1 /tmp/h; grep -i '^access-control' /tmp/h
+          python3 -c "import json
+          m,c=json.load(open('/tmp/hl'))
+          for u,x in zip(m['universe'],c): print(u['name'], x.get('markPx'), x.get('prevDayPx'))"
+          echo "=== cors preflight hyperliquid"
+          curl -s -m 20 -X OPTIONS -H 'Origin: https://alreef.es' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -D - -o /dev/null https://api.hyperliquid.xyz/info | grep -i -E '^HTTP|access-control'
+          echo "=== coinboss raw SPX/NDX/SP500 prints"
+          curl -s -m 25 'https://www.coinboss.com/api/liquidations?limit=1000' | python3 -c "import sys,json
+          d=json.load(sys.stdin)['data']; seen=set()
+          for r in d:
+            k=(r['exchange'],r['symbol'],r['coin_base'])
+            if r['coin_base'] in ('SPX','NDX100','SP500','US500','ANT') and k not in seen: seen.add(k); print(k, r['price'])"
+          echo "=== binance futures SPX"
+          curl -s -m 20 'https://fapi.binance.com/fapi/v1/ticker/price?symbol=SPXUSDT'; echo
