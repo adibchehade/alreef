@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Markets · Terminal (test 1)</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#07090b; --panel:#0d1115; --line:#1b232b; --txt:#c9d3da; --dim:#6b7a86; --amber:#ffb300; --up:#00e676; --dn:#ff4d4d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:13px/1.35 ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace; }
+  header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:10px 16px; background:#000; border-bottom:2px solid var(--amber); }
+  .brand { color:#000; background:var(--amber); font-weight:700; padding:3px 8px; letter-spacing:.08em; }
+  .hdr-t { color:var(--amber); font-weight:700; letter-spacing:.06em; }
+  .clock { margin-left:auto; text-align:right; }
+  .clock b { color:#fff; font-size:20px; letter-spacing:.04em; }
+  .clock small { display:block; color:var(--dim); }
+  main { padding:14px 16px 24px; display:grid; gap:14px; max-width:1200px; }
+  section { background:var(--panel); border:1px solid var(--line); }
+  h2 { margin:0; padding:7px 10px; font-size:12px; color:var(--amber); letter-spacing:.12em; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; }
+  h2 span { color:var(--dim); font-weight:400; letter-spacing:0; }
+  .wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:620px; }
+  th, td { padding:6px 10px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
+  th { color:var(--dim); font-weight:400; font-size:11px; letter-spacing:.08em; }
+  th:first-child, td:first-child { text-align:left; }
+  td.sym { color:#fff; font-weight:700; }
+  td.sym small { color:var(--dim); font-weight:400; margin-left:6px; }
+  .up { color:var(--up); } .dn { color:var(--dn); }
+  td.px { color:#fff; font-size:15px; transition:background .6s; }
+  .flash-up { background:rgba(0,230,118,.28) !important; } .flash-dn { background:rgba(255,77,77,.28) !important; }
+  tr.tot td { color:var(--amber); font-weight:700; border-top:1px solid var(--amber); }
+  .ls { display:inline-block; width:90px; height:8px; background:var(--dn); vertical-align:middle; position:relative; }
+  .ls i { position:absolute; left:0; top:0; bottom:0; background:var(--up); }
+  .note { color:var(--dim); font-size:11px; padding:8px 10px; }
+  .status { color:var(--dim); font-size:11px; }
+  .status.err { color:var(--dn); }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">ALREEF</span>
+  <span class="hdr-t">MARKETS TERMINAL</span>
+  <span class="status" id="status">loading…</span>
+  <div class="clock"><b id="clock">--:--:--</b><small id="date"></small></div>
+</header>
+<main>
+  <section>
+    <h2>PRICES <span>refresh 60s</span></h2>
+    <div class="wrap"><table>
+      <thead><tr><th>ASSET</th><th>LAST</th><th>24H %</th><th>24H HIGH</th><th>24H LOW</th><th>24H VOL</th></tr></thead>
+      <tbody id="px"></tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>LIQUIDATIONS · USD <span>longs = green bar share</span></h2>
+    <div class="wrap"><table>
+      <thead><tr><th>ASSET</th><th>24H LONG</th><th>24H SHORT</th><th>24H TOTAL</th><th>L/S</th><th>7D TOTAL</th><th>30D TOTAL</th></tr></thead>
+      <tbody id="lq"></tbody>
+    </table></div>
+    <div class="note" id="hist-note"></div>
+  </section>
+  <div class="note">Sources: Binance (crypto prices) · Hyperliquid xyz perps (Anthropic, S&amp;P 500) · CoinBoss (liquidations). ANT and SPX liquidations are for futures/perps. Not financial advice.</div>
+</main>
+<script src="/crypto/lib.js"></script>
+<script>
+  const A = window.ALREEF, $ = id => document.getElementById(id);
+  A.clock($('clock'), $('date'));
+  const last = {};
+  function cls(v) { return v === null ? '' : v >= 0 ? 'up' : 'dn'; }
+  async function refresh() {
+    $('status').textContent = 'updating…';
+    const [P, L] = await Promise.all([A.prices(), A.liquidations()]);
+    $('px').innerHTML = P.map(a => `<tr>
+        <td class="sym">${a.sym}<small>${a.name}</small></td>
+        <td class="px" data-s="${a.sym}">${A.fmtPrice(a.price)}</td>
+        <td class="${cls(a.chg)}">${A.fmtPct(a.chg)}</td>
+        <td>${A.fmtPrice(a.high)}</td><td>${A.fmtPrice(a.low)}</td><td>${A.fmtUSD(a.vol)}</td></tr>`).join('');
+    P.forEach(a => {
+      const td = document.querySelector(`td.px[data-s="${a.sym}"]`);
+      if (a.price !== null && last[a.sym] !== undefined && a.price !== last[a.sym]) {
+        td.classList.add(a.price > last[a.sym] ? 'flash-up' : 'flash-dn');
+        setTimeout(() => td.classList.remove('flash-up', 'flash-dn'), 900);
+      }
+      if (a.price !== null) last[a.sym] = a.price;
+    });
+    const tot = { l: 0, s: 0, t: 0, w7: 0, w30: 0 };
+    $('lq').innerHTML = A.ASSETS.map(a => {
+      const x = L[a.sym], d = x['24h'];
+      tot.l += d.long || 0; tot.s += d.short || 0; tot.t += d.total || 0; tot.w7 += x['7d'].total || 0; tot.w30 += x['30d'].total || 0;
+      const share = d.long !== null && d.short !== null && (d.long + d.short) > 0 ? d.long / (d.long + d.short) * 100 : null;
+      return `<tr><td class="sym">${a.sym}<small>${a.name}</small></td>
+        <td class="up">${A.fmtUSD(d.long)}</td><td class="dn">${A.fmtUSD(d.short)}</td><td>${A.fmtUSD(d.total)}</td>
+        <td>${share === null ? '—' : `<span class="ls" title="longs ${share.toFixed(0)}%"><i style="width:${share}%"></i></span>`}</td>
+        <td>${A.fmtUSD(x['7d'].total)}</td><td>${A.fmtUSD(x['30d'].total)}</td></tr>`;
+    }).join('') + `<tr class="tot"><td>TOTAL</td><td>${A.fmtUSD(tot.l)}</td><td>${A.fmtUSD(tot.s)}</td><td>${A.fmtUSD(tot.t)}</td><td></td><td>${A.fmtUSD(tot.w7)}</td><td>${A.fmtUSD(tot.w30)}</td></tr>`;
+    const h = L.BTC['7d'];
+    $('hist-note').textContent = h.have < 7
+      ? `7D / 30D build up from the daily log (saved 23:55 UTC): ${L.BTC['7d'].have} of 7 days and ${L.BTC['30d'].have} of 30 days so far.`
+      : '';
+    const liqOk = A.ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
+    const s = $('status');
+    s.className = 'status' + (liqOk && pxOk ? '' : ' err');
+    s.textContent = (pxOk ? '' : 'prices unavailable · ') + (liqOk ? '' : 'liquidations unavailable · ') + 'updated ' + A.spain();
+  }
+  A.every60(refresh);
+</script>
+</body>
+</html>

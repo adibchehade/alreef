@@ -1,0 +1,33 @@
+name: Crypto · save daily liquidations
+
+on:
+  schedule:
+    - cron: '55 23 * * *'   # 23:55 UTC every day
+  workflow_dispatch:         # allows a manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crypto-liquidations
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Save today's 24h liquidation totals
+        run: python crypto/scripts/log_liquidations.py
+      - name: Commit
+        run: |
+          git config user.name "alreef-liquidations-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add crypto/data/liquidations.json
+          git diff --cached --quiet && { echo "no change"; exit 0; }
+          git commit -m "Crypto: daily liquidations $(date -u +%F)"
+          git pull --rebase origin main
+          git push
