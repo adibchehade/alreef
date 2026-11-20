@@ -9,37 +9,130 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a0b;
-      --bg-elevated: #141416;
-      --bg-card: #18181b;
-      --fg: #fafafa;
-      --fg-muted: #a1a1aa;
-      --fg-subtle: #71717a;
-      --accent: #e8b04c;
-      --accent-hover: #f0c060;
-      --border: #27272a;
-      --border-hover: #3f3f46;
-      --card-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.02);
-      --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.04);
+      --bg: #111317;
+      --panel: #15181d;
+      --panel-border: #23272f;
+      --card: #1b1e24;
+      --card-border: #2a2f38;
+      --card-hover: #22262e;
+      --btn: #1b1e24;
+      --btn-border: #2e333d;
+      --text: #eceef2;
+      --muted: #9aa3b2;
+      --accent: #0077c3;
+      --on-accent: #ffffff;
+      --accent-text: #3aa0e0;
+      --accent-hover: #6cbbea;
+      --log-bg: #0b0d10;
+      --log-text: #b8bfca;
+      --check-border: #4a515e;
+      --thumb: #3a404b;
+      --danger: #ff8a93;
+      --ok-fg: #4ade80;
+      --ok-bg: #153024;
+      --warn-fg: #fbbf24;
+      --warn-bg: #3a2e12;
+      --off-fg: #9aa3b2;
+      --off-bg: #23272f;
+      --work-fg: #6cbbea;
+      --work-bg: #13293b;
       --radius: 10px;
       --transition: 180ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #fafafa;
-        --bg-elevated: #ffffff;
-        --bg-card: #fafafa;
-        --fg: #09090b;
-        --fg-muted: #52525b;
-        --fg-subtle: #71717a;
-        --accent: #b8860b;
-        --accent-hover: #a0760a;
-        --border: #e4e4e7;
-        --border-hover: #d4d4d8;
-        --card-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04);
-        --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.06);
-      }
+
+    /* Navy (LiberNT) theme */
+    [data-theme="navy"] {
+      --bg: #08122b;
+      --panel: #0c1a3a;
+      --panel-border: #1a2d55;
+      --card: #11234b;
+      --card-border: #1a3260;
+      --card-hover: #17306a;
+      --btn: #11234b;
+      --btn-border: #1e3566;
+      --text: #e6eef8;
+      --muted: #8fa3c4;
+      --accent: #0077c3;
+      --on-accent: #ffffff;
+      --accent-text: #2a94d6;
+      --accent-hover: #60b4e8;
+      --log-bg: #050c1e;
+      --log-text: #b4c3da;
+      --check-border: #3d5a8c;
+      --thumb: #2a4373;
+      --danger: #ff8a93;
+      --ok-fg: #3ddc97;
+      --ok-bg: #14302a;
+      --warn-fg: #ffb547;
+      --warn-bg: #3a2d14;
+      --off-fg: #8fa3c4;
+      --off-bg: #16264a;
+      --work-fg: #60b4e8;
+      --work-bg: #0b2f66;
     }
+
+    /* Teal theme */
+    [data-theme="teal"] {
+      --bg: #0b1416;
+      --panel: #0f1b1d;
+      --panel-border: #1c2e31;
+      --card: #132124;
+      --card-border: #1f3337;
+      --card-hover: #18292d;
+      --btn: #132124;
+      --btn-border: #24393d;
+      --text: #e6f2f1;
+      --muted: #94a9ac;
+      --accent: #14b8a6;
+      --on-accent: #042f2b;
+      --accent-text: #2dd4bf;
+      --accent-hover: #5eead4;
+      --log-bg: #071012;
+      --log-text: #b3c7c9;
+      --check-border: #3b5458;
+      --thumb: #2a4246;
+      --danger: #ff8a93;
+      --ok-fg: #86efac;
+      --ok-bg: #1b2e1e;
+      --warn-fg: #fcd34d;
+      --warn-bg: #3a3014;
+      --off-fg: #94a9ac;
+      --off-bg: #1a2a2d;
+      --work-fg: #5eead4;
+      --work-bg: #0f3532;
+    }
+
+    /* Light theme */
+    [data-theme="light"] {
+      --bg: #f3f4f6;
+      --panel: #fafafb;
+      --panel-border: #e1e4e8;
+      --card: #ffffff;
+      --card-border: #e1e4e8;
+      --card-hover: #eef5fc;
+      --btn: #ffffff;
+      --btn-border: #d5d9df;
+      --text: #1b1f24;
+      --muted: #5b6370;
+      --accent: #0067c0;
+      --on-accent: #ffffff;
+      --accent-text: #0067c0;
+      --accent-hover: #0a84e0;
+      --log-bg: #ffffff;
+      --log-text: #39404a;
+      --check-border: #9aa1ab;
+      --thumb: #c5cad1;
+      --danger: #c42b1c;
+      --ok-fg: #11703a;
+      --ok-bg: #dcf5e5;
+      --warn-fg: #8a5300;
+      --warn-bg: #fcefd3;
+      --off-fg: #5b6370;
+      --off-bg: #eceef1;
+      --work-fg: #0067c0;
+      --work-bg: #e1eefb;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
@@ -47,7 +140,7 @@
       min-height: 100vh;
       font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
-      color: var(--fg);
+      color: var(--text);
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -60,6 +153,7 @@
     header {
       margin-bottom: 48px;
       text-align: center;
+      position: relative;
     }
     .logo {
       display: inline-flex;
@@ -69,12 +163,12 @@
       font-weight: 600;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--fg-subtle);
+      color: var(--muted);
       text-decoration: none;
       margin-bottom: 16px;
       transition: color var(--transition);
     }
-    .logo:hover { color: var(--accent); }
+    .logo:hover { color: var(--accent-text); }
     .logo svg { width: 20px; height: 20px; flex-shrink: 0; }
     h1 {
       font-size: clamp(2.5rem, 5vw, 3.5rem);
@@ -82,14 +176,14 @@
       letter-spacing: -0.02em;
       line-height: 1.1;
       margin-bottom: 12px;
-      background: linear-gradient(135deg, var(--fg) 0%, var(--fg-muted) 100%);
+      background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .subtitle {
       font-size: clamp(1rem, 2vw, 1.15rem);
-      color: var(--fg-muted);
+      color: var(--muted);
       font-weight: 400;
       max-width: 600px;
       margin: 0 auto;
@@ -100,11 +194,9 @@
       gap: 32px;
       margin-top: 32px;
       padding-top: 24px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--panel-border);
     }
-    .stat {
-      text-align: center;
-    }
+    .stat { text-align: center; }
     .stat-value {
       font-family: 'JetBrains Mono', monospace;
       font-size: 1.75rem;
@@ -117,9 +209,59 @@
       font-weight: 500;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--fg-subtle);
+      color: var(--muted);
       margin-top: 4px;
     }
+
+    /* Theme picker */
+    .theme-picker {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    @media (max-width: 640px) {
+      .theme-picker {
+        position: static;
+        justify-content: center;
+        margin-top: 16px;
+      }
+    }
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 14px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: var(--accent-text);
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-text);
+    }
+    .theme-swatch.auto { background: linear-gradient(135deg, #888 0%, #aaa 100%); }
+    .theme-swatch.graphite { background: #111317; }
+    .theme-swatch.navy { background: #08122b; }
+    .theme-swatch.teal { background: #0b1416; }
+    .theme-swatch.light { background: #f3f4f6; border-color: #e1e4e8; }
+    .theme-swatch.auto::after {
+      content: 'A';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
     .search-wrapper {
       position: relative;
       max-width: 560px;
@@ -130,17 +272,17 @@
       padding: 16px 20px 16px 52px;
       font-family: inherit;
       font-size: 1rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
       border-radius: var(--radius);
-      color: var(--fg);
+      color: var(--text);
       transition: border-color var(--transition), box-shadow var(--transition);
     }
-    .search-input::placeholder { color: var(--fg-subtle); }
+    .search-input::placeholder { color: var(--muted); }
     .search-input:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(232, 176, 76, 0.15);
+      box-shadow: 0 0 0 3px rgba(0, 119, 195, 0.15);
     }
     .search-icon {
       position: absolute;
@@ -149,11 +291,12 @@
       transform: translateY(-50%);
       width: 20px;
       height: 20px;
-      color: var(--fg-subtle);
+      color: var(--muted);
       pointer-events: none;
       transition: color var(--transition);
     }
     .search-input:focus + .search-icon { color: var(--accent); }
+
     .categories {
       display: flex;
       flex-wrap: wrap;
@@ -167,35 +310,36 @@
       font-size: 0.8rem;
       font-weight: 500;
       letter-spacing: 0.02em;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
       border-radius: 999px;
-      color: var(--fg-muted);
+      color: var(--muted);
       cursor: pointer;
       transition: all var(--transition);
     }
     .category-btn:hover {
-      border-color: var(--border-hover);
-      color: var(--fg);
+      border-color: var(--accent-text);
+      color: var(--text);
     }
     .category-btn.active,
     .category-btn.active:hover {
       background: var(--accent);
       border-color: var(--accent);
-      color: var(--bg);
+      color: var(--on-accent);
     }
     .category-btn:focus-visible {
       outline: none;
       box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg);
     }
+
     .tools-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
     }
     .tool-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
+      background: var(--card);
+      border: 1px solid var(--card-border);
       border-radius: var(--radius);
       padding: 24px;
       text-decoration: none;
@@ -204,17 +348,23 @@
       flex-direction: column;
       gap: 12px;
       transition: all var(--transition);
-      box-shadow: var(--card-shadow);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.02);
+    }
+    [data-theme="light"] .tool-card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04);
     }
     .tool-card:hover {
-      border-color: var(--border-hover);
-      box-shadow: var(--card-shadow-hover);
+      border-color: var(--accent-text);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.04);
       transform: translateY(-2px);
+    }
+    [data-theme="light"] .tool-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.06);
     }
     .tool-card:focus-visible {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent), var(--card-shadow-hover);
+      box-shadow: 0 0 0 2px var(--accent), 0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.04);
     }
     .tool-header {
       display: flex;
@@ -225,8 +375,8 @@
       width: 44px;
       height: 44px;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
-      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--panel), var(--card));
+      border: 1px solid var(--card-border);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -245,7 +395,7 @@
       font-size: 1rem;
       font-weight: 600;
       letter-spacing: -0.01em;
-      color: var(--fg);
+      color: var(--text);
       margin-bottom: 4px;
     }
     .tool-category {
@@ -253,12 +403,12 @@
       font-weight: 500;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--fg-subtle);
+      color: var(--muted);
     }
     .tool-desc {
       font-size: 0.85rem;
       line-height: 1.5;
-      color: var(--fg-muted);
+      color: var(--muted);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -281,17 +431,17 @@
       text-transform: uppercase;
       padding: 4px 10px;
       border-radius: 999px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      color: var(--fg-subtle);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--muted);
     }
-    .tool-type.web { border-color: var(--accent); color: var(--accent); background: rgba(232, 176, 76, 0.1); }
-    .tool-type.github { border-color: var(--fg-muted); }
-    .tool-type.store { border-color: #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    .tool-type.web { border-color: var(--accent); color: var(--accent); background: rgba(0, 119, 195, 0.1); }
+    .tool-type.github { border-color: var(--muted); }
+    .tool-type.store { border-color: #0067c0; color: #0067c0; background: rgba(0, 103, 192, 0.1); }
     .tool-arrow {
       width: 20px;
       height: 20px;
-      color: var(--fg-subtle);
+      color: var(--muted);
       transition: all var(--transition);
       flex-shrink: 0;
     }
@@ -303,15 +453,15 @@
       grid-column: 1 / -1;
       text-align: center;
       padding: 60px 20px;
-      color: var(--fg-subtle);
+      color: var(--muted);
     }
     .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
     footer {
       margin-top: 64px;
       padding-top: 32px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--panel-border);
       text-align: center;
-      color: var(--fg-subtle);
+      color: var(--muted);
       font-size: 0.8rem;
     }
     footer a { color: var(--accent); text-decoration: none; }
@@ -337,6 +487,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         alreef.es
       </a>
+
+      <div class="theme-picker" id="theme-picker" role="radiogroup" aria-label="Color theme">
+        <div class="theme-swatch auto" data-theme="auto" role="radio" aria-label="Auto (follows system)" tabindex="0"></div>
+        <div class="theme-swatch graphite" data-theme="graphite" role="radio" aria-label="Graphite" tabindex="0"></div>
+        <div class="theme-swatch navy" data-theme="navy" role="radio" aria-label="LiberNT Navy" tabindex="0"></div>
+        <div class="theme-swatch teal" data-theme="teal" role="radio" aria-label="Midnight Teal" tabindex="0"></div>
+        <div class="theme-swatch light" data-theme="light" role="radio" aria-label="Windows Light" tabindex="0"></div>
+      </div>
+
       <h1>Web Tools</h1>
       <p class="subtitle">A curated collection of useful web-based tools — no sign-ups, no installs, just open and use.</p>
       <div class="stats" aria-label="Statistics">
@@ -378,6 +537,68 @@
     (function() {
       'use strict';
 
+      // Theme system (matching Softserv Tools)
+      const THEMES = {
+        auto: { label: 'Auto', bg: null },
+        graphite: { label: 'Graphite', bg: '#111317' },
+        navy: { label: 'LiberNT Navy', bg: '#08122b' },
+        teal: { label: 'Midnight Teal', bg: '#0b1416' },
+        light: { label: 'Windows Light', bg: '#f3f4f6' }
+      };
+
+      function getAutoTheme() {
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'graphite';
+      }
+
+      function applyTheme(name) {
+        const effectiveTheme = name === 'auto' ? getAutoTheme() : name;
+        document.documentElement.dataset.theme = effectiveTheme;
+        document.documentElement.dataset.themeChoice = name;
+
+        // Update swatch active state
+        document.querySelectorAll('.theme-swatch').forEach(sw => {
+          const isActive = sw.dataset.theme === name;
+          sw.classList.toggle('active', isActive);
+          sw.setAttribute('aria-checked', isActive);
+        });
+
+        // Persist
+        try { localStorage.setItem('alreef-theme', name); } catch (e) {}
+      }
+
+      function initTheme() {
+        let saved = null;
+        try { saved = localStorage.getItem('alreef-theme'); } catch (e) {}
+        applyTheme(saved || 'auto');
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+          const choice = document.documentElement.dataset.themeChoice || 'auto';
+          if (choice === 'auto') applyTheme('auto');
+        });
+
+        // Click/keyboard handlers
+        const picker = document.getElementById('theme-picker');
+        picker.addEventListener('click', (e) => {
+          const swatch = e.target.closest('.theme-swatch');
+          if (swatch) applyTheme(swatch.dataset.theme);
+        });
+        picker.addEventListener('keydown', (e) => {
+          const swatches = Array.from(picker.querySelectorAll('.theme-swatch'));
+          const idx = swatches.findIndex(s => s === document.activeElement);
+          if (idx === -1) return;
+          let next = idx;
+          if (e.key === 'ArrowRight') next = (idx + 1) % swatches.length;
+          else if (e.key === 'ArrowLeft') next = (idx - 1 + swatches.length) % swatches.length;
+          else if (e.key === 'Home') next = 0;
+          else if (e.key === 'End') next = swatches.length - 1;
+          else return;
+          e.preventDefault();
+          swatches[next].focus();
+          applyTheme(swatches[next].dataset.theme);
+        });
+      }
+
       // Tool type detection from apps.json data
       function getToolType(tool) {
         if (tool.web) return 'web';
@@ -387,11 +608,9 @@
       }
 
       function getToolIcon(tool) {
-        // Try to extract a meaningful icon from the name/category
         const name = tool.name.toLowerCase();
         const category = tool.category?.toLowerCase() || '';
 
-        // Category-based icons
         if (category.includes('design') || category.includes('icon') || name.includes('figma') || name.includes('draw') || name.includes('svg') || name.includes('icon') || name.includes('excalidraw') || name.includes('tldraw')) {
           return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>';
         }
@@ -441,7 +660,6 @@
           return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
         }
 
-        // Default generic tool icon
         return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>';
       }
 
@@ -451,7 +669,6 @@
           if (!response.ok) throw new Error('Failed to load tools');
           const data = await response.json();
 
-          // Filter for web tools primarily, but include all
           const webTools = data.filter(t => t.web || t.category?.includes('Web Tools') || t.installer?.includes('github.com'));
           return { all: data, web: webTools };
         } catch (e) {
@@ -478,7 +695,7 @@
           const desc = tool.args || tool.category || 'No description available';
 
           return `
-            <a href="${url}" target="_blank" rel="noopener noreferrer" class="tool-card" role="listitem" aria-label="${tool.name} - ${desc}">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="tool-card" role="listitem" aria-label="${escapeHtml(tool.name)} - ${escapeHtml(desc)}">
               <div class="tool-header">
                 <div class="tool-icon" aria-hidden="true">${icon}</div>
                 <div class="tool-info">
@@ -572,6 +789,8 @@
 
       // Initialize
       document.addEventListener('DOMContentLoaded', async () => {
+        initTheme();
+
         const { all, web } = await loadTools();
         allTools = all.length > 0 ? all : web;
 
