@@ -108,6 +108,141 @@
     return out;
   }
 
+  // ---------- Charts: candles per timeframe ----------
+  // Crypto: Binance klines (fallback Hyperliquid perps). ANT / S&P 500: Hyperliquid xyz candleSnapshot.
+  const TF = {
+    '1h':  { label: '1H',  iv: '1m',  ms: 3600e3 },
+    '4h':  { label: '4H',  iv: '5m',  ms: 4 * 3600e3 },
+    '24h': { label: '24H', iv: '15m', ms: 864e5 },
+    '7d':  { label: '7D',  iv: '1h',  ms: 7 * 864e5 },
+    '30d': { label: '30D', iv: '4h',  ms: 30 * 864e5 },
+  };
+  const IV_MS = { '1m': 6e4, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 };
+  const bar = (t, o, h, l, c, v) => ({ time: Math.floor(t / 1000), open: +o, high: +h, low: +l, close: +c, volume: +v });
+
+  async function hlCandles(coin, tf) {
+    const end = Date.now(), start = end - TF[tf].ms - IV_MS[TF[tf].iv];
+    const d = await getJSON(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'candleSnapshot', req: { coin, interval: TF[tf].iv, startTime: start, endTime: end } }) }, 15000);
+    return Array.isArray(d) ? d.map(k => bar(k.t, k.o, k.h, k.l, k.c, k.v)) : [];
+  }
+  async function candles(asset, tf) {
+    const spec = TF[tf];
+    if (asset.src === 'binance') {
+      const n = Math.min(1000, Math.ceil(spec.ms / IV_MS[spec.iv]) + 1);
+      const q = `/api/v3/klines?symbol=${asset.sym}USDT&interval=${spec.iv}&limit=${n}`;
+      for (const base of BINANCE) {
+        const d = await getJSON(base + q, {}, 15000);
+        if (Array.isArray(d) && d.length) return { src: 'Binance', bars: d.map(k => bar(k[0], k[1], k[2], k[3], k[4], k[7])) };
+      }
+      const hl = await hlCandles(asset.sym, tf);           // fallback: Hyperliquid perp
+      return { src: 'Hyperliquid', bars: hl };
+    }
+    return { src: 'Hyperliquid', bars: await hlCandles('xyz:' + asset.hl[0], tf) };
+  }
+
+  // Short-window liquidations straight from CoinBoss (1h / 4h); 24h, 7d, 30d come from liquidations().
+  async function liqRange(range) {
+    const d = await getJSON(`https://www.coinboss.com/api/liquidations/coins?range=${range}&limit=500`);
+    const out = {};
+    if (d && Array.isArray(d.data)) d.data.forEach(r => {
+      const long = num(r.long_usd), short = num(r.short_usd);
+      let total = num(r.total_usd); if (total === null && long !== null && short !== null) total = long + short;
+      out[String(r.coin || '').toUpperCase()] = { long, short, total };
+    });
+    return Object.keys(out).length ? out : null;
+  }
+
+  // ---------- Technical analysis on the candles ----------
+  function ema(vals, n) {
+    if (vals.length < n) return [];
+    const k = 2 / (n + 1), out = new Array(vals.length).fill(null);
+    let e = vals.slice(0, n).reduce((a, b) => a + b, 0) / n; out[n - 1] = e;
+    for (let i = n; i < vals.length; i++) { e = vals[i] * k + e * (1 - k); out[i] = e; }
+    return out;
+  }
+  function rsi(c, n = 14) {
+    if (c.length <= n) return null;
+    let g = 0, l = 0;
+    for (let i = 1; i <= n; i++) { const d = c[i] - c[i - 1]; d > 0 ? g += d : l -= d; }
+    g /= n; l /= n;
+    for (let i = n + 1; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; }
+    return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  }
+  function atrPct(b, n = 14) {
+    if (b.length <= n) return null;
+    const tr = b.slice(1).map((x, i) => Math.max(x.high - x.low, Math.abs(x.high - b[i].close), Math.abs(x.low - b[i].close)));
+    const a = tr.slice(-n).reduce((s, v) => s + v, 0) / n;
+    return a / b[b.length - 1].close * 100;
+  }
+  // Swing highs/lows: a bar higher (lower) than the k bars on each side.
+  function pivots(b, k = 3) {
+    const hi = [], lo = [];
+    for (let i = k; i < b.length - k; i++) {
+      const w = b.slice(i - k, i + k + 1);
+      if (b[i].high === Math.max(...w.map(x => x.high))) hi.push(b[i].high);
+      if (b[i].low === Math.min(...w.map(x => x.low))) lo.push(b[i].low);
+    }
+    return { hi, lo };
+  }
+  function analyze(b, liq) {
+    if (!b || b.length < 5) return null;
+    const c = b.map(x => x.close), last = c[c.length - 1], first = b[0].open;
+    const high = Math.max(...b.map(x => x.high)), low = Math.min(...b.map(x => x.low));
+    const e20 = ema(c, 20), e50 = ema(c, 50);
+    const E20 = e20.length ? e20[e20.length - 1] : null, E50 = e50.length ? e50[e50.length - 1] : null;
+    const E20prev = e20.length > 10 ? e20[e20.length - 11] : null;
+    const R = rsi(c), ATR = atrPct(b);
+    // Significant swing levels only: at least one average candle range (ATR) away from price.
+    const pv = pivots(b, b.length >= 60 ? 4 : 3);
+    const gap = ATR !== null ? last * ATR / 100 : last * 0.003;
+    const support = Math.max(...pv.lo.filter(v => v < last - gap), -Infinity);
+    const resistance = Math.min(...pv.hi.filter(v => v > last + gap), Infinity);
+    const vols = b.map(x => x.volume), avgV = vols.reduce((s, v) => s + v, 0) / vols.length;
+    const recentV = vols.slice(-5).reduce((s, v) => s + v, 0) / Math.min(5, vols.length);
+    let score = 0, checks = 0;
+    const add = cond => { if (cond === null) return; checks++; score += cond ? 1 : -1; };
+    add(E20 === null ? null : last > E20);
+    add(E20 === null || E50 === null ? null : E20 > E50);
+    add(E20 === null || E20prev === null ? null : E20 > E20prev);
+    add(last > first);
+    const trend = checks === 0 ? 'Mixed' : score >= checks - 1 && score > 0 ? 'Bullish' : score <= -(checks - 1) && score < 0 ? 'Bearish' : 'Mixed';
+    return {
+      last, first, change: (last / first - 1) * 100, high, low,
+      rangePos: high > low ? (last - low) / (high - low) * 100 : null,
+      ema20: E20, ema50: E50, ema20Series: e20, ema50Series: e50,
+      rsi: R, atr: ATR, trend,
+      support: isFinite(support) ? support : null, resistance: isFinite(resistance) ? resistance : null,
+      volRatio: avgV > 0 ? recentV / avgV : null, liq,
+    };
+  }
+  const TF_WORDS = { '1h': ['1 hour', '1-hour'], '4h': ['4 hours', '4-hour'], '24h': ['24 hours', '24-hour'],
+                     '7d': ['7 days', '7-day'], '30d': ['30 days', '30-day'] };
+  function summary(a, tf, name) {
+    if (!a) return 'Not enough price data for this timeframe yet.';
+    const [tfLabel, tfAdj] = TF_WORDS[tf] || [tf, tf];
+    const p = [];
+    const dir = a.change >= 0 ? 'up' : 'down';
+    const where = a.rangePos === null ? 'within' : a.rangePos > 75 ? 'near the top of' : a.rangePos < 25 ? 'near the bottom of' : 'mid-way in';
+    p.push(`${name} is ${dir} ${Math.abs(a.change).toFixed(2)}% over ${tfLabel}, trading ${where} its ${tfAdj} range.`);
+    const t = { Bullish: 'The trend is bullish: price is above its moving averages and they are rising.',
+                Bearish: 'The trend is bearish: price is below its moving averages and they are falling.',
+                Mixed: 'The trend is mixed, with no clear direction on this timeframe.' }[a.trend];
+    p.push(t);
+    if (a.rsi !== null) p.push(a.rsi < 30 ? `RSI ${a.rsi.toFixed(0)} is oversold, so a short-term bounce is possible, though not guaranteed.`
+      : a.rsi > 70 ? `RSI ${a.rsi.toFixed(0)} is overbought, so a pullback is possible.` : `RSI ${a.rsi.toFixed(0)} is neutral.`);
+    if (a.support || a.resistance) p.push(`Nearest support ${a.support ? fmtPrice(a.support) : 'not clear'}, resistance ${a.resistance ? fmtPrice(a.resistance) : 'not clear'}.`);
+    if (a.volRatio !== null && (a.volRatio > 1.5 || a.volRatio < 0.6)) p.push(a.volRatio > 1.5 ? `Volume is running ${a.volRatio.toFixed(1)}× the ${tfAdj} average, so this move has conviction.` : 'Volume is light, so moves may lack follow-through.');
+    const L = a.liq;
+    if (L && L.total) {
+      const ls = L.long / (L.long + L.short || 1) * 100;
+      if (ls >= 65) p.push(`Liquidations were ${ls.toFixed(0)}% longs (${fmtUSD(L.long)}): leveraged buyers were forced out, which adds selling pressure.`);
+      else if (ls <= 35) p.push(`Liquidations were ${(100 - ls).toFixed(0)}% shorts (${fmtUSD(L.short)}): a short squeeze added buying pressure.`);
+      else p.push(`Liquidations were fairly balanced between longs and shorts (${fmtUSD(L.total)} total).`);
+    }
+    return p.join(' ');
+  }
+
   const fmtUSD = v => v === null || v === undefined ? '—'
     : Math.abs(v) >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B'
     : Math.abs(v) >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M'
@@ -135,5 +270,6 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, LIQ_ASSETS, prices, liquidations, fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
+  window.ALREEF = { ASSETS, LIQ_ASSETS, TF, prices, liquidations, liqRange, candles, analyze, summary,
+                    fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();
