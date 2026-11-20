@@ -10,7 +10,7 @@ import os
 import urllib.request
 
 # S&P 500 is not included: CoinBoss "SPX" is the SPX6900 memecoin, not the index.
-COINS = ["BTC", "ETH", "BNB", "SOL", "XRP", "ANT"]
+COINS = ["BTC", "ETH", "BNB", "SOL", "XRP", "PEPE", "ANT"]  # Purple Bitcoin has no futures market
 URL = "https://www.coinboss.com/api/liquidations/coins?limit=500"
 FILE = os.path.join(os.path.dirname(__file__), "..", "data", "liquidations.json")
 KEEP_DAYS = 60

@@ -1,6 +1,7 @@
 // alreef.es crypto dashboard — shared data layer (free, keyless sources only)
 //  · Crypto prices: Binance public REST (fallback: data-api.binance.vision)
 //  · ANT / S&P 500 prices: Hyperliquid info API, "xyz" dex (markPx vs prevDayPx)
+//  · Purple Bitcoin (Solana memecoin): DexScreener price, GeckoTerminal candles
 //  · 24h liquidations: CoinBoss /api/liquidations/coins (per-coin, live, one request)
 //    S&P 500 has no free liquidation source (CoinBoss "SPX" is the SPX6900 memecoin), so price only
 //  · 7d / 30d liquidations: live 24h + previous days saved by the GitHub Action
@@ -12,8 +13,15 @@
     { sym: 'BNB', name: 'BNB',      src: 'binance' },
     { sym: 'SOL', name: 'Solana',   src: 'binance' },
     { sym: 'XRP', name: 'XRP',      src: 'binance' },
+    // PEPE: Binance spot; Hyperliquid fallback trades it as kPEPE (price × 1000)
+    { sym: 'PEPE', name: 'Pepe',    src: 'binance', hlCoin: 'kPEPE', hlScale: 1e-3 },
+    // Purple Bitcoin: Solana memecoin, spot only (no futures, so no liquidations).
+    // Price: DexScreener · charts: GeckoTerminal, main Raydium PBTC/SOL pool.
+    { sym: 'PBTC', name: 'Purple Bitcoin', src: 'dex', chain: 'solana',
+      mint: 'HfMbPyDdZH6QMaDDUokjYCkHxzjoGBMpgaUvpLWGbF5p', pool: 'ATH32pbLRupjq8YNUHQWaJbgBbGPRbrw2GZw5jdZXiRr',
+      noLiq: 'no futures market' },
     { sym: 'ANT', name: 'Anthropic', src: 'hl', hl: ['ANT'] },
-    { sym: 'SPX', name: 'S&P 500',   src: 'hl', hl: ['SP500'], noLiq: true },
+    { sym: 'SPX', name: 'S&P 500',   src: 'hl', hl: ['SP500'], noLiq: 'no free source' },
   ];
   const LIQ_ASSETS = ASSETS.filter(a => !a.noLiq);
   const BINANCE = ['https://api.binance.com', 'https://data-api.binance.vision'];
@@ -54,9 +62,23 @@
     return out;
   }
 
+  // DexScreener: free, keyless, CORS. Pick the most liquid pair for the token.
+  async function dex(a) {
+    const d = await getJSON(`https://api.dexscreener.com/latest/dex/tokens/${a.mint}`);
+    const pairs = (d && d.pairs || []).filter(p => p.baseToken && p.baseToken.address === a.mint);
+    pairs.sort((x, y) => ((y.liquidity || {}).usd || 0) - ((x.liquidity || {}).usd || 0));
+    return pairs[0] || null;
+  }
+
   async function prices() {
-    const [b, h] = await Promise.all([binance(), hyperliquid()]);
+    const [b, h, ...dx] = await Promise.all([binance(), hyperliquid(), ...ASSETS.filter(a => a.src === 'dex').map(dex)]);
+    const D = {}; ASSETS.filter(a => a.src === 'dex').forEach((a, i) => D[a.sym] = dx[i]);
     return ASSETS.map(a => {
+      if (a.src === 'dex') {
+        const p = D[a.sym];
+        return { ...a, price: p ? num(p.priceUsd) : null, chg: p && p.priceChange ? num(p.priceChange.h24) : null,
+                 high: null, low: null, vol: p && p.volume ? num(p.volume.h24) : null };
+      }
       if (a.src === 'binance') {
         const t = b.find(x => x.symbol === a.sym + 'USDT');
         return { ...a, price: t ? num(t.lastPrice) : null, chg: t ? num(t.priceChangePercent) : null,
@@ -120,14 +142,24 @@
   const IV_MS = { '1m': 6e4, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 };
   const bar = (t, o, h, l, c, v) => ({ time: Math.floor(t / 1000), open: +o, high: +h, low: +l, close: +c, volume: +v });
 
-  async function hlCandles(coin, tf) {
+  async function hlCandles(coin, tf, scale = 1) {
     const end = Date.now(), start = end - TF[tf].ms - IV_MS[TF[tf].iv];
     const d = await getJSON(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'candleSnapshot', req: { coin, interval: TF[tf].iv, startTime: start, endTime: end } }) }, 15000);
-    return Array.isArray(d) ? d.map(k => bar(k.t, k.o, k.h, k.l, k.c, k.v)) : [];
+    return Array.isArray(d) ? d.map(k => bar(k.t, k.o * scale, k.h * scale, k.l * scale, k.c * scale, k.v / scale)) : [];
+  }
+  // GeckoTerminal pool OHLCV (USD, newest first). Thin pools skip minutes with no trades.
+  const GT_IV = { '1m': ['minute', 1], '5m': ['minute', 5], '15m': ['minute', 15], '1h': ['hour', 1], '4h': ['hour', 4] };
+  async function gtCandles(a, tf) {
+    const [unit, agg] = GT_IV[TF[tf].iv], n = Math.min(1000, Math.ceil(TF[tf].ms / IV_MS[TF[tf].iv]) + 1);
+    const d = await getJSON(`https://api.geckoterminal.com/api/v2/networks/${a.chain}/pools/${a.pool}/ohlcv/${unit}?aggregate=${agg}&limit=${n}&currency=usd&token=base`, { headers: { Accept: 'application/json' } }, 15000);
+    const list = d && d.data && d.data.attributes && d.data.attributes.ohlcv_list;
+    const since = Date.now() - TF[tf].ms;
+    return Array.isArray(list) ? list.map(k => bar(k[0] * 1000, k[1], k[2], k[3], k[4], k[5])).filter(b => b.time * 1000 >= since).reverse() : [];
   }
   async function candles(asset, tf) {
     const spec = TF[tf];
+    if (asset.src === 'dex') return { src: 'GeckoTerminal', bars: await gtCandles(asset, tf) };
     if (asset.src === 'binance') {
       const n = Math.min(1000, Math.ceil(spec.ms / IV_MS[spec.iv]) + 1);
       const q = `/api/v3/klines?symbol=${asset.sym}USDT&interval=${spec.iv}&limit=${n}`;
@@ -135,7 +167,7 @@
         const d = await getJSON(base + q, {}, 15000);
         if (Array.isArray(d) && d.length) return { src: 'Binance', bars: d.map(k => bar(k[0], k[1], k[2], k[3], k[4], k[7])) };
       }
-      const hl = await hlCandles(asset.sym, tf);           // fallback: Hyperliquid perp
+      const hl = await hlCandles(asset.hlCoin || asset.sym, tf, asset.hlScale || 1);   // fallback: Hyperliquid perp
       return { src: 'Hyperliquid', bars: hl };
     }
     return { src: 'Hyperliquid', bars: await hlCandles('xyz:' + asset.hl[0], tf) };
@@ -244,12 +276,14 @@
   }
 
   const fmtUSD = v => v === null || v === undefined ? '—'
+    : Math.abs(v) >= 1e12 ? '$' + (v / 1e12).toFixed(2) + 'T'
     : Math.abs(v) >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B'
     : Math.abs(v) >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M'
     : Math.abs(v) >= 1e3 ? '$' + (v / 1e3).toFixed(1) + 'K' : '$' + Math.round(v);
   const fmtPrice = v => {
     if (v === null || v === undefined) return '—';
-    const d = v >= 1000 ? 2 : v >= 10 ? 2 : v >= 1 ? 3 : 4;
+    if (v > 0 && v < 0.01) return '$' + v.toLocaleString('en-US', { maximumSignificantDigits: 4 });   // e.g. PEPE $0.000003448
+    const d = v >= 10 ? 2 : v >= 1 ? 3 : 4;
     return '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   };
   const fmtPct = v => v === null || v === undefined ? '—' : (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
