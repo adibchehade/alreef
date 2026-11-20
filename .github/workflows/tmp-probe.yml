@@ -1,0 +1,18 @@
+name: tmp probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          set +e
+          for body in '{"type":"metaAndAssetCtxs"}' '{"type":"metaAndAssetCtxs","dex":"xyz"}'; do
+            echo "=== $body"
+            curl -s -m 25 -H 'Content-Type: application/json' -d "$body" https://api.hyperliquid.xyz/info | python3 -c "import sys,json
+          m,c=json.load(sys.stdin)
+          for u,x in zip(m['universe'],c):
+            n=u['name']
+            if n.split(':')[-1] in ('BTC','ETH','BNB','SOL','XRP','kPEPE','ANT','SP500'): print(n, {k:x.get(k) for k in ('funding','openInterest','markPx','oraclePx','premium','dayNtlVlm')})
+          print('ctx keys', list(c[0].keys()))"
+          done
