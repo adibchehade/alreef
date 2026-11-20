@@ -6,9 +6,10 @@ jobs:
     steps:
       - shell: bash
         run: |
+          set +e
           P=ATH32pbLRupjq8YNUHQWaJbgBbGPRbrw2GZw5jdZXiRr
           for q in "minute?aggregate=1&limit=3" "minute?aggregate=15&limit=3" "hour?aggregate=4&limit=3"; do
-            echo "=== geckoterminal $q"; curl -s -m 25 -H 'Accept: application/json' -D /tmp/h -o /tmp/g "https://api.geckoterminal.com/api/v2/networks/solana/pools/$P/ohlcv/$q&currency=usd&token=base" || true
+            echo "=== geckoterminal $q"; curl -s -m 25 -H 'Origin: https://alreef.es' -H 'Accept: application/json' -D /tmp/h -o /tmp/g "https://api.geckoterminal.com/api/v2/networks/solana/pools/$P/ohlcv/$q&currency=usd&token=base" || true
             head -1 /tmp/h; grep -i 'access-control-allow-origin' /tmp/h; head -c 400 /tmp/g; echo
           done
           echo "=== coinboss PBTC / PEPE"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?limit=500" | python3 -c "import sys,json;[print(r) for r in json.load(sys.stdin)['data'] if r['coin'] in ('PEPE','1000PEPE','KPEPE','PBTC')]" || true
