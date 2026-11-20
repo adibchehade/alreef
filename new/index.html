@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tools — alreef.es</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-elevated: #141416;
+      --bg-card: #18181b;
+      --fg: #fafafa;
+      --fg-muted: #a1a1aa;
+      --fg-subtle: #71717a;
+      --accent: #e8b04c;
+      --accent-hover: #f0c060;
+      --border: #27272a;
+      --border-hover: #3f3f46;
+      --card-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.02);
+      --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.04);
+      --radius: 10px;
+      --transition: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #fafafa;
+        --bg-elevated: #ffffff;
+        --bg-card: #fafafa;
+        --fg: #09090b;
+        --fg-muted: #52525b;
+        --fg-subtle: #71717a;
+        --accent: #b8860b;
+        --accent-hover: #a0760a;
+        --border: #e4e4e7;
+        --border-hover: #d4d4d8;
+        --card-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04);
+        --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.06);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    header {
+      margin-bottom: 48px;
+      text-align: center;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      text-decoration: none;
+      margin-bottom: 16px;
+      transition: color var(--transition);
+    }
+    .logo:hover { color: var(--accent); }
+    .logo svg { width: 20px; height: 20px; flex-shrink: 0; }
+    h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--fg) 0%, var(--fg-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--fg-muted);
+      font-weight: 400;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin-top: 4px;
+    }
+    .search-wrapper {
+      position: relative;
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 16px 20px 16px 52px;
+      font-family: inherit;
+      font-size: 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--fg);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .search-input::placeholder { color: var(--fg-subtle); }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232, 176, 76, 0.15);
+    }
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: var(--fg-subtle);
+      pointer-events: none;
+      transition: color var(--transition);
+    }
+    .search-input:focus + .search-icon { color: var(--accent); }
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+    .category-btn {
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .category-btn:hover {
+      border-color: var(--border-hover);
+      color: var(--fg);
+    }
+    .category-btn.active,
+    .category-btn.active:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    .category-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg);
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .tool-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all var(--transition);
+      box-shadow: var(--card-shadow);
+    }
+    .tool-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--card-shadow-hover);
+      transform: translateY(-2px);
+    }
+    .tool-card:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent), var(--card-shadow-hover);
+    }
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .tool-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .tool-icon svg,
+    .tool-icon img {
+      width: 24px;
+      height: 24px;
+      color: var(--accent);
+    }
+    .tool-icon img { border-radius: 6px; }
+    .tool-info { flex: 1; min-width: 0; }
+    .tool-name {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      margin-bottom: 4px;
+    }
+    .tool-category {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+    }
+    .tool-desc {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--fg-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+      margin-top: auto;
+    }
+    .tool-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--fg-subtle);
+    }
+    .tool-type.web { border-color: var(--accent); color: var(--accent); background: rgba(232, 176, 76, 0.1); }
+    .tool-type.github { border-color: var(--fg-muted); }
+    .tool-type.store { border-color: #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+    .tool-arrow {
+      width: 20px;
+      height: 20px;
+      color: var(--fg-subtle);
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .tool-card:hover .tool-arrow {
+      color: var(--accent);
+      transform: translateX(4px);
+    }
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--fg-subtle);
+    }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+    footer {
+      margin-top: 64px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--fg-subtle);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 640px) {
+      .container { padding: 32px 16px 60px; }
+      header { margin-bottom: 32px; }
+      h1 { font-size: 2rem; }
+      .stats { gap: 20px; }
+      .stat-value { font-size: 1.5rem; }
+      .tools-grid { grid-template-columns: 1fr; }
+      .tool-card { padding: 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="logo" aria-label="Back to alreef.es">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        alreef.es
+      </a>
+      <h1>Web Tools</h1>
+      <p class="subtitle">A curated collection of useful web-based tools — no sign-ups, no installs, just open and use.</p>
+      <div class="stats" aria-label="Statistics">
+        <div class="stat">
+          <div class="stat-value" id="total-tools">0</div>
+          <div class="stat-label">Tools</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="total-categories">0</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="web-tools">0</div>
+          <div class="stat-label">Web-Based</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="search-wrapper">
+      <input type="search" class="search-input" id="search" placeholder="Search tools by name, description, or category..." aria-label="Search tools">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    </div>
+
+    <div class="categories" id="categories" role="tablist" aria-label="Filter by category"></div>
+
+    <div class="tools-grid" id="tools-grid" role="list"></div>
+
+    <div class="empty-state" id="empty-state" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 8l6 6"/><path d="M14 8l-6 6"/></svg>
+      <p>No tools match your search. Try a different query or clear the filter.</p>
+    </div>
+
+    <footer>
+      <p>Data sourced from <a href="../apps/apps.json" target="_blank" rel="noopener">apps.json</a> · Built for <a href="/">alreef.es</a></p>
+    </footer>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Tool type detection from apps.json data
+      function getToolType(tool) {
+        if (tool.web) return 'web';
+        if (tool.github || tool.githubinstaller || tool.detect) return 'github';
+        if (tool.store || tool.appx) return 'store';
+        return 'web';
+      }
+
+      function getToolIcon(tool) {
+        // Try to extract a meaningful icon from the name/category
+        const name = tool.name.toLowerCase();
+        const category = tool.category?.toLowerCase() || '';
+
+        // Category-based icons
+        if (category.includes('design') || category.includes('icon') || name.includes('figma') || name.includes('draw') || name.includes('svg') || name.includes('icon') || name.includes('excalidraw') || name.includes('tldraw')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>';
+        }
+        if (category.includes('development') || category.includes('dev') || name.includes('code') || name.includes('git') || name.includes('api') || name.includes('json') || name.includes('sql') || name.includes('regex') || name.includes('vscode') || name.includes('editor')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+        }
+        if (category.includes('writing') || category.includes('note') || name.includes('markdown') || name.includes('note') || name.includes('dillinger') || name.includes('stackedit') || name.includes('obsidian') || name.includes('logseq') || name.includes('affine')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>';
+        }
+        if (category.includes('media') || name.includes('video') || name.includes('audio') || name.includes('image') || name.includes('photo') || name.includes('ffmpeg') || name.includes('squoosh') || name.includes('compress')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M8 14l4-4 4 4 6-6"/><line x1="18" y1="18" x2="6" y2="18"/></svg>';
+        }
+        if (category.includes('data') || name.includes('chart') || name.includes('graph') || name.includes('csv') || name.includes('table') || name.includes('spreadsheet') || name.includes('ethercalc') || name.includes('grist') || name.includes('datasette')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>';
+        }
+        if (category.includes('privacy') || category.includes('security') || name.includes('crypto') || name.includes('password') || name.includes('encryption') || name.includes('cyberchef') || name.includes('metadata')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+        }
+        if (category.includes('utility') || category.includes('util') || name.includes('file') || name.includes('convert') || name.includes('transfer') || name.includes('drop') || name.includes('paste') || name.includes('qr')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+        }
+        if (category.includes('productivity') || name.includes('project') || name.includes('task') || name.includes('habit') || name.includes('pomodoro') || name.includes('resume') || name.includes('cv') || name.includes('meeting') || name.includes('calendar')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+        }
+        if (category.includes('education') || name.includes('learn') || name.includes('tutor') || name.includes('python') || name.includes('algorithm')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10"/><path d="M6 6h.01M18 6h.01"/><path d="M4 14h16"/><path d="M4 18h16"/></svg>';
+        }
+        if (category.includes('ai') || name.includes('llm') || name.includes('chat') || name.includes('grok') || name.includes('claude')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><path d="M9 11h.01M15 11h.01M12 17h.01"/></svg>';
+        }
+        if (category.includes('browser') || name.includes('browser') || name.includes('tor') || name.includes('brave') || name.includes('firefox')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+        }
+        if (category.includes('remote') || name.includes('desktop') || name.includes('anydesk') || name.includes('rustdesk') || name.includes('ultraviewer')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>';
+        }
+        if (category.includes('download') || name.includes('download') || name.includes('idm') || name.includes('fdm')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+        }
+        if (category.includes('network') || name.includes('vpn') || name.includes('proxy') || name.includes('proxifier') || name.includes('openvpn') || name.includes('9proxy')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/><path d="M21 12a9 9 0 0 0-9-9"/><path d="M3 12a9 9 0 0 1 9-9"/><path d="M21 12a9 9 0 0 1 0 18"/><path d="M3 12a9 9 0 0 0 0 18"/></svg>';
+        }
+        if (category.includes('runtime') || name.includes('python') || name.includes('node') || name.includes('.net') || name.includes('docker') || name.includes('vc++') || name.includes('visual c')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><polyline points="20 17 14 11 20 5"/></svg>';
+        }
+        if (category.includes('antidetect') || name.includes('camoufox') || name.includes('shard') || name.includes('multilogin') || name.includes('gologin') || name.includes('adspower') || name.includes('roxybrowser')) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+        }
+
+        // Default generic tool icon
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>';
+      }
+
+      async function loadTools() {
+        try {
+          const response = await fetch('../apps/apps.json');
+          if (!response.ok) throw new Error('Failed to load tools');
+          const data = await response.json();
+
+          // Filter for web tools primarily, but include all
+          const webTools = data.filter(t => t.web || t.category?.includes('Web Tools') || t.installer?.includes('github.com'));
+          return { all: data, web: webTools };
+        } catch (e) {
+          console.error('Error loading tools:', e);
+          return { all: [], web: [] };
+        }
+      }
+
+      function renderTools(tools) {
+        const grid = document.getElementById('tools-grid');
+        const emptyState = document.getElementById('empty-state');
+
+        if (tools.length === 0) {
+          grid.innerHTML = '';
+          emptyState.hidden = false;
+          return;
+        }
+
+        emptyState.hidden = true;
+        grid.innerHTML = tools.map(tool => {
+          const type = getToolType(tool);
+          const icon = getToolIcon(tool);
+          const url = tool.web || tool.homepage || tool.installer || '#';
+          const desc = tool.args || tool.category || 'No description available';
+
+          return `
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="tool-card" role="listitem" aria-label="${tool.name} - ${desc}">
+              <div class="tool-header">
+                <div class="tool-icon" aria-hidden="true">${icon}</div>
+                <div class="tool-info">
+                  <div class="tool-name">${escapeHtml(tool.name)}</div>
+                  <div class="tool-category">${escapeHtml(tool.category || 'Uncategorized')}</div>
+                </div>
+              </div>
+              <p class="tool-desc">${escapeHtml(desc)}</p>
+              <div class="tool-footer">
+                <span class="tool-type ${type}">${type === 'web' ? 'Web' : type === 'github' ? 'GitHub' : 'Store'}</span>
+                <svg class="tool-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function renderCategories(tools) {
+        const categoriesContainer = document.getElementById('categories');
+        const categories = [...new Set(tools.map(t => t.category).filter(Boolean))].sort();
+
+        const allBtn = document.createElement('button');
+        allBtn.className = 'category-btn active';
+        allBtn.textContent = 'All';
+        allBtn.setAttribute('role', 'tab');
+        allBtn.setAttribute('aria-selected', 'true');
+        allBtn.dataset.category = '';
+        allBtn.addEventListener('click', () => filterByCategory(''));
+        categoriesContainer.appendChild(allBtn);
+
+        categories.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.className = 'category-btn';
+          btn.textContent = cat;
+          btn.setAttribute('role', 'tab');
+          btn.setAttribute('aria-selected', 'false');
+          btn.dataset.category = cat;
+          btn.addEventListener('click', () => filterByCategory(cat));
+          categoriesContainer.appendChild(btn);
+        });
+      }
+
+      let allTools = [];
+      let currentCategory = '';
+      let currentSearch = '';
+
+      function filterByCategory(category) {
+        currentCategory = category;
+        document.querySelectorAll('.category-btn').forEach(btn => {
+          const isActive = btn.dataset.category === category;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive);
+        });
+        applyFilters();
+      }
+
+      function applyFilters() {
+        let filtered = allTools;
+
+        if (currentCategory) {
+          filtered = filtered.filter(t => t.category === currentCategory);
+        }
+
+        if (currentSearch) {
+          const query = currentSearch.toLowerCase();
+          filtered = filtered.filter(t =>
+            t.name.toLowerCase().includes(query) ||
+            (t.category?.toLowerCase().includes(query)) ||
+            (t.args?.toLowerCase().includes(query)) ||
+            (t.homepage?.toLowerCase().includes(query))
+          );
+        }
+
+        renderTools(filtered);
+        updateStats(filtered);
+      }
+
+      function updateStats(filtered) {
+        document.getElementById('total-tools').textContent = filtered.length;
+        const categories = [...new Set(filtered.map(t => t.category).filter(Boolean))];
+        document.getElementById('total-categories').textContent = categories.length;
+        const webCount = filtered.filter(t => getToolType(t) === 'web').length;
+        document.getElementById('web-tools').textContent = webCount;
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', async () => {
+        const { all, web } = await loadTools();
+        allTools = all.length > 0 ? all : web;
+
+        renderCategories(allTools);
+        applyFilters();
+
+        // Search handler
+        const searchInput = document.getElementById('search');
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
+            currentSearch = e.target.value.trim();
+            applyFilters();
+          }, 150);
+        });
+
+        // Keyboard navigation for categories
+        document.getElementById('categories').addEventListener('keydown', (e) => {
+          const buttons = Array.from(document.querySelectorAll('.category-btn'));
+          const currentIndex = buttons.findIndex(b => b.classList.contains('active'));
+          let nextIndex = currentIndex;
+
+          if (e.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length;
+          else if (e.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+          else if (e.key === 'Home') nextIndex = 0;
+          else if (e.key === 'End') nextIndex = buttons.length - 1;
+          else return;
+
+          e.preventDefault();
+          buttons[nextIndex].click();
+          buttons[nextIndex].focus();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
