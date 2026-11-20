@@ -1,0 +1,13 @@
+name: tmp probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "=== feed"; curl -s -m 25 -D /tmp/h "https://www.coinboss.com/api/liquidations?limit=5" | head -c 1500; echo; grep -i 'access-control-allow-origin' /tmp/h
+          echo "=== feed limit 200 sides/exchanges"; curl -s -m 25 "https://www.coinboss.com/api/liquidations?limit=200" | python3 -c "import sys,json,collections,time
+          d=json.load(sys.stdin)['data'];print(len(d), collections.Counter(r['side'] for r in d), collections.Counter(r['exchange'] for r in d));print('newest age s', round(time.time()-d[0]['timestamp']/1000), 'oldest age s', round(time.time()-d[-1]['timestamp']/1000))"
+          echo "=== feed minUsd?"; curl -s -m 25 "https://www.coinboss.com/api/liquidations?limit=5&min_usd=10000" | python3 -c "import sys,json;d=json.load(sys.stdin);print([round(float(r['value_usd'])) for r in d.get('data',[])], d.get('error'))"
+          echo "=== overview"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/overview" | head -c 700; echo
+          echo "=== coins 12h count"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?range=12h&limit=500" | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print(len(d), d[:2], sum(r['total_usd'] for r in d))"
