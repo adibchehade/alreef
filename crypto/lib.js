@@ -124,8 +124,11 @@
     const out = {};
     LIQ_ASSETS.forEach(a => {
       const live = ok ? (lives[a.sym] || { long: 0, short: 0, total: 0 }) : null;
+      const today = new Date().toISOString().slice(0, 10);
+      const past = Object.keys(H).filter(d => d < today).sort().slice(-30).map(d => H[d] && H[d][a.sym]).filter(r => r && num(r.total) !== null);
       out[a.sym] = { '24h': live ? { ...live, have: 1, need: 1 } : { long: null, short: null, total: null, have: 0, need: 1 },
-                     '7d': windowSum(H, a.sym, live, 7), '30d': windowSum(H, a.sym, live, 30) };
+                     '7d': windowSum(H, a.sym, live, 7), '30d': windowSum(H, a.sym, live, 30),
+                     avgDay: past.length ? { avg: past.reduce((s, r) => s + num(r.total), 0) / past.length, days: past.length } : null };
     });
     return out;
   }
@@ -186,93 +189,151 @@
   }
 
   // ---------- Technical analysis on the candles ----------
+  const mean = a => a.reduce((s, v) => s + v, 0) / (a.length || 1);
   function ema(vals, n) {
     if (vals.length < n) return [];
     const k = 2 / (n + 1), out = new Array(vals.length).fill(null);
-    let e = vals.slice(0, n).reduce((a, b) => a + b, 0) / n; out[n - 1] = e;
+    let e = mean(vals.slice(0, n)); out[n - 1] = e;
     for (let i = n; i < vals.length; i++) { e = vals[i] * k + e * (1 - k); out[i] = e; }
     return out;
   }
-  function rsi(c, n = 14) {
-    if (c.length <= n) return null;
+  function rsiSeries(c, n = 14) {
+    const out = new Array(c.length).fill(null);
+    if (c.length <= n) return out;
     let g = 0, l = 0;
     for (let i = 1; i <= n; i++) { const d = c[i] - c[i - 1]; d > 0 ? g += d : l -= d; }
-    g /= n; l /= n;
-    for (let i = n + 1; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; }
-    return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    g /= n; l /= n; out[n] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    for (let i = n + 1; i < c.length; i++) {
+      const d = c[i] - c[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n;
+      out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    }
+    return out;
   }
   function atrPct(b, n = 14) {
     if (b.length <= n) return null;
     const tr = b.slice(1).map((x, i) => Math.max(x.high - x.low, Math.abs(x.high - b[i].close), Math.abs(x.low - b[i].close)));
-    const a = tr.slice(-n).reduce((s, v) => s + v, 0) / n;
-    return a / b[b.length - 1].close * 100;
+    return mean(tr.slice(-n)) / b[b.length - 1].close * 100;
   }
-  // Swing highs/lows: a bar higher (lower) than the k bars on each side.
+  // Swing highs/lows: a bar higher (lower) than the k bars on each side. Returns {price, i}.
   function pivots(b, k = 3) {
     const hi = [], lo = [];
     for (let i = k; i < b.length - k; i++) {
       const w = b.slice(i - k, i + k + 1);
-      if (b[i].high === Math.max(...w.map(x => x.high))) hi.push(b[i].high);
-      if (b[i].low === Math.min(...w.map(x => x.low))) lo.push(b[i].low);
+      if (b[i].high === Math.max(...w.map(x => x.high))) hi.push({ price: b[i].high, i });
+      if (b[i].low === Math.min(...w.map(x => x.low))) lo.push({ price: b[i].low, i });
     }
     return { hi, lo };
   }
+  // Nearest distinct levels on one side of price; levels closer than `merge` collapse into one.
+  function levels(list, last, side, gap, merge) {
+    const c = list.map(p => p.price).filter(v => side < 0 ? v < last - gap : v > last + gap)
+      .sort((a, b) => side < 0 ? b - a : a - b);
+    const out = [];
+    for (const v of c) if (!out.some(x => Math.abs(x - v) < merge)) out.push(v);
+    return out.slice(0, 2);
+  }
+  function macd(c) {
+    const e12 = ema(c, 12), e26 = ema(c, 26);
+    if (!e26.length) return null;
+    const line = c.map((_, i) => e12[i] !== null && e26[i] !== null ? e12[i] - e26[i] : null);
+    const valid = line.filter(v => v !== null);
+    if (valid.length < 9) return null;
+    const sig = ema(valid, 9), off = line.length - valid.length;
+    const signal = line.map((_, i) => i >= off ? sig[i - off] : null);
+    const n = c.length - 1, hist = i => line[i] - signal[i];
+    let cross = null;
+    for (let i = n; i > n - 4 && i > off + 9; i--) {
+      if (signal[i] === null || signal[i - 1] === null) break;
+      if (hist(i) > 0 && hist(i - 1) <= 0) { cross = 'up'; break; }
+      if (hist(i) < 0 && hist(i - 1) >= 0) { cross = 'down'; break; }
+    }
+    return { line: line[n], signal: signal[n], hist: hist(n), rising: hist(n) > hist(n - 1), cross };
+  }
+  function bollinger(c, n = 20) {
+    if (c.length < n + 5) return null;
+    const bw = [];
+    let mid, up, lo;
+    for (let i = n - 1; i < c.length; i++) {
+      const w = c.slice(i - n + 1, i + 1), m = mean(w), sd = Math.sqrt(mean(w.map(v => (v - m) ** 2)));
+      bw.push((4 * sd) / m); mid = m; up = m + 2 * sd; lo = m - 2 * sd;
+    }
+    const last = c[c.length - 1];
+    return { mid, upper: up, lower: lo, pctB: up > lo ? (last - lo) / (up - lo) : 0.5,
+             width: bw[bw.length - 1], squeeze: bw[bw.length - 1] < 0.75 * mean(bw) };
+  }
+  // Simple RSI divergence between the last two swing lows / highs.
+  function divergence(b, r, pv) {
+    const two = (arr) => arr.filter(p => r[p.i] !== null).slice(-2);
+    const L = two(pv.lo), H = two(pv.hi);
+    if (L.length === 2 && L[1].i - L[0].i >= 4 && L[1].price < L[0].price && r[L[1].i] > r[L[0].i] + 2) return 'bullish';
+    if (H.length === 2 && H[1].i - H[0].i >= 4 && H[1].price > H[0].price && r[H[1].i] < r[H[0].i] - 2) return 'bearish';
+    return null;
+  }
+
   function analyze(b, liq) {
-    if (!b || b.length < 5) return null;
-    const c = b.map(x => x.close), last = c[c.length - 1], first = b[0].open;
-    const high = Math.max(...b.map(x => x.high)), low = Math.min(...b.map(x => x.low));
+    if (!b || b.length < 10) return null;
+    const c = b.map(x => x.close), n = c.length - 1, last = c[n], first = b[0].open;
+    const hiI = b.reduce((m, x, i) => x.high > b[m].high ? i : m, 0), loI = b.reduce((m, x, i) => x.low < b[m].low ? i : m, 0);
+    const high = b[hiI].high, low = b[loI].low;
     const e20 = ema(c, 20), e50 = ema(c, 50);
-    const E20 = e20.length ? e20[e20.length - 1] : null, E50 = e50.length ? e50[e50.length - 1] : null;
-    const E20prev = e20.length > 10 ? e20[e20.length - 11] : null;
-    const R = rsi(c), ATR = atrPct(b);
-    // Significant swing levels only: at least one average candle range (ATR) away from price.
+    const E20 = e20.length ? e20[n] : null, E50 = e50.length ? e50[n] : null;
+    const E20prev = e20.length && n >= 30 ? e20[n - 10] : null;
+    const rs = rsiSeries(c), R = rs[n], ATR = atrPct(b);
     const pv = pivots(b, b.length >= 60 ? 4 : 3);
     const gap = ATR !== null ? last * ATR / 100 : last * 0.003;
-    const support = Math.max(...pv.lo.filter(v => v < last - gap), -Infinity);
-    const resistance = Math.min(...pv.hi.filter(v => v > last + gap), Infinity);
-    const vols = b.map(x => x.volume), avgV = vols.reduce((s, v) => s + v, 0) / vols.length;
-    const recentV = vols.slice(-5).reduce((s, v) => s + v, 0) / Math.min(5, vols.length);
-    let score = 0, checks = 0;
-    const add = cond => { if (cond === null) return; checks++; score += cond ? 1 : -1; };
-    add(E20 === null ? null : last > E20);
-    add(E20 === null || E50 === null ? null : E20 > E50);
-    add(E20 === null || E20prev === null ? null : E20 > E20prev);
-    add(last > first);
-    const trend = checks === 0 ? 'Mixed' : score >= checks - 1 && score > 0 ? 'Bullish' : score <= -(checks - 1) && score < 0 ? 'Bearish' : 'Mixed';
+    const sup = levels(pv.lo, last, -1, gap, gap), res = levels(pv.hi, last, 1, gap, gap);
+    const vols = b.map(x => x.volume), totV = vols.reduce((s, v) => s + v, 0);
+    const avgV = totV / vols.length, recentV = mean(vols.slice(-5));
+    const upV = b.reduce((s, x) => s + (x.close >= x.open ? x.volume : 0), 0);
+    const vwap = totV > 0 ? b.reduce((s, x) => s + (x.high + x.low + x.close) / 3 * x.volume, 0) / totV : null;
+    const M = macd(c), BB = bollinger(c);
+    // Fibonacci of the window's main swing (low→high if the high came last, else high→low)
+    const upSwing = hiI > loI, span = high - low;
+    const fibs = [0.236, 0.382, 0.5, 0.618, 0.786].map(r => ({ r, price: upSwing ? high - r * span : low + r * span }));
+    const fibNear = span > 0 ? fibs.reduce((a, f) => Math.abs(f.price - last) < Math.abs(a.price - last) ? f : a) : null;
+    // Trend & momentum scorecard
+    const sig = [];
+    const add = (key, cond) => { if (cond !== null && cond !== undefined) sig.push({ key, bull: !!cond }); };
+    add('ema20', E20 === null ? null : last > E20);
+    add('emaStack', E20 === null || E50 === null ? null : E20 > E50);
+    add('emaSlope', E20 === null || E20prev === null ? null : E20 > E20prev);
+    add('macd', M ? M.line > M.signal : null);
+    add('vwap', vwap === null ? null : last > vwap);
+    add('rsi50', R === null ? null : R > 50);
+    add('flow', totV > 0 ? upV / totV > 0.5 : null);
+    const bulls = sig.filter(s => s.bull).length, score = sig.length ? (bulls / sig.length) * 2 - 1 : 0;   // -1 … +1
+    const bias = score >= 0.6 ? 'strongBull' : score >= 0.2 ? 'bull' : score <= -0.6 ? 'strongBear' : score <= -0.2 ? 'bear' : 'neutral';
+    const trend = bias.includes('Bull') || bias === 'bull' ? 'Bullish' : bias.includes('Bear') || bias === 'bear' ? 'Bearish' : 'Mixed';
     return {
-      last, first, change: (last / first - 1) * 100, high, low,
-      rangePos: high > low ? (last - low) / (high - low) * 100 : null,
+      last, first, change: (last / first - 1) * 100, high, low, hiI, loI, upSwing,
+      rangePos: span > 0 ? (last - low) / span * 100 : null,
+      fromHigh: (last / high - 1) * 100, fromLow: (last / low - 1) * 100,
       ema20: E20, ema50: E50, ema20Series: e20, ema50Series: e50,
-      rsi: R, atr: ATR, trend,
-      support: isFinite(support) ? support : null, resistance: isFinite(resistance) ? resistance : null,
-      volRatio: avgV > 0 ? recentV / avgV : null, liq,
+      rsi: R, rsiDiv: divergence(b, rs, pv), atr: ATR, macd: M, bb: BB, vwap,
+      support: sup[0] ?? null, support2: sup[1] ?? null, resistance: res[0] ?? null, resistance2: res[1] ?? null,
+      fib: fibNear, volRatio: avgV > 0 ? recentV / avgV : null, buyShare: totV > 0 ? upV / totV : null,
+      signals: sig, bulls, score, bias, trend, liq, bars: b.length,
     };
   }
-  const TF_WORDS = { '1h': ['1 hour', '1-hour'], '4h': ['4 hours', '4-hour'], '24h': ['24 hours', '24-hour'],
-                     '7d': ['7 days', '7-day'], '30d': ['30 days', '30-day'] };
-  function summary(a, tf, name) {
-    if (!a) return 'Not enough price data for this timeframe yet.';
-    const [tfLabel, tfAdj] = TF_WORDS[tf] || [tf, tf];
-    const p = [];
-    const dir = a.change >= 0 ? 'up' : 'down';
-    const where = a.rangePos === null ? 'within' : a.rangePos > 75 ? 'near the top of' : a.rangePos < 25 ? 'near the bottom of' : 'mid-way in';
-    p.push(`${name} is ${dir} ${Math.abs(a.change).toFixed(2)}% over ${tfLabel}, trading ${where} its ${tfAdj} range.`);
-    const t = { Bullish: 'The trend is bullish: price is above its moving averages and they are rising.',
-                Bearish: 'The trend is bearish: price is below its moving averages and they are falling.',
-                Mixed: 'The trend is mixed, with no clear direction on this timeframe.' }[a.trend];
-    p.push(t);
-    if (a.rsi !== null) p.push(a.rsi < 30 ? `RSI ${a.rsi.toFixed(0)} is oversold, so a short-term bounce is possible, though not guaranteed.`
-      : a.rsi > 70 ? `RSI ${a.rsi.toFixed(0)} is overbought, so a pullback is possible.` : `RSI ${a.rsi.toFixed(0)} is neutral.`);
-    if (a.support || a.resistance) p.push(`Nearest support ${a.support ? fmtPrice(a.support) : 'not clear'}, resistance ${a.resistance ? fmtPrice(a.resistance) : 'not clear'}.`);
-    if (a.volRatio !== null && (a.volRatio > 1.5 || a.volRatio < 0.6)) p.push(a.volRatio > 1.5 ? `Volume is running ${a.volRatio.toFixed(1)}× the ${tfAdj} average, so this move has conviction.` : 'Volume is light, so moves may lack follow-through.');
-    const L = a.liq;
-    if (L && L.total) {
-      const ls = L.long / (L.long + L.short || 1) * 100;
-      if (ls >= 65) p.push(`Liquidations were ${ls.toFixed(0)}% longs (${fmtUSD(L.long)}): leveraged buyers were forced out, which adds selling pressure.`);
-      else if (ls <= 35) p.push(`Liquidations were ${(100 - ls).toFixed(0)}% shorts (${fmtUSD(L.short)}): a short squeeze added buying pressure.`);
-      else p.push(`Liquidations were fairly balanced between longs and shorts (${fmtUSD(L.total)} total).`);
+
+  // Futures positioning from Hyperliquid (free): funding (hourly rate), open interest, premium.
+  const HL_PERP = { BTC: 'BTC', ETH: 'ETH', BNB: 'BNB', SOL: 'SOL', XRP: 'XRP', PEPE: 'kPEPE', ANT: 'xyz:ANT', SPX: 'xyz:SP500' };
+  let hlCtx = { at: 0, map: null };
+  async function positioning(sym) {
+    const name = HL_PERP[sym];
+    if (!name) return null;
+    if (!hlCtx.map || Date.now() - hlCtx.at > 55000) {
+      const post = body => getJSON(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const [m, x] = await Promise.all([post({ type: 'metaAndAssetCtxs' }), post({ type: 'metaAndAssetCtxs', dex: 'xyz' })]);
+      const map = {};
+      for (const d of [m, x]) if (Array.isArray(d) && d[0] && Array.isArray(d[1])) d[0].universe.forEach((u, i) => map[u.name] = d[1][i]);
+      hlCtx = { at: Date.now(), map };
     }
-    return p.join(' ');
+    const c = hlCtx.map[name];
+    if (!c) return null;
+    const f = num(c.funding), oi = num(c.openInterest), px = num(c.markPx);
+    return { funding8h: f === null ? null : f * 8 * 100, fundingYear: f === null ? null : f * 24 * 365 * 100,
+             oiUsd: oi !== null && px !== null ? oi * px : null, premium: num(c.premium) === null ? null : num(c.premium) * 100 };
   }
 
   const fmtUSD = v => v === null || v === undefined ? '—'
@@ -304,6 +365,6 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, LIQ_ASSETS, TF, prices, liquidations, liqRange, candles, analyze, summary,
+  window.ALREEF = { ASSETS, LIQ_ASSETS, TF, prices, liquidations, liqRange, candles, analyze, positioning,
                     fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();

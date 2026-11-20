@@ -66,9 +66,20 @@
   .stats small { display:block; color:var(--dim); font-size:10px; letter-spacing:.1em; margin-bottom:3px; }
   .stats b { color:#fff; font-size:14px; font-weight:700; }
   .stats b.up { color:var(--up); } .stats b.dn { color:var(--dn); } .stats b.am { color:var(--amber); }
-  .sum { margin:10px 12px 0; padding:10px 12px; border-left:3px solid var(--amber); background:#0a0e11; }
-  .sum h3 { margin:0 0 6px; font-size:11px; color:var(--amber); letter-spacing:.12em; }
-  .sum p { margin:0; line-height:1.55; color:var(--txt); }
+  .sum { margin:10px 12px 0; padding:10px 14px 12px; border-left:3px solid var(--amber); background:#0a0e11; }
+  .sumh { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+  .sum h3 { margin:0; font-size:11px; color:var(--amber); letter-spacing:.12em; }
+  .langs { display:flex; gap:4px; }
+  .langs button { background:#000; border:1px solid var(--line); color:var(--dim); font:inherit; font-size:11px; padding:3px 9px; cursor:pointer; }
+  .langs button.on { color:#000; background:var(--amber); border-color:var(--amber); }
+  .rep h4 { margin:10px 0 3px; font-size:11px; letter-spacing:.08em; color:#fff; text-transform:uppercase; }
+  .rep p { margin:0; line-height:1.6; color:var(--txt); }
+  .rep .verdict p { color:#fff; }
+  .rep[dir="rtl"] { font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Geeza Pro",Arial,sans-serif; font-size:14px; }
+  .rep[dir="rtl"] h4 { letter-spacing:0; font-size:13px; text-transform:none; }
+  .rep[dir="rtl"] p { line-height:1.85; }
+  .bias { display:inline-block; padding:1px 8px; margin-inline-end:8px; font-weight:700; color:#000; }
+  .bias.strongBull, .bias.bull { background:var(--up); } .bias.strongBear, .bias.bear { background:var(--dn); } .bias.neutral { background:var(--amber); }
   @media (max-width:640px) {
     .ov { padding:0; align-items:stretch; }
     .modal { max-height:none; height:100%; border-left:0; border-right:0; }
@@ -121,13 +132,17 @@
       <span id="m-src"></span>
     </div>
     <div class="stats" id="stats"></div>
-    <div class="sum"><h3 id="m-sumh">ANALYSIS</h3><p id="m-sum"></p></div>
+    <div class="sum">
+      <div class="sumh"><h3 id="m-sumh">ANALYSIS</h3><span class="langs" id="langs" role="group" aria-label="Analysis language"></span></div>
+      <div class="rep" id="m-sum"></div>
+    </div>
     <div class="note">Technical read from price and liquidation data only. Not financial advice.</div>
   </div>
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611202335"></script>
+<script src="/crypto/lib.js?v=202611202350"></script>
+<script src="/crypto/report.js?v=202611202350"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -217,11 +232,30 @@
     return L && L[sym] ? L[sym][tf] : null;
   }
 
+  // Candles are cached for 55 s so the multi-timeframe trend check doesn't refetch the same data.
+  const cCache = {};
+  async function candlesCached(asset, tf) {
+    const k = asset.sym + tf, c = cCache[k];
+    if (c && Date.now() - c.at < 55000) return c.data;
+    const data = await A.candles(asset, tf);
+    if (data.bars.length) cCache[k] = { at: Date.now(), data };
+    return data;
+  }
+  // Extra context for the report: trend on every timeframe, futures positioning, average liquidation day.
+  async function context(asset, seq) {
+    const [pos, ...mt] = await Promise.all([A.positioning(asset.sym), ...TFS.map(t => candlesCached(asset, t))]);
+    if (seq !== cur.seq) return;
+    const mtf = {};
+    TFS.forEach((t, i) => { const a = A.analyze(mt[i].bars, null); if (a) mtf[t] = a.trend; });
+    view.ctx = { pos, mtf, liqAvgDay: L && L[asset.sym] ? L[asset.sym].avgDay : null };
+    renderStats(); renderReport();
+  }
+
   async function loadChart(fit) {
     const seq = ++cur.seq, sym = cur.sym, tf = cur.tf, asset = A.ASSETS.find(a => a.sym === sym);
     document.querySelectorAll('#tfs button').forEach(b => b.classList.toggle('on', b.dataset.tf === tf));
     if (fit) { $('cmsg').textContent = 'loading…'; $('cmsg').hidden = false; }
-    const [cd, liq] = await Promise.all([A.candles(asset, tf), liqFor(sym, tf)]);
+    const [cd, liq] = await Promise.all([candlesCached(asset, tf), liqFor(sym, tf)]);
     if (seq !== cur.seq) return;                      // a newer request replaced this one
     const bars = cd.bars;
     if (!chart) makeChart();
@@ -243,30 +277,67 @@
     if (an && an.resistance) plines.push(sCandle.createPriceLine({ price: an.resistance, color: '#ff4d4d', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'R' }));
     if (fit && bars.length) chart.timeScale().fitContent();
     $('m-src').textContent = bars.length ? `${A.TF[tf].iv} candles · ${cd.src}` : '';
-    renderStats(an, liq, asset, tf);
+    const keep = view.ctx && view.sym === sym ? view.ctx : null;
+    Object.assign(view, { an, liq, asset, tf, sym, ctx: keep });
+    renderStats(); renderReport();
+    context(asset, seq);
   }
 
-  function renderStats(an, liq, asset, tf) {
+  // ---------- stats grid + report ----------
+  const view = { an: null, liq: null, asset: null, tf: '24h', sym: null, ctx: null };
+  const BIAS_EN = { strongBull: 'STRONG BULLISH', bull: 'BULLISH', neutral: 'NEUTRAL', bear: 'BEARISH', strongBear: 'STRONG BEARISH' };
+  function renderStats() {
+    const { an, liq, asset, tf, ctx } = view;
+    if (!asset) return;
     const lab = A.TF[tf].label, cell = (k, v, c = '') => `<div><small>${k}</small><b class="${c}">${v}</b></div>`;
     const c = [];
     if (an) {
       c.push(cell(`CHANGE ${lab}`, A.fmtPct(an.change), cls(an.change)));
       c.push(cell(`HIGH ${lab}`, A.fmtPrice(an.high)), cell(`LOW ${lab}`, A.fmtPrice(an.low)));
-      c.push(cell('TREND', an.trend.toUpperCase(), an.trend === 'Bullish' ? 'up' : an.trend === 'Bearish' ? 'dn' : 'am'));
+      c.push(cell('BIAS', `${BIAS_EN[an.bias]} · ${an.bulls}/${an.signals.length}`, an.bias.includes('ull') ? 'up' : an.bias.includes('ear') ? 'dn' : 'am'));
       c.push(cell('RSI (14)', an.rsi === null ? '—' : an.rsi.toFixed(0) + (an.rsi < 30 ? ' · oversold' : an.rsi > 70 ? ' · overbought' : ''), an.rsi === null ? '' : an.rsi < 30 ? 'up' : an.rsi > 70 ? 'dn' : ''));
-      c.push(cell('SUPPORT', A.fmtPrice(an.support), 'up'), cell('RESISTANCE', A.fmtPrice(an.resistance), 'dn'));
-      c.push(cell('VOLATILITY / CANDLE', an.atr === null ? '—' : an.atr.toFixed(2) + '%'));
+      c.push(cell('MACD', an.macd ? (an.macd.line > an.macd.signal ? 'ABOVE SIGNAL' : 'BELOW SIGNAL') + (an.macd.cross ? ' · NEW CROSS' : '') : '—', an.macd ? (an.macd.line > an.macd.signal ? 'up' : 'dn') : ''));
+      c.push(cell('SUPPORT S1 / S2', an.support === null ? '—' : A.fmtPrice(an.support) + (an.support2 !== null ? ' / ' + A.fmtPrice(an.support2) : ''), 'up'));
+      c.push(cell('RESISTANCE R1 / R2', an.resistance === null ? '—' : A.fmtPrice(an.resistance) + (an.resistance2 !== null ? ' / ' + A.fmtPrice(an.resistance2) : ''), 'dn'));
+      c.push(cell(`VWAP ${lab}`, A.fmtPrice(an.vwap), an.vwap === null ? '' : an.last > an.vwap ? 'up' : 'dn'));
+      c.push(cell('VOLATILITY / CANDLE', an.atr === null ? '—' : an.atr.toFixed(2) + '%' + (an.bb && an.bb.squeeze ? ' · SQUEEZE' : ''), an.bb && an.bb.squeeze ? 'am' : ''));
       c.push(cell('VOLUME vs AVG', an.volRatio === null ? '—' : an.volRatio.toFixed(2) + '×', an.volRatio > 1.5 ? 'am' : ''));
+      c.push(cell('BUY VOLUME', an.buyShare === null ? '—' : (an.buyShare * 100).toFixed(0) + '%', an.buyShare === null ? '' : an.buyShare > 0.55 ? 'up' : an.buyShare < 0.45 ? 'dn' : ''));
     }
-    if (asset.noLiq) c.push(cell(`LIQUIDATIONS ${lab}`, asset.noLiq));
+    if (ctx && ctx.pos) {
+      const f = ctx.pos.funding8h;
+      c.push(cell('FUNDING / 8H', f === null ? '—' : (f >= 0 ? '+' : '') + f.toFixed(4) + '%', f === null ? '' : f > 0.01 ? 'up' : f < -0.01 ? 'dn' : ''));
+      c.push(cell('OPEN INTEREST', A.fmtUSD(ctx.pos.oiUsd)));
+    }
+    if (asset.noLiq) c.push(cell(`LIQUIDATIONS ${lab}`, asset.noLiq.toUpperCase()));
     else if (!liq || liq.total === null) c.push(cell(`LIQUIDATIONS ${lab}`, '—'));
     else {
       c.push(cell(`LIQ LONGS ${lab}`, A.fmtUSD(liq.long), 'up'), cell(`LIQ SHORTS ${lab}`, A.fmtUSD(liq.short), 'dn'), cell(`LIQ TOTAL ${lab}`, A.fmtUSD(liq.total)));
       if (liq.need > 1 && liq.have < liq.need) c.push(cell('LIQ HISTORY', `${liq.have} of ${liq.need} days`, 'am'));
     }
     $('stats').innerHTML = c.join('');
-    $('m-sumh').textContent = `ANALYSIS · ${lab}`;
-    $('m-sum').textContent = A.summary(an, tf, asset.name);
+  }
+
+  // Language for the analysis: remembered on this device; first visit follows the browser language.
+  const LS_KEY = 'alreef-crypto-lang';
+  let lang = (() => { try { const v = localStorage.getItem(LS_KEY); if (v && A.LANGS[v]) return v; } catch (e) {}
+    const n = (navigator.language || 'en').slice(0, 2); return A.LANGS[n] ? n : 'en'; })();
+  $('langs').innerHTML = Object.entries(A.LANGS).map(([k, v]) => `<button data-l="${k}" lang="${k}">${k === 'en' ? 'EN' : k === 'es' ? 'ES' : 'عربي'}</button>`).join('');
+  $('langs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    lang = b.dataset.l; try { localStorage.setItem(LS_KEY, lang); } catch (e) {}
+    renderReport();
+  });
+  const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  function renderReport() {
+    const { an, asset, tf, ctx } = view;
+    if (!asset) return;
+    document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+    const r = A.report(an, ctx, tf, asset, lang);
+    const el = $('m-sum');
+    el.setAttribute('dir', r.dir); el.setAttribute('lang', lang);
+    el.innerHTML = r.sections.map((s, i) => `<div class="${i === 0 ? 'verdict' : ''}"><h4>${esc(s.h)}</h4><p>${i === 0 && an ? `<span class="bias ${an.bias}">${esc(s.p.split(':')[0])}</span>${esc(s.p.slice(s.p.indexOf(':') + 1).trim())}` : esc(s.p)}</p></div>`).join('');
+    $('m-sumh').textContent = `ANALYSIS · ${A.TF[tf].label}`;
   }
 
   function openAsset(sym, tf) {
