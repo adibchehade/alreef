@@ -1,0 +1,18 @@
+name: tmp coinboss probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          H='User-Agent: alreef-probe'
+          for u in "liquidations/overview?coin=BTC" "liquidations/overview?coin=SOL" "liquidations/overview?symbol=BTC" "liquidations/overview?coin=BTCUSDT" \
+                   "liquidations/coins" "liquidations/by-coin" "liquidations/coin?coin=BTC" "liquidations/summary?coin=BTC" "liquidations?coin=BTC&window=24h" \
+                   "liquidations/timeseries?coin=BTC&interval=1h" "liquidations/history?coin=BTC" "openapi.json" "docs/openapi.json"; do
+            echo "=== $u"; curl -s -m 20 -H "$H" -D /tmp/h -o /tmp/b "https://www.coinboss.com/api/$u"; head -1 /tmp/h; grep -i '^access-control' /tmp/h; head -c 1500 /tmp/b; echo
+          done
+          echo "=== openapi liquidation paths"
+          curl -s -m 20 -H "$H" https://www.coinboss.com/api/openapi.json | python3 -c "import sys,json
+          try:
+            d=json.load(sys.stdin);[print(p, list(v.keys()), [x.get('name') for m in v.values() if isinstance(m,dict) for x in m.get('parameters',[])]) for p,v in d.get('paths',{}).items() if 'liq' in p.lower()]
+          except Exception as e: print('no openapi',e)"
