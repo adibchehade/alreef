@@ -84,16 +84,39 @@
   // ---------- multi-window change % for the prices table (2H, 4H, 7D) ----------
   // Binance rolling-window ticker (one request per window for all coins); Hyperliquid 15m candles
   // for Anthropic / S&P 500 / gold; GeckoTerminal hourly candles for Purple Bitcoin.
-  const WINDOWS = { '2h': 2 * 3600e3, '4h': 4 * 3600e3, '7d': 7 * 864e5 };
-  function changesFrom(bars, now) {           // bars: [{t(ms), o, c}] oldest → newest
+  const WINDOWS = { '1h': 3600e3, '2h': 2 * 3600e3, '4h': 4 * 3600e3, '7d': 7 * 864e5 };
+  const LONG = { '30d': 30 * 864e5, '90d': 90 * 864e5, '1y': 365 * 864e5 };
+  function changesFrom(bars, now, W = WINDOWS, slack = 36e5) {           // bars: [{t(ms), o, c}] oldest → newest
     const out = {};
     if (!bars.length) return out;
     const last = bars[bars.length - 1].c;
-    for (const [w, ms] of Object.entries(WINDOWS)) {
+    for (const [w, ms] of Object.entries(W)) {
       const from = now - ms, b = bars.find(x => x.t >= from);
-      const ok = b && b.o > 0 && bars[0].t <= from + 36e5;   // null if history is too short
+      const ok = b && b.o > 0 && bars[0].t <= from + slack;   // null if history is too short
       out[w] = ok ? (last / b.o - 1) * 100 : null; out[w + '_o'] = ok ? b.o : null;
     }
+    return out;
+  }
+  // 30D / 90D / 1Y from daily candles (open of the first day in the window). Fetched at most every 10 min.
+  async function changesLong() {
+    const now = Date.now(), out = {}, day = 864e5, start = now - LONG['1y'] - 2 * day;
+    const binReq = ASSETS.filter(a => a.src === 'binance').map(async a => {
+      for (const base of BINANCE) {
+        const d = await getJSON(`${base}/api/v3/klines?symbol=${a.sym}USDT&interval=1d&limit=368`, {}, 15000);
+        if (Array.isArray(d) && d.length) { out[a.sym] = changesFrom(d.map(k => ({ t: k[0], o: +k[1], c: +k[4] })), now, LONG, day); return; }
+      }
+    });
+    const hlReq = ASSETS.filter(a => a.src === 'hl').map(async a => {
+      const d = await getJSON(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'candleSnapshot', req: { coin: 'xyz:' + a.hl[0], interval: '1d', startTime: start, endTime: now } }) }, 15000);
+      if (Array.isArray(d)) out[a.sym] = changesFrom(d.map(k => ({ t: k.t, o: +k.o, c: +k.c })), now, LONG, day);
+    });
+    const dexReq = ASSETS.filter(a => a.src === 'dex').map(async a => {
+      const d = await getJSON(`https://api.geckoterminal.com/api/v2/networks/${a.chain}/pools/${a.pool}/ohlcv/day?aggregate=1&limit=368&currency=usd&token=base`, { headers: { Accept: 'application/json' } }, 15000);
+      const l = d && d.data && d.data.attributes && d.data.attributes.ohlcv_list;
+      if (Array.isArray(l)) out[a.sym] = changesFrom(l.map(k => ({ t: k[0] * 1000, o: +k[1], c: +k[4] })).reverse(), now, LONG, day);
+    });
+    await Promise.all([...binReq, ...hlReq, ...dexReq]);
     return out;
   }
   async function changes() {
@@ -116,6 +139,8 @@
       if (Array.isArray(l)) out[a.sym] = changesFrom(l.map(k => ({ t: k[0] * 1000, o: +k[1], c: +k[4] })).reverse(), now);
     });
     await Promise.all([...binReq, ...hlReq, ...dexReq]);
+    const lg = await cached('long', 600000, changesLong);
+    Object.entries(lg || {}).forEach(([k, v]) => { out[k] = { ...(out[k] || {}), ...v }; });
     return out;
   }
 
@@ -465,10 +490,11 @@
     });
   }
   // ---------- colour themes (CSS in /crypto/theme.css) ----------
-  const THEMES = { terminal: 'Terminal', midnight: 'Midnight', light: 'Light' }, THEME_KEY = 'alreef-theme';
+  const THEMES = { terminal: 'Terminal', graphite: 'Graphite', violet: 'Violet', mocha: 'Mocha', light: 'Light', paper: 'Paper' }, THEME_KEY = 'alreef-theme';
   function themeUI(sel) {
     sel.innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-    sel.value = document.documentElement.dataset.theme || 'terminal';
+    if (!THEMES[document.documentElement.dataset.theme]) document.documentElement.dataset.theme = 'terminal';   // e.g. the retired Midnight
+    sel.value = document.documentElement.dataset.theme;
     sel.addEventListener('change', () => {
       document.documentElement.dataset.theme = sel.value;
       try { localStorage.setItem(THEME_KEY, sel.value); } catch (e) {}

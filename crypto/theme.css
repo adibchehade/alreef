@@ -5,16 +5,27 @@
   --upbg:rgba(0,230,118,.28); --dnbg:rgba(255,77,77,.28); --shade:rgba(0,0,0,.6); --scrim:rgba(0,0,0,.72);
   color-scheme:dark;
 }
-[data-theme="midnight"] {
-  --bg:#0a0f1f; --panel:#10172b; --line:#212c4a; --txt:#cfd8f0; --dim:#7884a8; --amber:#5ad1e8; --up:#4ade80; --dn:#fb7185; --blue:#c084fc;
-  --hdr:#070b17; --hi:#f4f7ff; --on:#06101c; --hover:#18223d; --sum:#0d1426; --grid:#172039; --axis:#8b97bb;
-  --upbg:rgba(74,222,128,.25); --dnbg:rgba(251,113,133,.25); --shade:rgba(0,0,0,.55); --scrim:rgba(3,6,15,.75);
+[data-theme="graphite"] {
+  --bg:#131722; --panel:#1e222d; --line:#2a2e39; --txt:#d1d4dc; --dim:#787b86; --amber:#5b8cff; --up:#26a69a; --dn:#ef5350; --blue:#f7a600; --hdr:#131722; --hi:#ffffff; --on:#ffffff; --hover:#262b38; --sum:#1a1e28; --grid:#242833; --axis:#9598a1; --upbg:rgba(38,166,154,.25); --dnbg:rgba(239,83,80,.25); --shade:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.65);
+  color-scheme:dark;
+}
+[data-theme="violet"] {
+  --bg:#0d0a14; --panel:#15111f; --line:#2a2240; --txt:#d6d0e6; --dim:#857ca0; --amber:#b388ff; --up:#3ddc97; --dn:#ff5c7a; --blue:#ffd166; --hdr:#09070f; --hi:#ffffff; --on:#0d0a14; --hover:#1f1930; --sum:#120e1b; --grid:#1b1628; --axis:#9a91b5; --upbg:rgba(61,220,151,.25); --dnbg:rgba(255,92,122,.25); --shade:rgba(0,0,0,.55); --scrim:rgba(5,3,10,.72);
+  color-scheme:dark;
+}
+[data-theme="mocha"] {
+  --bg:#1a1411; --panel:#221a16; --line:#3a2d25; --txt:#e6d9cc; --dim:#9c8878; --amber:#ff9e45; --up:#8bd17c; --dn:#ff6b5b; --blue:#7cc4e8; --hdr:#140f0c; --hi:#fff7ee; --on:#1a1411; --hover:#2c221c; --sum:#1e1713; --grid:#2a201b; --axis:#a8968a; --upbg:rgba(139,209,124,.25); --dnbg:rgba(255,107,91,.25); --shade:rgba(0,0,0,.55); --scrim:rgba(10,6,4,.72);
   color-scheme:dark;
 }
 [data-theme="light"] {
   --bg:#eef1f4; --panel:#ffffff; --line:#d9dee4; --txt:#26313b; --dim:#66727e; --amber:#a35f00; --up:#08814a; --dn:#cc2b2b; --blue:#1d64c8;
   --hdr:#ffffff; --hi:#0b1218; --on:#ffffff; --hover:#f1f4f7; --sum:#f7f9fa; --grid:#eef1f4; --axis:#5d6873;
   --upbg:rgba(8,129,74,.16); --dnbg:rgba(204,43,43,.16); --shade:rgba(20,30,40,.18); --scrim:rgba(20,30,40,.45);
+  color-scheme:light;
+}
+
+[data-theme="paper"] {
+  --bg:#f3ecdd; --panel:#fbf7ef; --line:#dfd3bd; --txt:#3b3226; --dim:#7a6b57; --amber:#a14d0a; --up:#2e7d32; --dn:#c62828; --blue:#275d9b; --hdr:#fbf7ef; --hi:#1f1810; --on:#ffffff; --hover:#f1e8d7; --sum:#f7f0e3; --grid:#efe6d4; --axis:#6e604d; --upbg:rgba(46,125,50,.16); --dnbg:rgba(198,40,40,.16); --shade:rgba(60,40,20,.18); --scrim:rgba(60,40,20,.45);
   color-scheme:light;
 }
 /* header controls: theme + refresh rate */
