@@ -21,6 +21,12 @@
   h2 span { color:var(--dim); font-weight:400; letter-spacing:0; }
   .wrap { overflow-x:auto; }
   table { width:100%; border-collapse:collapse; min-width:620px; }
+  #pxt { min-width:860px; }
+  /* keep the asset name visible while swiping the tables sideways on a phone */
+  .wrap th:first-child, .wrap td:first-child { position:sticky; left:0; z-index:1; background:var(--panel); }
+  tr.click:hover td:first-child, tr.click:focus td:first-child { background:#111a21; }
+  @media (max-width:640px) { td.sym small { display:none; } }
+  th.grp, td.grp { border-left:1px solid var(--line); }
   th, td { padding:6px 10px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
   th { color:var(--dim); font-weight:400; font-size:11px; letter-spacing:.08em; }
   th:first-child, td:first-child { text-align:left; }
@@ -103,8 +109,8 @@
 <main>
   <section>
     <h2>PRICES <span>click an asset for charts · refresh 60s</span></h2>
-    <div class="wrap"><table>
-      <thead><tr><th>ASSET</th><th>LAST</th><th>24H %</th><th>24H HIGH</th><th>24H LOW</th><th>24H VOL</th></tr></thead>
+    <div class="wrap"><table id="pxt">
+      <thead><tr><th>ASSET</th><th>LAST</th><th class="grp">2H %</th><th>4H %</th><th>24H %</th><th>7D %</th><th class="grp">24H HIGH</th><th>24H LOW</th><th>24H VOL</th></tr></thead>
       <tbody id="px"></tbody>
     </table></div>
   </section>
@@ -149,23 +155,28 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211527"></script>
-<script src="/crypto/report.js?v=202611211527"></script>
+<script src="/crypto/lib.js?v=202611211607"></script>
+<script src="/crypto/report.js?v=202611211607"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
   const last = {};
-  let P = [], L = null;
+  let P = [], L = null, CH = {};
   function cls(v) { return v === null || v === undefined ? '' : v >= 0 ? 'up' : 'dn'; }
 
   async function refresh() {
     $('status').textContent = 'updating…';
-    [P, L] = await Promise.all([A.prices(), A.liquidations()]);
+    let ch;
+    [P, L, ch] = await Promise.all([A.prices(), A.liquidations(), A.changes()]);
+    // keep the last good value per window if a source hiccups
+    Object.entries(ch).forEach(([s, v]) => { CH[s] = { ...(CH[s] || {}), ...Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined)) }; });
     $('px').innerHTML = P.map(a => `<tr class="click" data-s="${a.sym}" tabindex="0" title="Open ${a.name} charts">
         <td class="sym">${a.sym}<small>${a.name}</small></td>
         <td class="px" data-s="${a.sym}">${A.fmtPrice(a.price)}</td>
+        ${['2h', '4h'].map((w, i) => { const v = CH[a.sym] && CH[a.sym][w]; return `<td class="${cls(v ?? null)}${i ? '' : ' grp'}">${A.fmtPct(v ?? null)}</td>`; }).join('')}
         <td class="${cls(a.chg)}">${A.fmtPct(a.chg)}</td>
-        <td>${A.fmtPrice(a.high)}</td><td>${A.fmtPrice(a.low)}</td><td>${A.fmtUSD(a.vol)}</td></tr>`).join('');
+        ${(v => `<td class="${cls(v ?? null)}">${A.fmtPct(v ?? null)}</td>`)(CH[a.sym] && CH[a.sym]['7d'])}
+        <td class="grp">${A.fmtPrice(a.high)}</td><td>${A.fmtPrice(a.low)}</td><td>${A.fmtUSD(a.vol)}</td></tr>`).join('');
     P.forEach(a => {
       const td = document.querySelector(`td.px[data-s="${a.sym}"]`);
       if (a.price !== null && last[a.sym] !== undefined && a.price !== last[a.sym]) {

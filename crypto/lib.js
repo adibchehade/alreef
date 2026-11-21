@@ -81,6 +81,43 @@
     return pairs[0] || null;
   }
 
+  // ---------- multi-window change % for the prices table (2H, 4H, 7D) ----------
+  // Binance rolling-window ticker (one request per window for all coins); Hyperliquid 15m candles
+  // for Anthropic / S&P 500 / gold; GeckoTerminal hourly candles for Purple Bitcoin.
+  const WINDOWS = { '2h': 2 * 3600e3, '4h': 4 * 3600e3, '7d': 7 * 864e5 };
+  function changesFrom(bars, now) {           // bars: [{t(ms), o, c}] oldest → newest
+    const out = {};
+    if (!bars.length) return out;
+    const last = bars[bars.length - 1].c;
+    for (const [w, ms] of Object.entries(WINDOWS)) {
+      const from = now - ms, b = bars.find(x => x.t >= from);
+      out[w] = b && b.o > 0 && bars[0].t <= from + 36e5 ? (last / b.o - 1) * 100 : null;   // null if history is too short
+    }
+    return out;
+  }
+  async function changes() {
+    const now = Date.now(), out = {};
+    const bin = ASSETS.filter(a => a.src === 'binance'), syms = encodeURIComponent(JSON.stringify(bin.map(a => a.sym + 'USDT')));
+    const binReq = Object.keys(WINDOWS).map(async w => {
+      for (const base of BINANCE) {
+        const d = await getJSON(`${base}/api/v3/ticker?windowSize=${w}&symbols=${syms}`);
+        if (Array.isArray(d) && d.length) { d.forEach(t => { const a = bin.find(x => x.sym + 'USDT' === t.symbol); if (a) (out[a.sym] = out[a.sym] || {})[w] = num(t.priceChangePercent); }); return; }
+      }
+    });
+    const hlReq = ASSETS.filter(a => a.src === 'hl').map(async a => {
+      const d = await getJSON(HL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'candleSnapshot', req: { coin: 'xyz:' + a.hl[0], interval: '15m', startTime: now - WINDOWS['7d'] - 9e5, endTime: now } }) }, 15000);
+      if (Array.isArray(d)) out[a.sym] = changesFrom(d.map(k => ({ t: k.t, o: +k.o, c: +k.c })), now);
+    });
+    const dexReq = ASSETS.filter(a => a.src === 'dex').map(async a => {
+      const d = await getJSON(`https://api.geckoterminal.com/api/v2/networks/${a.chain}/pools/${a.pool}/ohlcv/hour?aggregate=1&limit=170&currency=usd&token=base`, { headers: { Accept: 'application/json' } }, 15000);
+      const l = d && d.data && d.data.attributes && d.data.attributes.ohlcv_list;
+      if (Array.isArray(l)) out[a.sym] = changesFrom(l.map(k => ({ t: k[0] * 1000, o: +k[1], c: +k[4] })).reverse(), now);
+    });
+    await Promise.all([...binReq, ...hlReq, ...dexReq]);
+    return out;
+  }
+
   async function prices() {
     const [b, h, ...dx] = await Promise.all([binance(), hyperliquid(), ...ASSETS.filter(a => a.src === 'dex').map(dex)]);
     const D = {}; ASSETS.filter(a => a.src === 'dex').forEach((a, i) => D[a.sym] = dx[i]);
@@ -391,6 +428,6 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, LIQ_ASSETS, liqPick, TF, prices, liquidations, liqRange, candles, analyze, positioning,
+  window.ALREEF = { ASSETS, LIQ_ASSETS, liqPick, changes, TF, prices, liquidations, liqRange, candles, analyze, positioning,
                     fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();
