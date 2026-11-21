@@ -15,7 +15,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Live prices, charts with support/resistance and targets, analysis (EN/ES/AR) and liquidations for BTC, ETH, BNB, SOL, XRP, PEPE, Purple Bitcoin, Anthropic, S&amp;P 500 and gold.">
-<link rel="stylesheet" href="/crypto/theme.css?v=202611211632">
+<link rel="stylesheet" href="/crypto/theme.css?v=202611211652">
 <script>try { const t = localStorage.getItem('alreef-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <style>
   * { box-sizing:border-box; }
@@ -141,7 +141,7 @@
   <section>
     <h2>LIQUIDATIONS · USD <span>longs = green bar share · <a href="/crypto/liquidations/" style="color:var(--amber)">heatmap &amp; live feed ▸</a></span></h2>
     <div class="wrap"><table>
-      <thead><tr><th>ASSET</th><th>24H LONG</th><th>24H SHORT</th><th>24H TOTAL</th><th>L/S</th></tr></thead>
+      <thead><tr><th>ASSET</th><th>1H TOTAL</th><th>4H TOTAL</th><th>12H TOTAL</th><th class="grp">24H LONG</th><th>24H SHORT</th><th>24H TOTAL</th><th>L/S</th></tr></thead>
       <tbody id="lq"></tbody>
     </table></div>
   </section>
@@ -186,13 +186,13 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211632"></script>
-<script src="/crypto/report.js?v=202611211632"></script>
+<script src="/crypto/lib.js?v=202611211652"></script>
+<script src="/crypto/report.js?v=202611211652"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
   const last = {};
-  let P = [], L = null, CH = {};
+  let P = [], L = null, CH = {}; const LW = {};
   function cls(v) { return v === null || v === undefined ? '' : v >= 0 ? 'up' : 'dn'; }
 
   // Prices refresh at the chosen rate (1 s – 1 min); 2H/4H/7D bases and liquidations every 15 s at most;
@@ -235,20 +235,24 @@
     pricesAt = Date.now(); renderPrices(); setStatus();
   }
   async function refreshSlow() {
-    let ch;
-    [L, ch] = await Promise.all([A.liquidations(), A.changes()]);
+    let ch, w1, w4, w12;
+    [L, ch, w1, w4, w12] = await Promise.all([A.liquidations(), A.changes(), A.liqRange('1h'), A.liqRange('4h'), A.liqRange('12h')]);
+    // 1H / 4H / 12H totals (keep the last good set if one request fails)
+    [['1h', w1], ['4h', w4], ['12h', w12]].forEach(([k, v]) => { if (v) LW[k] = v; });
     // keep the last good value per window if a source hiccups
     Object.entries(ch).forEach(([s, v]) => { CH[s] = { ...(CH[s] || {}), ...Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined)) }; });
     if (P.length) renderPrices();
-    const tot = { l: 0, s: 0, t: 0 };
+    const tot = { l: 0, s: 0, t: 0, '1h': 0, '4h': 0, '12h': 0 };
     $('lq').innerHTML = A.LIQ_ASSETS.map(a => {
       const x = L[a.sym], d = x['24h'];
       tot.l += d.long || 0; tot.s += d.short || 0; tot.t += d.total || 0;
+      const wc = k => { const v = LW[k] ? A.liqPick(LW[k], a) : null; if (v && v.total) tot[k] += v.total;
+        return v ? `<td title="longs ${A.fmtUSD(v.long)} · shorts ${A.fmtUSD(v.short)}">${A.fmtUSD(v.total)}</td>` : '<td>—</td>'; };
       const share = d.long !== null && d.short !== null && (d.long + d.short) > 0 ? d.long / (d.long + d.short) * 100 : null;
       return `<tr class="click" data-s="${a.sym}" tabindex="0" title="Open ${a.name} charts"><td class="sym">${a.sym}<small>${a.name}</small></td>
-        <td class="up">${A.fmtUSD(d.long)}</td><td class="dn">${A.fmtUSD(d.short)}</td><td>${A.fmtUSD(d.total)}</td>
+        ${wc('1h')}${wc('4h')}${wc('12h')}<td class="up grp">${A.fmtUSD(d.long)}</td><td class="dn">${A.fmtUSD(d.short)}</td><td>${A.fmtUSD(d.total)}</td>
         <td>${share === null ? '—' : `<span class="ls" title="longs ${share.toFixed(0)}%"><i style="width:${share}%"></i></span>`}</td></tr>`;
-    }).join('') + `<tr class="tot"><td>TOTAL</td><td>${A.fmtUSD(tot.l)}</td><td>${A.fmtUSD(tot.s)}</td><td>${A.fmtUSD(tot.t)}</td><td></td></tr>`;
+    }).join('') + `<tr class="tot"><td>TOTAL</td><td>${A.fmtUSD(tot['1h'])}</td><td>${A.fmtUSD(tot['4h'])}</td><td>${A.fmtUSD(tot['12h'])}</td><td class="grp">${A.fmtUSD(tot.l)}</td><td>${A.fmtUSD(tot.s)}</td><td>${A.fmtUSD(tot.t)}</td><td></td></tr>`;
     setStatus();
   }
   function refreshChart() { if (cur.sym) { header(); loadChart(false); } }
