@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Markets · alreef crypto</title>
 <meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="alreef">
+<meta property="og:title" content="alreef · Markets Terminal">
+<meta property="og:description" content="Live prices, charts with support/resistance and targets, analysis (EN/ES/AR) and liquidations for BTC, ETH, BNB, SOL, XRP, PEPE, Purple Bitcoin, Anthropic, S&amp;P 500 and gold.">
+<meta property="og:url" content="https://alreef.es/crypto/">
+<meta property="og:image" content="https://alreef.es/crypto/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Live prices, charts with support/resistance and targets, analysis (EN/ES/AR) and liquidations for BTC, ETH, BNB, SOL, XRP, PEPE, Purple Bitcoin, Anthropic, S&amp;P 500 and gold.">
 <style>
   :root { --bg:#07090b; --panel:#0d1115; --line:#1b232b; --txt:#c9d3da; --dim:#6b7a86; --amber:#ffb300; --up:#00e676; --dn:#ff4d4d; --blue:#4aa3ff; }
   * { box-sizing:border-box; }
@@ -52,7 +62,7 @@
   .ov { position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; padding:20px; z-index:10; }
   .ov[hidden] { display:none; }
   .modal { width:min(1000px,100%); max-height:100%; overflow:auto; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--amber); box-shadow:0 20px 60px rgba(0,0,0,.6); }
-  .mh { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid var(--line); background:#000; position:sticky; top:0; z-index:2; }
+  .mh { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid var(--line); background:#000; position:sticky; top:0; z-index:10; }
   .mh .nm { color:var(--dim); }
   .mh .mpx { color:#fff; font-size:18px; font-weight:700; transition:color .5s, text-shadow .5s; font-variant-numeric:tabular-nums; }
   .mh .mpx.flash-up { color:var(--up); text-shadow:0 0 10px rgba(0,230,118,.7); transition:none; }
@@ -61,7 +71,16 @@
   .livebadge i { display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-right:6px; vertical-align:1px; animation:pulse 1.2s infinite; }
   .livebadge.warn { color:var(--amber); }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
-  .mh .x { margin-left:auto; background:none; border:1px solid var(--line); color:var(--txt); font:inherit; font-size:16px; width:34px; height:34px; cursor:pointer; }
+  .sharebtn { background:#000; border:1px solid var(--line); color:var(--amber); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 10px; cursor:pointer; }
+  .sharebtn:hover { border-color:var(--amber); }
+  .mh .sharebtn { margin-left:auto; height:34px; }
+  .shwrap { position:relative; z-index:30; margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .smenu { position:absolute; right:42px; top:40px; background:#000; border:1px solid var(--amber); z-index:30; min-width:250px; white-space:nowrap; box-shadow:0 10px 30px rgba(0,0,0,.6); }
+  .smenu[hidden] { display:none; }
+  .smenu button { display:block; width:100%; text-align:left; background:none; border:0; border-bottom:1px solid var(--line); color:var(--txt); font:inherit; padding:10px 12px; cursor:pointer; }
+  .smenu button:last-child { border-bottom:0; }
+  .smenu button:hover, .smenu button:focus { background:#111a21; color:var(--amber); outline:none; }
+  .mh .x { background:none; border:1px solid var(--line); color:var(--txt); font:inherit; font-size:16px; width:34px; height:34px; cursor:pointer; }
   .mh .x:hover { border-color:var(--amber); color:var(--amber); }
   .tfs { display:flex; gap:4px; padding:10px 12px 0; flex-wrap:wrap; }
   .tfs button { background:#000; border:1px solid var(--line); color:var(--dim); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 14px; cursor:pointer; }
@@ -104,7 +123,8 @@
   <span class="brand">ALREEF</span>
   <span class="hdr-t">MARKETS TERMINAL</span>
   <span class="status" id="status">loading…</span>
-  <div class="clock"><b id="clock">--:--:--</b><small id="date"></small></div>
+  <button class="sharebtn" id="share-page" style="margin-left:auto" title="Share this page">⤴ SHARE</button>
+  <div class="clock" style="margin-left:0"><b id="clock">--:--:--</b><small id="date"></small></div>
 </header>
 <main>
   <section>
@@ -132,7 +152,15 @@
       <span class="nm" id="m-name"></span>
       <span class="mpx" id="m-px"></span>
       <span id="m-chg"></span>
-      <button class="x" id="m-x" aria-label="Close">✕</button>
+      <div class="shwrap">
+        <button class="sharebtn" id="m-share" aria-haspopup="menu" aria-expanded="false" title="Share this chart">⤴ SHARE</button>
+        <div class="smenu" id="smenu" role="menu" hidden>
+          <button role="menuitem" data-act="link">Share link to this chart</button>
+          <button role="menuitem" data-act="image">Share chart image</button>
+          <button role="menuitem" data-act="copy">Copy link</button>
+        </div>
+        <button class="x" id="m-x" aria-label="Close" style="margin-left:0">✕</button>
+      </div>
     </div>
     <div class="tfs" id="tfs"></div>
     <div class="cw"><div id="chart"></div><div class="cmsg" id="cmsg">loading…</div></div>
@@ -155,8 +183,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211607"></script>
-<script src="/crypto/report.js?v=202611211607"></script>
+<script src="/crypto/lib.js?v=202611211612"></script>
+<script src="/crypto/report.js?v=202611211612"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -507,7 +535,7 @@
     $('m-x').focus();
   }
   function closeAsset() {
-    stopLive();
+    stopLive(); $('smenu').hidden = true;
     cur.sym = null; cur.seq++;
     $('ov').hidden = true; document.body.style.overflow = '';
     history.replaceState(null, '', location.pathname);
@@ -523,7 +551,59 @@
   });
   $('m-x').addEventListener('click', closeAsset);
   $('ov').addEventListener('click', e => { if (e.target === $('ov')) closeAsset(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && cur.sym) closeAsset(); });
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!smenu.hidden) { menu(false); $('m-share').focus(); } else if (cur.sym) closeAsset(); });
+
+  // ---------- share ----------
+  const tfLabel = () => (A.TF[cur.tf] && A.TF[cur.tf].label) || cur.tf;
+  function shareInfo() {
+    const base = location.origin + location.pathname;
+    if (!cur.sym) return { title: 'alreef · Markets Terminal', text: 'Live crypto, Anthropic, S&P 500 and gold prices with charts and analysis', url: base };
+    const name = $('m-name').textContent.trim(), px = $('m-px').textContent.trim(), chg = $('m-chg').textContent.trim();
+    let bias = '';
+    try { if (view.an && view.asset) bias = A.report(view.an, view.ctx, view.tf, view.asset, 'en').sections[0].p.split(':')[0].trim(); } catch (e) {}
+    return { title: `${cur.sym} ${px} ${chg}`,
+      text: `${name} (${cur.sym}) ${px} · ${chg}${bias ? ' · ' + bias : ''}`,
+      url: `${base}#${cur.sym}-${cur.tf}` };
+  }
+  async function chartImage() {
+    const shot = chart.takeScreenshot(), W = 1200, pad = 36;
+    const ch = Math.round(shot.height * (W - pad * 2) / shot.width), H = 150 + ch + 70;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'), mono = 'ui-monospace,Menlo,Consolas,monospace';
+    g.fillStyle = '#07090b'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#ffb300'; g.fillRect(0, 0, W, 6);
+    g.textBaseline = 'alphabetic';
+    g.font = `700 20px ${mono}`; g.fillStyle = '#ffb300'; g.fillText('ALREEF', pad, 44);
+    g.fillStyle = '#7d8b96'; g.fillText(`· ${$('m-name').textContent.trim()} · ${tfLabel()}`, pad + 92, 44);
+    g.font = `700 46px ${mono}`; g.fillStyle = '#e8eef2';
+    const head = `${cur.sym}  ${$('m-px').textContent.trim()}`; g.fillText(head, pad, 106); const hw = g.measureText(head).width;
+    const chg = $('m-chg').textContent.trim();
+    g.fillStyle = getComputedStyle($('m-chg')).color || '#e8eef2'; g.font = `700 34px ${mono}`;
+    g.fillText(chg, pad + hw + 24, 106);
+    const info = shareInfo().text.split(' · ').slice(2).join(' · ');
+    if (info) { g.font = `600 18px ${mono}`; g.fillStyle = '#ffb300'; g.textAlign = 'right'; g.fillText(info.toUpperCase(), W - pad, 44); g.textAlign = 'left'; }
+    g.drawImage(shot, pad, 130, W - pad * 2, ch);
+    g.strokeStyle = '#1c252c'; g.strokeRect(pad - .5, 129.5, W - pad * 2 + 1, ch + 1);
+    g.font = `16px ${mono}`; g.fillStyle = '#7d8b96';
+    g.fillText(`alreef.es/crypto · ${A.spain({ day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} Spain time`, pad, H - 28);
+    g.textAlign = 'right'; g.fillText('Not financial advice', W - pad, H - 28);
+    return new Promise(r => c.toBlob(r, 'image/png'));
+  }
+  const smenu = $('smenu');
+  const menu = open => { smenu.hidden = !open; $('m-share').setAttribute('aria-expanded', open); if (open) smenu.querySelector('button').focus(); };
+  $('m-share').addEventListener('click', e => { e.stopPropagation(); menu(smenu.hidden); });
+  smenu.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return; menu(false);
+    const info = shareInfo();
+    if (b.dataset.act === 'link') A.shareLink(info);
+    else if (b.dataset.act === 'copy') A.toast(await A.copyText(info.url) ? 'Link copied' : info.url);
+    else {
+      try { const blob = await chartImage(); await A.shareFile(blob, `alreef-${cur.sym}-${cur.tf}.png`, info); }
+      catch (err) { console.error(err); A.toast('Could not make the image — link copied instead'); A.copyText(info.url); }
+    }
+  });
+  document.addEventListener('click', e => { if (!smenu.hidden && !e.target.closest('.shwrap')) menu(false); });
+  $('share-page').addEventListener('click', () => A.shareLink(shareInfo()));
 
   A.every60(refresh);
   // Open straight from a link like /crypto/#BTC-7d

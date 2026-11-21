@@ -428,6 +428,45 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, LIQ_ASSETS, liqPick, changes, TF, prices, liquidations, liqRange, candles, analyze, positioning,
+  // ---------- sharing ----------
+  // Phone: the system share sheet (WhatsApp, Telegram, Messages…). Computer: copy the link / save the image.
+  function toast(msg) {
+    let t = document.getElementById('alreef-toast');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'alreef-toast'; t.setAttribute('role', 'status');
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#ffb300;color:#000;font:700 13px ui-monospace,Consolas,monospace;padding:9px 16px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;transition:opacity .3s';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = '0'; }, 2400);
+  }
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); return ok;
+  }
+  function saveBlob(blob, name) {
+    const u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+  }
+  async function shareLink({ title, text, url }) {
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    toast(await copyText(url) ? 'Link copied — paste it anywhere' : url);
+  }
+  async function shareFile(blob, name, { title, text, url }) {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title, text: `${text}\n${url}` }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    saveBlob(blob, name); toast('Chart image saved');
+  }
+
+  window.ALREEF = { toast, copyText, shareLink, shareFile, ASSETS, LIQ_ASSETS, liqPick, changes, TF, prices, liquidations, liqRange, candles, analyze, positioning,
                     fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();

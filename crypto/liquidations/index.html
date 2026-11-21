@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Liquidations · alreef crypto</title>
 <meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="alreef">
+<meta property="og:title" content="alreef · Crypto Liquidations">
+<meta property="og:description" content="Liquidation heatmap, long/short totals for 1H, 4H, 12H and 24H, and a live liquidation feed.">
+<meta property="og:url" content="https://alreef.es/crypto/liquidations/">
+<meta property="og:image" content="https://alreef.es/crypto/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Liquidation heatmap, long/short totals for 1H, 4H, 12H and 24H, and a live liquidation feed.">
 <style>
   :root { --bg:#07090b; --panel:#0d1115; --line:#1b232b; --txt:#c9d3da; --dim:#6b7a86; --amber:#ffb300; --up:#00e676; --dn:#ff4d4d; }
   * { box-sizing:border-box; }
@@ -83,7 +93,8 @@
   <span class="hdr-t">LIQUIDATIONS</span>
   <a class="nav" href="/crypto/">◂ markets terminal</a>
   <span class="status" id="status">loading…</span>
-  <div class="clock"><b id="clock">--:--:--</b><small id="date"></small></div>
+  <button id="share-page" title="Share this page" style="margin-left:auto;background:#000;border:1px solid var(--line);color:var(--amber);font:inherit;font-weight:700;letter-spacing:.06em;padding:6px 10px;cursor:pointer">⤴ SHARE</button>
+  <div class="clock" style="margin-left:0"><b id="clock">--:--:--</b><small id="date"></small></div>
 </header>
 <main>
   <section class="top">
@@ -115,7 +126,7 @@
   <div class="note">Data: CoinBoss (free, aggregated across Binance, Bybit, OKX, Gate, Hyperliquid and others). "Long" means a long position was liquidated (forced sale); "Short" means a short was liquidated (forced buy). Heatmap shows the top 80 coins; the rest are grouped as OTHER. Click BTC, ETH, BNB, SOL, XRP, PEPE, ANT or gold (XAUT, PAXG) for its chart. Refresh: totals 60 s, feed 15 s. Not financial advice.</div>
 </main>
 
-<script src="/crypto/lib.js?v=202611211607"></script>
+<script src="/crypto/lib.js?v=202611211612"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -212,6 +223,12 @@
     $('tfs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
     history.replaceState(null, '', '#' + R);
     drawTotals(); refresh();
+  });
+  $('share-page').addEventListener('click', () => {
+    const o = overview && overview[R];
+    A.shareLink({ title: `Crypto liquidations · ${R.toUpperCase()}`,
+      text: o ? `${A.fmtUSD(o.total_usd)} liquidated in ${R.toUpperCase()} · longs ${(o.long_usd / o.total_usd * 100).toFixed(0)}% · shorts ${(o.short_usd / o.total_usd * 100).toFixed(0)}%` : 'Crypto liquidations heatmap and live feed',
+      url: `${location.origin}/crypto/liquidations/#${R}` });
   });
   const h = location.hash.slice(1);
   if (['1h', '4h', '12h', '24h'].includes(h)) { R = h; $('tfs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.r === R)); }
