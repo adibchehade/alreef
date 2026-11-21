@@ -227,11 +227,20 @@
     sE20 = line('#ffb300'); sE50 = line('#4aa3ff');
   }
 
+  // Header change % = price now vs the open of the first candle in the selected timeframe.
+  const chgBase = { sym: null, tf: null, open: null, close: null };
+  function setChg(px) {
+    if (!chgBase.open || !(px > 0)) return;
+    const c = (px / chgBase.open - 1) * 100;
+    $('m-chg').className = cls(c); $('m-chg').textContent = A.fmtPct(c) + ' ' + A.TF[chgBase.tf].label;
+  }
   function header() {
     const p = P.find(x => x.sym === cur.sym) || A.ASSETS.find(x => x.sym === cur.sym);
     $('m-sym').textContent = p.sym; $('m-name').textContent = p.name;
     if (live.lastPx === null) $('m-px').textContent = A.fmtPrice(p.price ?? null);
-    $('m-chg').className = cls(p.chg); $('m-chg').textContent = p.chg === undefined ? '' : A.fmtPct(p.chg) + ' 24h';
+    // change over the selected timeframe once its candles are loaded; the 24h figure until then
+    if (chgBase.sym === cur.sym && chgBase.tf === cur.tf && chgBase.open) setChg(live.lastPx ?? chgBase.close);
+    else { $('m-chg').className = cls(p.chg); $('m-chg').textContent = p.chg === undefined ? '' : A.fmtPct(p.chg) + ' 24H'; }
   }
 
   async function liqFor(sym, tf) {
@@ -307,7 +316,11 @@
     // fit even if this load replaced the one that asked for it (e.g. the 60 s refresh landed first)
     if (cur.fitPending && bars.length) { chart.timeScale().fitContent(); cur.fitPending = false; }
     $('m-src').textContent = bars.length ? `${A.TF[tf].iv} candles · ${cd.src}` : '';
-    if (bars.length) startLive(asset, tf, cd.src, bars);
+    if (bars.length) {
+      Object.assign(chgBase, { sym, tf, open: bars[0].open, close: bars[bars.length - 1].close });
+      startLive(asset, tf, cd.src, bars);
+      setChg(live.lastPx ?? chgBase.close);
+    }
     const keep = view.ctx && view.sym === sym ? view.ctx : null;
     Object.assign(view, { an, liq, asset, tf, sym, ctx: keep });
     renderStats(); renderReport();
@@ -344,6 +357,7 @@
       clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('flash-up', 'flash-dn'), 700);
     }
     live.lastPx = px; el.textContent = A.fmtPrice(px);
+    setChg(px);
   }
   function tick(price, usd, ms) {          // one trade → update the current candle or start a new one
     if (!live.last || !(price > 0)) return;
