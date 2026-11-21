@@ -1,0 +1,24 @@
+name: tmp probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          set +e
+          echo "=== coinboss gold-like coins"
+          curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?limit=500" | python3 -c "import sys,json;[print(r) for r in json.load(sys.stdin)['data'] if any(k in r['coin'].upper() for k in ('XAU','GOLD','PAXG','GC'))]"
+          echo "=== coinboss gold prints"
+          curl -s -m 25 "https://www.coinboss.com/api/liquidations?limit=1000" | python3 -c "import sys,json
+          seen=set()
+          for r in json.load(sys.stdin)['data']:
+            if any(k in r['coin_base'].upper() for k in ('XAU','GOLD','PAXG')):
+              k=(r['exchange'],r['symbol'],r['coin_base'])
+              if k not in seen: seen.add(k); print(k, r['price'])"
+          echo "=== hyperliquid xyz:GOLD"
+          curl -s -m 25 -H 'Content-Type: application/json' -d '{"type":"metaAndAssetCtxs","dex":"xyz"}' https://api.hyperliquid.xyz/info | python3 -c "import sys,json
+          m,c=json.load(sys.stdin)
+          for u,x in zip(m['universe'],c):
+            if u['name'] in ('xyz:GOLD','xyz:SILVER'): print(u['name'],{k:x.get(k) for k in ('markPx','prevDayPx','funding','openInterest','dayNtlVlm')})"
+          curl -s -m 25 -H 'Content-Type: application/json' -d '{"type":"candleSnapshot","req":{"coin":"xyz:GOLD","interval":"15m","startTime":'$(( ($(date +%s)-3600)*1000 ))',"endTime":'$(( $(date +%s)*1000 ))'}}' https://api.hyperliquid.xyz/info | head -c 300; echo
