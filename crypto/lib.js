@@ -2,6 +2,7 @@
 //  · Crypto prices: Binance public REST (fallback: data-api.binance.vision)
 //  · ANT / S&P 500 prices: Hyperliquid info API, "xyz" dex (markPx vs prevDayPx)
 //  · Purple Bitcoin (Solana memecoin): DexScreener price, GeckoTerminal candles
+//  · Gold: Hyperliquid xyz:GOLD; liquidations from XAUT + PAXG futures on CoinBoss
 //  · 24h liquidations: CoinBoss /api/liquidations/coins (per-coin, live, one request)
 //    S&P 500 has no free liquidation source (CoinBoss "SPX" is the SPX6900 memecoin), so price only
 //  · 7d / 30d liquidations: live 24h + previous days saved by the GitHub Action
@@ -22,8 +23,18 @@
       noLiq: 'no futures market' },
     { sym: 'ANT', name: 'Anthropic', src: 'hl', hl: ['ANT'] },
     { sym: 'SPX', name: 'S&P 500',   src: 'hl', hl: ['SP500'], noLiq: 'no free source' },
+    // Gold: Hyperliquid xyz:GOLD perp (price, charts, funding). Liquidations = gold-backed token futures
+    // on CoinBoss: Tether Gold (XAUT) + Pax Gold (PAXG); CoinBoss has no XAU/TradFi gold contract.
+    { sym: 'GOLD', name: 'Gold',      src: 'hl', hl: ['GOLD'], liqCoins: ['XAUT', 'PAXG'] },
   ];
   const LIQ_ASSETS = ASSETS.filter(a => !a.noLiq);
+  // Liquidations for an asset from a per-coin map (sums several coins for gold).
+  function liqPick(map, a) {
+    const rows = (a.liqCoins || [a.sym]).map(c => map[c]).filter(Boolean);
+    if (!rows.length) return { long: 0, short: 0, total: 0 };
+    const s = k => rows.reduce((t, r) => t + (num(r[k]) || 0), 0);
+    return { long: s('long'), short: s('short'), total: s('total') };
+  }
   const BINANCE = ['https://api.binance.com', 'https://data-api.binance.vision'];
   const HL = 'https://api.hyperliquid.xyz/info';
   const LIQ = 'https://www.coinboss.com/api/liquidations/coins?limit=500';
@@ -123,7 +134,7 @@
     const ok = Object.keys(lives).length > 0;
     const out = {};
     LIQ_ASSETS.forEach(a => {
-      const live = ok ? (lives[a.sym] || { long: 0, short: 0, total: 0 }) : null;
+      const live = ok ? liqPick(lives, a) : null;
       const today = new Date().toISOString().slice(0, 10);
       const past = Object.keys(H).filter(d => d < today).sort().slice(-30).map(d => H[d] && H[d][a.sym]).filter(r => r && num(r.total) !== null);
       out[a.sym] = { '24h': live ? { ...live, have: 1, need: 1 } : { long: null, short: null, total: null, have: 0, need: 1 },
@@ -317,7 +328,7 @@
   }
 
   // Futures positioning from Hyperliquid (free): funding (hourly rate), open interest, premium.
-  const HL_PERP = { BTC: 'BTC', ETH: 'ETH', BNB: 'BNB', SOL: 'SOL', XRP: 'XRP', PEPE: 'kPEPE', ANT: 'xyz:ANT', SPX: 'xyz:SP500' };
+  const HL_PERP = { BTC: 'BTC', ETH: 'ETH', BNB: 'BNB', SOL: 'SOL', XRP: 'XRP', PEPE: 'kPEPE', ANT: 'xyz:ANT', SPX: 'xyz:SP500', GOLD: 'xyz:GOLD' };
   let hlCtx = { at: 0, map: null };
   async function positioning(sym) {
     const name = HL_PERP[sym];
@@ -365,6 +376,6 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
-  window.ALREEF = { ASSETS, LIQ_ASSETS, TF, prices, liquidations, liqRange, candles, analyze, positioning,
+  window.ALREEF = { ASSETS, LIQ_ASSETS, liqPick, TF, prices, liquidations, liqRange, candles, analyze, positioning,
                     fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();

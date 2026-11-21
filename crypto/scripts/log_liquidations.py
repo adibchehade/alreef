@@ -11,6 +11,8 @@ import urllib.request
 
 # S&P 500 is not included: CoinBoss "SPX" is the SPX6900 memecoin, not the index.
 COINS = ["BTC", "ETH", "BNB", "SOL", "XRP", "PEPE", "ANT"]  # Purple Bitcoin has no futures market
+# Saved under one name, summed from several CoinBoss coins (gold-backed token futures)
+GROUPS = {"GOLD": ["XAUT", "PAXG"]}
 URL = "https://www.coinboss.com/api/liquidations/coins?limit=500"
 FILE = os.path.join(os.path.dirname(__file__), "..", "data", "liquidations.json")
 KEEP_DAYS = 60
@@ -53,6 +55,9 @@ def main():
         raise SystemExit("no liquidation data fetched; nothing saved")
     # a coin missing from the list had no liquidations in the last 24h
     row = {c: live.get(c, {"long": 0.0, "short": 0.0, "total": 0.0}) for c in COINS}
+    for name, parts in GROUPS.items():
+        rs = [live[c] for c in parts if c in live]
+        row[name] = {k: sum((r.get(k) or 0.0) for r in rs) for k in ("long", "short", "total")}
     days[today] = row
     days = dict(sorted(days.items())[-KEEP_DAYS:])
     out = {"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), "days": days}

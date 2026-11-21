@@ -112,15 +112,16 @@
     </h2>
     <div class="feed" id="feed"></div>
   </section>
-  <div class="note">Data: CoinBoss (free, aggregated across Binance, Bybit, OKX, Gate, Hyperliquid and others). "Long" means a long position was liquidated (forced sale); "Short" means a short was liquidated (forced buy). Heatmap shows the top 80 coins; the rest are grouped as OTHER. Click BTC, ETH, BNB, SOL, XRP, PEPE or ANT for its chart. Refresh: totals 60 s, feed 15 s. Not financial advice.</div>
+  <div class="note">Data: CoinBoss (free, aggregated across Binance, Bybit, OKX, Gate, Hyperliquid and others). "Long" means a long position was liquidated (forced sale); "Short" means a short was liquidated (forced buy). Heatmap shows the top 80 coins; the rest are grouped as OTHER. Click BTC, ETH, BNB, SOL, XRP, PEPE, ANT or gold (XAUT, PAXG) for its chart. Refresh: totals 60 s, feed 15 s. Not financial advice.</div>
 </main>
 
-<script src="/crypto/lib.js?v=202611202350"></script>
+<script src="/crypto/lib.js?v=202611211051"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
   const CB = 'https://www.coinboss.com/api/liquidations';
-  const WATCH = new Set(A.LIQ_ASSETS.map(a => a.sym));
+  // coin on the heatmap → asset with a chart (gold-backed XAUT/PAXG open the Gold chart)
+  const WATCH = new Map(A.LIQ_ASSETS.flatMap(a => (a.liqCoins || [a.sym]).map(c => [c, a.sym])));
   const CHART_TF = { '1h': '1h', '4h': '4h', '12h': '24h', '24h': '24h' };
   let R = '24h', coins = [], overview = null;
 
@@ -187,7 +188,7 @@
       const showName = b.w > 34 && b.h > 18, showAmt = b.w > 48 && b.h > 36;
       const tip = `${b.coin}: ${A.fmtUSD(b.total)} · longs ${A.fmtUSD(b.long)} (${(share * 100).toFixed(0)}%) · shorts ${A.fmtUSD(b.short)}`;
       const watch = WATCH.has(b.coin);
-      const tag = watch ? 'a' : 'div', href = watch ? ` href="/crypto/#${b.coin}-${CHART_TF[R]}"` : '';
+      const tag = watch ? 'a' : 'div', href = watch ? ` href="/crypto/#${WATCH.get(b.coin)}-${CHART_TF[R]}"` : '';
       return `<${tag} class="blk${watch ? ' watch' : ''}"${href} title="${tip}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px;background:${colour(share)}">
         ${showName ? `<b style="font-size:${fs}px">${b.coin}</b>` : ''}${showAmt ? `<span style="font-size:${Math.max(9, fs * 0.6)}px">${A.fmtUSD(b.total)}</span>` : ''}</${tag}>`;
     }).join('');

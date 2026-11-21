@@ -110,7 +110,7 @@
     </table></div>
     <div class="note" id="hist-note"></div>
   </section>
-  <div class="note">Sources: Binance (crypto prices &amp; charts) · Hyperliquid xyz perps (Anthropic, S&amp;P 500) · DexScreener &amp; GeckoTerminal (Purple Bitcoin, Solana) · CoinBoss (liquidations). Liquidations are futures/perps: none for Purple Bitcoin (spot only) or the S&amp;P 500 (no free source). Not financial advice.</div>
+  <div class="note">Sources: Binance (crypto prices &amp; charts) · Hyperliquid xyz perps (Anthropic, S&amp;P 500, gold) · DexScreener &amp; GeckoTerminal (Purple Bitcoin, Solana) · CoinBoss (liquidations; gold = XAUT + PAXG futures). Liquidations are futures/perps: none for Purple Bitcoin (spot only) or the S&amp;P 500 (no free source). Not financial advice.</div>
 </main>
 
 <div class="ov" id="ov" hidden>
@@ -141,8 +141,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611202350"></script>
-<script src="/crypto/report.js?v=202611202350"></script>
+<script src="/crypto/lib.js?v=202611211051"></script>
+<script src="/crypto/report.js?v=202611211051"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -227,7 +227,7 @@
       const c = shortLiq[tf];
       if (!c || Date.now() - c.at > 55000) shortLiq[tf] = { at: Date.now(), data: await A.liqRange(tf) };
       const d = shortLiq[tf].data;
-      return d ? (d[sym] || { long: 0, short: 0, total: 0 }) : null;
+      return d ? A.liqPick(d, asset) : null;
     }
     return L && L[sym] ? L[sym][tf] : null;
   }
