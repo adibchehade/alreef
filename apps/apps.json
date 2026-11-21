@@ -56,6 +56,16 @@
         "default":  false
     },
     {
+        "name":  "freeclaudecode",
+        "githubinstaller":  "Alishahryar1/free-claude-code",
+        "asset":  "install\\.ps1$",
+        "exe":  "install.ps1",
+        "category":  "AI",
+        "homepage":  "https://github.com/Alishahryar1/free-claude-code",
+        "default":  false,
+        "args":  "-NoProfile -ExecutionPolicy Bypass"
+    },
+    {
         "name":  "Tor Browser",
         "id":  "TorProject.TorBrowser",
         "category":  "Browsers",
@@ -253,6 +263,15 @@
         "category":  "Utilities",
         "homepage":  "https://www.bleachbit.org/download/windows",
         "default":  false
+    },
+    {
+        "name":  "activate doors",
+        "installer":  "https://get.activated.win",
+        "detect":  "Windows Activation",
+        "category":  "Utilities",
+        "homepage":  "https://github.com/massgravel/Microsoft-Activation-Scripts",
+        "default":  false,
+        "args":  ""
     },
     {
         "name":  "Python 3.13",
