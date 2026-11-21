@@ -190,7 +190,7 @@
     if (asset.noLiq) pos.push(T.noLiq(nm, asset.noLiq));
     else if (a.liq && a.liq.total) {
       const share = a.liq.long / ((a.liq.long + a.liq.short) || 1);
-      pos.push(T.liq({ total: a.liq.total, share }, tfW));
+      pos.push(T.liq({ total: a.liq.total, share }, a.liq.win && T.tf[a.liq.win] ? T.tf[a.liq.win][0] : tfW));
       if (tf === '24h' && ctx && ctx.liqAvgDay && ctx.liqAvgDay.days >= 3) pos.push(T.liqAvg(a.liq.total / ctx.liqAvgDay.avg, ctx.liqAvgDay.days));
     }
     if (pos.length) S.push({ h: T.h.pos, p: pos.join(' ') });

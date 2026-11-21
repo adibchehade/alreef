@@ -15,7 +15,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Live prices, charts with support/resistance and targets, analysis (EN/ES/AR) and liquidations for BTC, ETH, BNB, SOL, XRP, PEPE, Purple Bitcoin, Anthropic, S&amp;P 500 and gold.">
-<link rel="stylesheet" href="/crypto/theme.css?v=202611211624">
+<link rel="stylesheet" href="/crypto/theme.css?v=202611211632">
 <script>try { const t = localStorage.getItem('alreef-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <style>
   * { box-sizing:border-box; }
@@ -141,10 +141,9 @@
   <section>
     <h2>LIQUIDATIONS · USD <span>longs = green bar share · <a href="/crypto/liquidations/" style="color:var(--amber)">heatmap &amp; live feed ▸</a></span></h2>
     <div class="wrap"><table>
-      <thead><tr><th>ASSET</th><th>24H LONG</th><th>24H SHORT</th><th>24H TOTAL</th><th>L/S</th><th>7D TOTAL</th><th>30D TOTAL</th></tr></thead>
+      <thead><tr><th>ASSET</th><th>24H LONG</th><th>24H SHORT</th><th>24H TOTAL</th><th>L/S</th></tr></thead>
       <tbody id="lq"></tbody>
     </table></div>
-    <div class="note" id="hist-note"></div>
   </section>
   <div class="note">Sources: Binance (crypto prices &amp; charts) · Hyperliquid xyz perps (Anthropic, S&amp;P 500, gold) · DexScreener &amp; GeckoTerminal (Purple Bitcoin, Solana) · CoinBoss (liquidations; gold = XAUT + PAXG futures). Liquidations are futures/perps: none for Purple Bitcoin (spot only) or the S&amp;P 500 (no free source). Not financial advice.</div>
 </main>
@@ -187,8 +186,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211624"></script>
-<script src="/crypto/report.js?v=202611211624"></script>
+<script src="/crypto/lib.js?v=202611211632"></script>
+<script src="/crypto/report.js?v=202611211632"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -241,20 +240,15 @@
     // keep the last good value per window if a source hiccups
     Object.entries(ch).forEach(([s, v]) => { CH[s] = { ...(CH[s] || {}), ...Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined)) }; });
     if (P.length) renderPrices();
-    const tot = { l: 0, s: 0, t: 0, w7: 0, w30: 0 };
+    const tot = { l: 0, s: 0, t: 0 };
     $('lq').innerHTML = A.LIQ_ASSETS.map(a => {
       const x = L[a.sym], d = x['24h'];
-      tot.l += d.long || 0; tot.s += d.short || 0; tot.t += d.total || 0; tot.w7 += x['7d'].total || 0; tot.w30 += x['30d'].total || 0;
+      tot.l += d.long || 0; tot.s += d.short || 0; tot.t += d.total || 0;
       const share = d.long !== null && d.short !== null && (d.long + d.short) > 0 ? d.long / (d.long + d.short) * 100 : null;
       return `<tr class="click" data-s="${a.sym}" tabindex="0" title="Open ${a.name} charts"><td class="sym">${a.sym}<small>${a.name}</small></td>
         <td class="up">${A.fmtUSD(d.long)}</td><td class="dn">${A.fmtUSD(d.short)}</td><td>${A.fmtUSD(d.total)}</td>
-        <td>${share === null ? '—' : `<span class="ls" title="longs ${share.toFixed(0)}%"><i style="width:${share}%"></i></span>`}</td>
-        <td>${A.fmtUSD(x['7d'].total)}</td><td>${A.fmtUSD(x['30d'].total)}</td></tr>`;
-    }).join('') + `<tr class="tot"><td>TOTAL</td><td>${A.fmtUSD(tot.l)}</td><td>${A.fmtUSD(tot.s)}</td><td>${A.fmtUSD(tot.t)}</td><td></td><td>${A.fmtUSD(tot.w7)}</td><td>${A.fmtUSD(tot.w30)}</td></tr>`;
-    const h = L.BTC['7d'];
-    $('hist-note').textContent = h.have < 7
-      ? `7D / 30D build up from the daily log (saved 23:55 UTC): ${L.BTC['7d'].have} of 7 days and ${L.BTC['30d'].have} of 30 days so far.`
-      : '';
+        <td>${share === null ? '—' : `<span class="ls" title="longs ${share.toFixed(0)}%"><i style="width:${share}%"></i></span>`}</td></tr>`;
+    }).join('') + `<tr class="tot"><td>TOTAL</td><td>${A.fmtUSD(tot.l)}</td><td>${A.fmtUSD(tot.s)}</td><td>${A.fmtUSD(tot.t)}</td><td></td></tr>`;
     setStatus();
   }
   function refreshChart() { if (cur.sym) { header(); loadChart(false); } }
@@ -325,13 +319,16 @@
   async function liqFor(sym, tf) {
     const asset = A.ASSETS.find(a => a.sym === sym);
     if (asset.noLiq) return null;
-    if (tf === '1h' || tf === '4h') {
-      const c = shortLiq[tf];
-      if (!c || Date.now() - c.at > 55000) shortLiq[tf] = { at: Date.now(), data: await A.liqRange(tf) };
-      const d = shortLiq[tf].data;
-      return d ? A.liqPick(d, asset) : null;
+    // 1H / 4H / 24H come straight from the source. 2H and 7D+: it only keeps the last 24 h, so those
+    // timeframes show the real 24H figures (labelled 24H).
+    const key = tf === '1h' || tf === '4h' ? tf : '24h';
+    let d = key === '24h' && L && L[sym] ? L[sym]['24h'] : null;
+    if (!d) {
+      const c = shortLiq[key];
+      if (!c || Date.now() - c.at > 55000) shortLiq[key] = { at: Date.now(), data: await A.liqRange(key) };
+      d = shortLiq[key].data ? A.liqPick(shortLiq[key].data, asset) : null;
     }
-    return L && L[sym] ? L[sym][tf] : null;
+    return d && key !== tf ? { ...d, win: '24h' } : d;
   }
 
   // Candles are cached for 55 s so the multi-timeframe trend check doesn't refetch the same data.
@@ -536,11 +533,10 @@
       c.push(cell('OPEN INTEREST', A.fmtUSD(ctx.pos.oiUsd)));
     }
     if (asset.noLiq) c.push(cell(`LIQUIDATIONS ${lab}`, asset.noLiq.toUpperCase()));
-    else if (tf === '2h') c.push(cell('LIQUIDATIONS 2H', 'N/A · SOURCE HAS 1H / 4H'));
-    else if (!liq || liq.total === null) c.push(cell(`LIQUIDATIONS ${lab}`, '—'));
     else {
-      c.push(cell(`LIQ LONGS ${lab}`, A.fmtUSD(liq.long), 'up'), cell(`LIQ SHORTS ${lab}`, A.fmtUSD(liq.short), 'dn'), cell(`LIQ TOTAL ${lab}`, A.fmtUSD(liq.total)));
-      if (liq.need > 1 && liq.have < liq.need) c.push(cell('LIQ HISTORY', `${liq.have} of ${liq.need} days`, 'am'));
+      const ll = liq && liq.win ? '24H' : lab;
+      if (!liq || liq.total === null) c.push(cell(`LIQUIDATIONS ${ll}`, '—'));
+      else c.push(cell(`LIQ LONGS ${ll}`, A.fmtUSD(liq.long), 'up'), cell(`LIQ SHORTS ${ll}`, A.fmtUSD(liq.short), 'dn'), cell(`LIQ TOTAL ${ll}`, A.fmtUSD(liq.total)));
     }
     $('stats').innerHTML = c.join('');
   }
