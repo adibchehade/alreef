@@ -7,6 +7,15 @@ jobs:
       - shell: bash
         run: |
           set +e
-          for r in 7d 1w 30d 1m 168h 720h 3d 48h; do echo "== range=$r"; curl -s "https://www.coinboss.com/api/liquidations/coins?range=$r&limit=3" | head -c 400; echo; done
-          echo "== overview"; curl -s "https://www.coinboss.com/api/liquidations/overview" | head -c 800; echo
-          echo "== history?"; for u in "liquidations/history?coin=BTC" "liquidations/chart?coin=BTC&range=30d" "liquidations/coins/BTC?range=30d"; do echo "-- $u"; curl -s -o /dev/null -w "%{http_code}\n" "https://www.coinboss.com/api/$u"; curl -s "https://www.coinboss.com/api/$u" | head -c 300; echo; done
+          sum() { python3 -c "
+          import sys,json
+          d=json.load(sys.stdin); a=d.get('data') or []
+          if isinstance(a,dict): print('dict keys',list(a)[:10]); sys.exit()
+          hs=sorted({int(x['hour']) for x in a}) if a else []
+          import datetime as D
+          f=lambda t: D.datetime.utcfromtimestamp(t/1000).strftime('%Y-%m-%d %H:%M')
+          tot=sum(float(x['total_usd']) for x in a)
+          print(len(a),'rows', len(hs),'hours', f(hs[0]) if hs else '-', '->', f(hs[-1]) if hs else '-', 'sum=%.0f'%tot, 'keys',list(a[0]) if a else '')
+          " 2>&1 | sed 's/^          //'; }
+          for q in "" "?coin=BTC" "?coin=ETH" "?coin=BTC&range=24h" "?coin=BTC&range=7d" "?coin=BTC&range=30d" "?coin=BTC&range=90d" "?coin=BTC&range=1y" "?coin=XAUT&range=30d" "?coin=ANT&range=30d" "?coin=PEPE&range=30d" "?symbol=ETH&range=30d" "?coin=BTC&days=30" "?coin=BTC&range=30d&limit=5000"; do echo "-- $q"; curl -s "https://www.coinboss.com/api/liquidations/chart$q" | sum; done
+          curl -s -D - -o /dev/null "https://www.coinboss.com/api/liquidations/chart?coin=BTC&range=30d" | grep -i "access-control\|cache\|ratelimit"
