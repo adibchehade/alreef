@@ -127,8 +127,9 @@
     <div class="lgd">
       <span><i style="background:var(--amber)"></i>EMA 20</span>
       <span><i style="background:var(--blue)"></i>EMA 50</span>
-      <span><i class="d" style="border-color:var(--up)"></i>support</span>
-      <span><i class="d" style="border-color:var(--dn)"></i>resistance</span>
+      <span><i class="d" style="border-color:var(--up)"></i>support S1 / S2</span>
+      <span><i class="d" style="border-color:var(--dn)"></i>resistance R1 / R2</span>
+      <span><i class="d" style="border-color:var(--amber)"></i>▲ / ▼ targets</span>
       <span id="m-src"></span>
     </div>
     <div class="stats" id="stats"></div>
@@ -141,8 +142,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211051"></script>
-<script src="/crypto/report.js?v=202611211051"></script>
+<script src="/crypto/lib.js?v=202611211500"></script>
+<script src="/crypto/report.js?v=202611211500"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -190,7 +191,7 @@
   // ---------- chart window ----------
   const TFS = Object.keys(A.TF);
   const cur = { sym: null, tf: '24h', seq: 0 };
-  let chart = null, sCandle, sVol, sE20, sE50, plines = [], shortLiq = {};
+  let chart = null, sCandle, sVol, sE20, sE50, plines = [], levelPrices = [], shortLiq = {};
   $('tfs').innerHTML = TFS.map(k => `<button data-tf="${k}">${A.TF[k].label}</button>`).join('');
 
   const madrid = (t, o) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour12: false, ...o }).format(new Date(t * 1000));
@@ -206,7 +207,13 @@
       localization: { timeFormatter: t => madrid(t, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' Spain' },
       crosshair: { mode: 0 },
     });
-    sCandle = chart.addCandlestickSeries({ upColor: '#00e676', downColor: '#ff4d4d', borderVisible: false, wickUpColor: '#00e676', wickDownColor: '#ff4d4d' });
+    sCandle = chart.addCandlestickSeries({ upColor: '#00e676', downColor: '#ff4d4d', borderVisible: false, wickUpColor: '#00e676', wickDownColor: '#ff4d4d',
+      // widen the price scale so every support / resistance / target line stays on screen
+      autoscaleInfoProvider: original => {
+        const r = original();
+        if (!r || !r.priceRange || !levelPrices.length) return r;
+        return { ...r, priceRange: { minValue: Math.min(r.priceRange.minValue, ...levelPrices), maxValue: Math.max(r.priceRange.maxValue, ...levelPrices) } };
+      } });
     sVol = chart.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
     chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
     const line = c => chart.addLineSeries({ color: c, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
@@ -254,7 +261,7 @@
   async function loadChart(fit) {
     const seq = ++cur.seq, sym = cur.sym, tf = cur.tf, asset = A.ASSETS.find(a => a.sym === sym);
     document.querySelectorAll('#tfs button').forEach(b => b.classList.toggle('on', b.dataset.tf === tf));
-    if (fit) { $('cmsg').textContent = 'loading…'; $('cmsg').hidden = false; }
+    if (fit) { cur.fitPending = true; $('cmsg').textContent = 'loading…'; $('cmsg').hidden = false; }
     const [cd, liq] = await Promise.all([candlesCached(asset, tf), liqFor(sym, tf)]);
     if (seq !== cur.seq) return;                      // a newer request replaced this one
     const bars = cd.bars;
@@ -273,9 +280,24 @@
     const an = A.analyze(bars, liq);
     const toLine = s => an ? bars.map((b, i) => s[i] === null || s[i] === undefined ? null : { time: b.time, value: s[i] }).filter(Boolean) : [];
     sE20.setData(an ? toLine(an.ema20Series) : []); sE50.setData(an ? toLine(an.ema50Series) : []);
-    if (an && an.support) plines.push(sCandle.createPriceLine({ price: an.support, color: '#00e676', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'S' }));
-    if (an && an.resistance) plines.push(sCandle.createPriceLine({ price: an.resistance, color: '#ff4d4d', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'R' }));
-    if (fit && bars.length) chart.timeScale().fitContent();
+    // Levels on the chart: S1/S2 support, R1/R2 resistance, ▲/▼ targets (same numbers as the analysis).
+    levelPrices = [];
+    if (an) {
+      const line = (price, color, width, style, title) => {
+        if (price === null || price === undefined || !(price > 0)) return;
+        plines.push(sCandle.createPriceLine({ price, color, lineWidth: width, lineStyle: style, axisLabelVisible: true, title }));
+        levelPrices.push(price);
+      };
+      const same = (x, y) => x !== null && y !== null && Math.abs(x - y) / y < 1e-6;
+      line(an.support, '#00e676', 2, 2, 'S1');
+      if (!same(an.support2, an.targetDown)) line(an.support2, 'rgba(0,230,118,.6)', 1, 1, 'S2');
+      line(an.resistance, '#ff4d4d', 2, 2, 'R1');
+      if (!same(an.resistance2, an.targetUp)) line(an.resistance2, 'rgba(255,77,77,.6)', 1, 1, 'R2');
+      line(an.targetUp, '#ffb300', 2, 3, same(an.resistance2, an.targetUp) ? 'R2 ▲ target' : '▲ target');
+      line(an.targetDown, '#ffb300', 2, 3, same(an.support2, an.targetDown) ? 'S2 ▼ target' : '▼ target');
+    }
+    // fit even if this load replaced the one that asked for it (e.g. the 60 s refresh landed first)
+    if (cur.fitPending && bars.length) { chart.timeScale().fitContent(); cur.fitPending = false; }
     $('m-src').textContent = bars.length ? `${A.TF[tf].iv} candles · ${cd.src}` : '';
     const keep = view.ctx && view.sym === sym ? view.ctx : null;
     Object.assign(view, { an, liq, asset, tf, sym, ctx: keep });
@@ -299,6 +321,7 @@
       c.push(cell('MACD', an.macd ? (an.macd.line > an.macd.signal ? 'ABOVE SIGNAL' : 'BELOW SIGNAL') + (an.macd.cross ? ' · NEW CROSS' : '') : '—', an.macd ? (an.macd.line > an.macd.signal ? 'up' : 'dn') : ''));
       c.push(cell('SUPPORT S1 / S2', an.support === null ? '—' : A.fmtPrice(an.support) + (an.support2 !== null ? ' / ' + A.fmtPrice(an.support2) : ''), 'up'));
       c.push(cell('RESISTANCE R1 / R2', an.resistance === null ? '—' : A.fmtPrice(an.resistance) + (an.resistance2 !== null ? ' / ' + A.fmtPrice(an.resistance2) : ''), 'dn'));
+      c.push(cell('TARGET ▲ / ▼', `${A.fmtPrice(an.targetUp)} / ${A.fmtPrice(an.targetDown)}`, 'am'));
       c.push(cell(`VWAP ${lab}`, A.fmtPrice(an.vwap), an.vwap === null ? '' : an.last > an.vwap ? 'up' : 'dn'));
       c.push(cell('VOLATILITY / CANDLE', an.atr === null ? '—' : an.atr.toFixed(2) + '%' + (an.bb && an.bb.squeeze ? ' · SQUEEZE' : ''), an.bb && an.bb.squeeze ? 'am' : ''));
       c.push(cell('VOLUME vs AVG', an.volRatio === null ? '—' : an.volRatio.toFixed(2) + '×', an.volRatio > 1.5 ? 'am' : ''));

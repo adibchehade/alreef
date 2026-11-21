@@ -312,6 +312,15 @@
     add('vwap', vwap === null ? null : last > vwap);
     add('rsi50', R === null ? null : R > 50);
     add('flow', totV > 0 ? upV / totV > 0.5 : null);
+    // Targets: the next swing level beyond the trigger; if none in this window, a measured move
+    // (the range height between support and resistance projected beyond the break).
+    const S1 = sup[0] ?? null, S2 = sup[1] ?? null, R1 = res[0] ?? null, R2 = res[1] ?? null;
+    const trigUp = R1 ?? high, trigDn = S1 ?? low;
+    let targetUp = R2, upMeasured = false, targetDown = S2, dnMeasured = false;
+    if (targetUp === null && R1 !== null && high > R1 + gap) targetUp = high;
+    if (targetUp === null) { targetUp = trigUp + (trigUp - trigDn); upMeasured = true; }
+    if (targetDown === null && S1 !== null && low < S1 - gap) targetDown = low;
+    if (targetDown === null) { const t = trigDn - (trigUp - trigDn); targetDown = t > 0 ? t : null; dnMeasured = true; }
     const bulls = sig.filter(s => s.bull).length, score = sig.length ? (bulls / sig.length) * 2 - 1 : 0;   // -1 … +1
     const bias = score >= 0.6 ? 'strongBull' : score >= 0.2 ? 'bull' : score <= -0.6 ? 'strongBear' : score <= -0.2 ? 'bear' : 'neutral';
     const trend = bias.includes('Bull') || bias === 'bull' ? 'Bullish' : bias.includes('Bear') || bias === 'bear' ? 'Bearish' : 'Mixed';
@@ -321,7 +330,8 @@
       fromHigh: (last / high - 1) * 100, fromLow: (last / low - 1) * 100,
       ema20: E20, ema50: E50, ema20Series: e20, ema50Series: e50,
       rsi: R, rsiDiv: divergence(b, rs, pv), atr: ATR, macd: M, bb: BB, vwap,
-      support: sup[0] ?? null, support2: sup[1] ?? null, resistance: res[0] ?? null, resistance2: res[1] ?? null,
+      support: S1, support2: S2, resistance: R1, resistance2: R2,
+      trigUp, trigDn, targetUp, targetDown, upMeasured, dnMeasured,
       fib: fibNear, volRatio: avgV > 0 ? recentV / avgV : null, buyShare: totV > 0 ? upV / totV : null,
       signals: sig, bulls, score, bias, trend, liq, bars: b.length,
     };

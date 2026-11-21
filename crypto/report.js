@@ -40,8 +40,8 @@
       noSup: (v) => `No clear swing support below price in this window; the window low ${P(v)} is the nearest reference.`,
       noRes: (v) => `No clear swing resistance above price in this window; the window high ${P(v)} is the nearest reference.`,
       fib: (r, p, up, adj) => `Price is near the ${(r * 100).toFixed(1)}% Fibonacci retracement (${P(p)}) of the ${adj} ${up ? 'rally' : 'drop'}.`,
-      bull: (s, r1, r2) => `Bullish case: holding ${P(s)} and breaking above ${P(r1)} would open the way to ${P(r2)}.`,
-      bear: (s1, s2) => `Bearish case: losing ${P(s1)} would expose ${P(s2)}.`,
+      bull: (s, r1, t, m) => `Bullish case: holding ${P(s)} and breaking above ${P(r1)} targets ${P(t)}${m ? ' (a measured-move projection, as there is no higher level in this window)' : ''}.`,
+      bear: (s1, t, m) => `Bearish case: losing ${P(s1)} targets ${P(t)}${m ? ' (a measured-move projection, as there is no lower level in this window)' : ''}.`,
       bullHi: (s, h) => `Bullish case: holding ${P(s)} and breaking the window high ${P(h)} would put the price in new territory for this period.`,
       bearLo: (l) => `Bearish case: losing the window low ${P(l)} would mean new lows for this period, with no nearby support underneath.`,
       noise: (v) => `Moves smaller than about ${v.toFixed(2)}% (one average candle) are noise, not a signal.`,
@@ -81,8 +81,8 @@
       noSup: (v) => `No hay un soporte claro por debajo en este periodo; el mínimo ${P(v)} es la referencia más cercana.`,
       noRes: (v) => `No hay una resistencia clara por encima en este periodo; el máximo ${P(v)} es la referencia más cercana.`,
       fib: (r, p, up, adj) => `El precio está cerca del retroceso de Fibonacci del ${(r * 100).toFixed(1)}% (${P(p)}) de la ${up ? 'subida' : 'caída'} ${adj}.`,
-      bull: (s, r1, r2) => `Escenario alcista: mantener ${P(s)} y superar ${P(r1)} abriría el camino hacia ${P(r2)}.`,
-      bear: (s1, s2) => `Escenario bajista: perder ${P(s1)} dejaría expuesto ${P(s2)}.`,
+      bull: (s, r1, t, m) => `Escenario alcista: mantener ${P(s)} y superar ${P(r1)} apunta a ${P(t)}${m ? ' (proyección por la amplitud del rango, ya que no hay un nivel superior en este periodo)' : ''}.`,
+      bear: (s1, t, m) => `Escenario bajista: perder ${P(s1)} apunta a ${P(t)}${m ? ' (proyección por la amplitud del rango, ya que no hay un nivel inferior en este periodo)' : ''}.`,
       bullHi: (s, h) => `Escenario alcista: mantener ${P(s)} y superar el máximo del periodo ${P(h)} llevaría el precio a terreno nuevo.`,
       bearLo: (l) => `Escenario bajista: perder el mínimo del periodo ${P(l)} supondría nuevos mínimos, sin soporte cercano por debajo.`,
       noise: (v) => `Los movimientos menores de un ${v.toFixed(2)}% (una vela media) son ruido, no una señal.`,
@@ -122,8 +122,8 @@
       noSup: (v) => `لا يوجد دعم واضح تحت السعر في هذه الفترة؛ أدنى سعر ${P(v)} هو أقرب مرجع.`,
       noRes: (v) => `لا توجد مقاومة واضحة فوق السعر في هذه الفترة؛ أعلى سعر ${P(v)} هو أقرب مرجع.`,
       fib: (r, p, up, adj) => `السعر قريب من مستوى فيبوناتشي ${(r * 100).toFixed(1)}% (${P(p)}) ${up ? 'للصعود' : 'للهبوط'} ${adj}.`,
-      bull: (s, r1, r2) => `السيناريو الإيجابي: الثبات فوق ${P(s)} واختراق ${P(r1)} يفتح الطريق نحو ${P(r2)}.`,
-      bear: (s1, s2) => `السيناريو السلبي: كسر ${P(s1)} قد يدفع السعر نحو ${P(s2)}.`,
+      bull: (s, r1, t, m) => `السيناريو الإيجابي: الثبات فوق ${P(s)} واختراق ${P(r1)} يستهدف ${P(t)}${m ? ' (إسقاط حسب اتساع النطاق، لعدم وجود مستوى أعلى في هذه الفترة)' : ''}.`,
+      bear: (s1, t, m) => `السيناريو السلبي: كسر ${P(s1)} يستهدف ${P(t)}${m ? ' (إسقاط حسب اتساع النطاق، لعدم وجود مستوى أدنى في هذه الفترة)' : ''}.`,
       bullHi: (s, h) => `السيناريو الإيجابي: الثبات فوق ${P(s)} واختراق أعلى سعر في الفترة ${P(h)} يضع السعر في منطقة جديدة.`,
       bearLo: (l) => `السيناريو السلبي: كسر أدنى سعر في الفترة ${P(l)} يعني قيعانًا جديدة دون دعم قريب.`,
       noise: (v) => `الحركات الأصغر من نحو ${v.toFixed(2)}% (شمعة متوسطة واحدة) تُعدّ ضجيجًا وليست إشارة.`,
@@ -203,8 +203,8 @@
     const s1 = a.support ?? a.low, s2 = a.support2 ?? (a.support !== null && a.low < a.support ? a.low : null);
     const r1 = a.resistance ?? a.high, r2 = a.resistance2 ?? (a.resistance !== null && a.high > a.resistance ? a.high : null);
     const sc = [];
-    sc.push(r2 !== null ? T.bull(s1, r1, r2) : T.bullHi(s1, a.high));
-    sc.push(s2 !== null ? T.bear(s1, s2) : T.bearLo(a.low));
+    sc.push(T.bull(a.trigDn, a.trigUp, a.targetUp, a.upMeasured));
+    if (a.targetDown !== null) sc.push(T.bear(a.trigDn, a.targetDown, a.dnMeasured)); else sc.push(T.bearLo(a.low));
     if (a.atr !== null) sc.push(T.noise(a.atr));
     if (sc.length) S.push({ h: T.h.sc, p: sc.join(' ') });
 
