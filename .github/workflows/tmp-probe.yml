@@ -1,0 +1,12 @@
+name: tmp-probe
+on: workflow_dispatch
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          set +e
+          for r in 7d 1w 30d 1m 168h 720h 3d 48h; do echo "== range=$r"; curl -s "https://www.coinboss.com/api/liquidations/coins?range=$r&limit=3" | head -c 400; echo; done
+          echo "== overview"; curl -s "https://www.coinboss.com/api/liquidations/overview" | head -c 800; echo
+          echo "== history?"; for u in "liquidations/history?coin=BTC" "liquidations/chart?coin=BTC&range=30d" "liquidations/coins/BTC?range=30d"; do echo "-- $u"; curl -s -o /dev/null -w "%{http_code}\n" "https://www.coinboss.com/api/$u"; curl -s "https://www.coinboss.com/api/$u" | head -c 300; echo; done
