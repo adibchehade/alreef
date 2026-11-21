@@ -1,0 +1,15 @@
+name: tmp probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          set +e
+          for r in 2h 1h; do echo "=== coinboss range=$r"; curl -s -m 25 "https://www.coinboss.com/api/liquidations/coins?range=$r&limit=5" | head -c 200; echo; done
+          now=$(( $(date +%s)*1000 ))
+          for c in xyz:ANT xyz:GOLD xyz:SP500 BTC; do for iv in 12h 1d; do
+            echo "=== hl $c $iv"; curl -s -m 25 -H 'Content-Type: application/json' -d "{\"type\":\"candleSnapshot\",\"req\":{\"coin\":\"$c\",\"interval\":\"$iv\",\"startTime\":$((now-366*86400*1000)),\"endTime\":$now}}" https://api.hyperliquid.xyz/info | python3 -c "import sys,json,datetime;d=json.load(sys.stdin);print(len(d), datetime.datetime.utcfromtimestamp(d[0]['t']/1000).date() if d else None)"
+          done; done
+          echo "=== geckoterminal day/12h"; for q in "day?aggregate=1&limit=366" "hour?aggregate=12&limit=181"; do curl -s -m 25 "https://api.geckoterminal.com/api/v2/networks/solana/pools/ATH32pbLRupjq8YNUHQWaJbgBbGPRbrw2GZw5jdZXiRr/ohlcv/$q&currency=usd&token=base" | python3 -c "import sys,json,datetime;l=json.load(sys.stdin)['data']['attributes']['ohlcv_list'];print('$q',len(l), datetime.datetime.utcfromtimestamp(l[-1][0]).date())"; done
