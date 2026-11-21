@@ -91,7 +91,8 @@
     const last = bars[bars.length - 1].c;
     for (const [w, ms] of Object.entries(WINDOWS)) {
       const from = now - ms, b = bars.find(x => x.t >= from);
-      out[w] = b && b.o > 0 && bars[0].t <= from + 36e5 ? (last / b.o - 1) * 100 : null;   // null if history is too short
+      const ok = b && b.o > 0 && bars[0].t <= from + 36e5;   // null if history is too short
+      out[w] = ok ? (last / b.o - 1) * 100 : null; out[w + '_o'] = ok ? b.o : null;
     }
     return out;
   }
@@ -101,7 +102,7 @@
     const binReq = Object.keys(WINDOWS).map(async w => {
       for (const base of BINANCE) {
         const d = await getJSON(`${base}/api/v3/ticker?windowSize=${w}&symbols=${syms}`);
-        if (Array.isArray(d) && d.length) { d.forEach(t => { const a = bin.find(x => x.sym + 'USDT' === t.symbol); if (a) (out[a.sym] = out[a.sym] || {})[w] = num(t.priceChangePercent); }); return; }
+        if (Array.isArray(d) && d.length) { d.forEach(t => { const a = bin.find(x => x.sym + 'USDT' === t.symbol); if (a) { const o = (out[a.sym] = out[a.sym] || {}); o[w] = num(t.priceChangePercent); o[w + '_o'] = num(t.openPrice); } }); return; }
       }
     });
     const hlReq = ASSETS.filter(a => a.src === 'hl').map(async a => {
@@ -118,8 +119,17 @@
     return out;
   }
 
+  const memo = {};
+  async function cached(key, ms, fn) {
+    const m = memo[key], now = Date.now();
+    if (m && now - m.t < ms) return m.v;
+    const v = await fn(), good = v && (Array.isArray(v) ? v.length : Object.keys(v).length);
+    if (good) { memo[key] = { t: now, v }; return v; }
+    return m && now - m.t < 120000 ? m.v : v;   // brief hiccup: keep the last good answer for up to 2 min
+  }
   async function prices() {
-    const [b, h, ...dx] = await Promise.all([binance(), hyperliquid(), ...ASSETS.filter(a => a.src === 'dex').map(dex)]);
+    const [b, h, ...dx] = await Promise.all([cached('bin', 900, binance), cached('hl', 3000, hyperliquid),
+      ...ASSETS.filter(a => a.src === 'dex').map(a => cached('dex' + a.sym, 3000, () => dex(a)))]);
     const D = {}; ASSETS.filter(a => a.src === 'dex').forEach((a, i) => D[a.sym] = dx[i]);
     return ASSETS.map(a => {
       if (a.src === 'dex') {
@@ -428,13 +438,61 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
   }
 
+
+  // ---------- refresh rate (shared by both pages, remembered per browser) ----------
+  const RATES = [1, 5, 15, 60], RATE_KEY = 'alreef-crypto-rate';
+  let rate = (() => { try { const v = +localStorage.getItem(RATE_KEY); if (RATES.includes(v)) return v; } catch (e) {} return 5; })();
+  const getRate = () => rate;
+  // Run fn now, then again every msFn() ms. Skips while the tab is hidden; reruns when it is shown or the rate changes.
+  function every(fn, msFn) {
+    let busy = false, h = null;
+    const run = async () => {
+      clearTimeout(h);
+      if (!busy && !document.hidden) { busy = true; try { await fn(); } catch (e) { console.error(e); } finally { busy = false; } }
+      clearTimeout(h); h = setTimeout(run, msFn());
+    };
+    run();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
+    window.addEventListener('alreef-rate', run);
+    return run;
+  }
+  function rateUI(sel, min = 1) {
+    sel.innerHTML = RATES.map(r => `<option value="${r}"${r < min ? ' disabled' : ''}>${r < 60 ? r + 's' : '1 min'}</option>`).join('');
+    sel.value = String(Math.max(rate, min));
+    sel.addEventListener('change', () => {
+      rate = +sel.value; try { localStorage.setItem(RATE_KEY, rate); } catch (e) {}
+      window.dispatchEvent(new Event('alreef-rate'));
+    });
+  }
+  // ---------- colour themes (CSS in /crypto/theme.css) ----------
+  const THEMES = { terminal: 'Terminal', midnight: 'Midnight', light: 'Light' }, THEME_KEY = 'alreef-theme';
+  function themeUI(sel) {
+    sel.innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+    sel.value = document.documentElement.dataset.theme || 'terminal';
+    sel.addEventListener('change', () => {
+      document.documentElement.dataset.theme = sel.value;
+      try { localStorage.setItem(THEME_KEY, sel.value); } catch (e) {}
+      window.dispatchEvent(new Event('alreef-theme'));
+    });
+  }
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim();
+  // '#rrggbb' / 'rgb(…)' → rgba with the given alpha (for chart volume bars and faint level lines)
+  function alpha(c, a) {
+    let m = c.match(/^#([0-9a-f]{6})$/i);
+    if (m) { const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+    m = c.match(/^#([0-9a-f]{3})$/i);
+    if (m) { const [r, g, b] = m[1].split('').map(x => parseInt(x + x, 16)); return `rgba(${r},${g},${b},${a})`; }
+    m = c.match(/rgba?\(([^)]+)\)/); if (m) { const [r, g, b] = m[1].split(',').map(x => x.trim()); return `rgba(${r},${g},${b},${a})`; }
+    return c;
+  }
+
   // ---------- sharing ----------
   // Phone: the system share sheet (WhatsApp, Telegram, Messages…). Computer: copy the link / save the image.
   function toast(msg) {
     let t = document.getElementById('alreef-toast');
     if (!t) {
       t = document.createElement('div'); t.id = 'alreef-toast'; t.setAttribute('role', 'status');
-      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#ffb300;color:#000;font:700 13px ui-monospace,Consolas,monospace;padding:9px 16px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;transition:opacity .3s';
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--amber,#ffb300);color:var(--on,#000);font:700 13px ui-monospace,Consolas,monospace;padding:9px 16px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;transition:opacity .3s';
       document.body.appendChild(t);
     }
     t.textContent = msg; t.style.opacity = '1';
@@ -467,6 +525,6 @@
     saveBlob(blob, name); toast('Chart image saved');
   }
 
-  window.ALREEF = { toast, copyText, shareLink, shareFile, ASSETS, LIQ_ASSETS, liqPick, changes, TF, prices, liquidations, liqRange, candles, analyze, positioning,
+  window.ALREEF = { every, getRate, rateUI, themeUI, cssVar, alpha, THEMES, toast, copyText, shareLink, shareFile, ASSETS, LIQ_ASSETS, liqPick, changes, TF, prices, liquidations, liqRange, candles, analyze, positioning,
                     fmtUSD, fmtPrice, fmtPct, spain, clock, every60 };
 })();

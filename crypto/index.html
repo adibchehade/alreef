@@ -15,15 +15,16 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="Live prices, charts with support/resistance and targets, analysis (EN/ES/AR) and liquidations for BTC, ETH, BNB, SOL, XRP, PEPE, Purple Bitcoin, Anthropic, S&amp;P 500 and gold.">
+<link rel="stylesheet" href="/crypto/theme.css?v=202611211620">
+<script>try { const t = localStorage.getItem('alreef-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <style>
-  :root { --bg:#07090b; --panel:#0d1115; --line:#1b232b; --txt:#c9d3da; --dim:#6b7a86; --amber:#ffb300; --up:#00e676; --dn:#ff4d4d; --blue:#4aa3ff; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:13px/1.35 ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace; }
-  header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:10px 16px; background:#000; border-bottom:2px solid var(--amber); }
-  .brand { color:#000; background:var(--amber); font-weight:700; padding:3px 8px; letter-spacing:.08em; }
+  header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:10px 16px; background:var(--hdr); border-bottom:2px solid var(--amber); }
+  .brand { color:var(--on); background:var(--amber); font-weight:700; padding:3px 8px; letter-spacing:.08em; }
   .hdr-t { color:var(--amber); font-weight:700; letter-spacing:.06em; }
   .clock { margin-left:auto; text-align:right; }
-  .clock b { color:#fff; font-size:20px; letter-spacing:.04em; }
+  .clock b { color:var(--hi); font-size:20px; letter-spacing:.04em; }
   .clock small { display:block; color:var(--dim); }
   main { padding:14px 16px 24px; display:grid; gap:14px; max-width:1200px; }
   section { background:var(--panel); border:1px solid var(--line); }
@@ -34,23 +35,23 @@
   #pxt { min-width:860px; }
   /* keep the asset name visible while swiping the tables sideways on a phone */
   .wrap th:first-child, .wrap td:first-child { position:sticky; left:0; z-index:1; background:var(--panel); }
-  tr.click:hover td:first-child, tr.click:focus td:first-child { background:#111a21; }
+  tr.click:hover td:first-child, tr.click:focus td:first-child { background:var(--hover); }
   @media (max-width:640px) { td.sym small { display:none; } }
   th.grp, td.grp { border-left:1px solid var(--line); }
   th, td { padding:6px 10px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
   th { color:var(--dim); font-weight:400; font-size:11px; letter-spacing:.08em; }
   th:first-child, td:first-child { text-align:left; }
-  td.sym { color:#fff; font-weight:700; }
+  td.sym { color:var(--hi); font-weight:700; }
   td.sym small { color:var(--dim); font-weight:400; margin-left:6px; }
   tr.click { cursor:pointer; }
   tr.click td { transition:background .15s; }
-  tr.click:hover td, tr.click:focus td { background:#111a21; }
+  tr.click:hover td, tr.click:focus td { background:var(--hover); }
   tr.click:focus { outline:none; }
   tr.click td.sym::after { content:"▸"; color:var(--amber); margin-left:8px; opacity:.45; }
   tr.click:hover td.sym::after, tr.click:focus td.sym::after { opacity:1; }
   .up { color:var(--up); } .dn { color:var(--dn); }
-  td.px { color:#fff; font-size:15px; transition:background .6s; }
-  .flash-up { background:rgba(0,230,118,.28) !important; } .flash-dn { background:rgba(255,77,77,.28) !important; }
+  td.px { color:var(--hi); font-size:15px; transition:background .6s; }
+  .flash-up { background:var(--upbg) !important; } .flash-dn { background:var(--dnbg) !important; }
   tr.tot td { color:var(--amber); font-weight:700; border-top:1px solid var(--amber); }
   .ls { display:inline-block; width:90px; height:8px; background:var(--dn); vertical-align:middle; position:relative; }
   .ls i { position:absolute; left:0; top:0; bottom:0; background:var(--up); }
@@ -59,33 +60,33 @@
   .status.err { color:var(--dn); }
 
   /* ---------- chart window ---------- */
-  .ov { position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; padding:20px; z-index:10; }
+  .ov { position:fixed; inset:0; background:var(--scrim); display:flex; align-items:center; justify-content:center; padding:20px; z-index:10; }
   .ov[hidden] { display:none; }
-  .modal { width:min(1000px,100%); max-height:100%; overflow:auto; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--amber); box-shadow:0 20px 60px rgba(0,0,0,.6); }
-  .mh { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid var(--line); background:#000; position:sticky; top:0; z-index:10; }
+  .modal { width:min(1000px,100%); max-height:100%; overflow:auto; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--amber); box-shadow:0 20px 60px var(--shade); }
+  .mh { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--hdr); position:sticky; top:0; z-index:10; }
   .mh .nm { color:var(--dim); }
-  .mh .mpx { color:#fff; font-size:18px; font-weight:700; transition:color .5s, text-shadow .5s; font-variant-numeric:tabular-nums; }
-  .mh .mpx.flash-up { color:var(--up); text-shadow:0 0 10px rgba(0,230,118,.7); transition:none; }
-  .mh .mpx.flash-dn { color:var(--dn); text-shadow:0 0 10px rgba(255,77,77,.7); transition:none; }
+  .mh .mpx { color:var(--hi); font-size:18px; font-weight:700; transition:color .5s, text-shadow .5s; font-variant-numeric:tabular-nums; }
+  .mh .mpx.flash-up { color:var(--up); text-shadow:0 0 10px var(--up); transition:none; }
+  .mh .mpx.flash-dn { color:var(--dn); text-shadow:0 0 10px var(--dn); transition:none; }
   .livebadge { font-weight:700; color:var(--up); letter-spacing:.06em; }
   .livebadge i { display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-right:6px; vertical-align:1px; animation:pulse 1.2s infinite; }
   .livebadge.warn { color:var(--amber); }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
-  .sharebtn { background:#000; border:1px solid var(--line); color:var(--amber); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 10px; cursor:pointer; }
+  .sharebtn { background:var(--hdr); border:1px solid var(--line); color:var(--amber); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 10px; cursor:pointer; }
   .sharebtn:hover { border-color:var(--amber); }
   .mh .sharebtn { margin-left:auto; height:34px; }
   .shwrap { position:relative; z-index:30; margin-left:auto; display:flex; gap:8px; align-items:center; }
-  .smenu { position:absolute; right:42px; top:40px; background:#000; border:1px solid var(--amber); z-index:30; min-width:250px; white-space:nowrap; box-shadow:0 10px 30px rgba(0,0,0,.6); }
+  .smenu { position:absolute; right:42px; top:40px; background:var(--hdr); border:1px solid var(--amber); z-index:30; min-width:250px; white-space:nowrap; box-shadow:0 10px 30px var(--shade); }
   .smenu[hidden] { display:none; }
   .smenu button { display:block; width:100%; text-align:left; background:none; border:0; border-bottom:1px solid var(--line); color:var(--txt); font:inherit; padding:10px 12px; cursor:pointer; }
   .smenu button:last-child { border-bottom:0; }
-  .smenu button:hover, .smenu button:focus { background:#111a21; color:var(--amber); outline:none; }
+  .smenu button:hover, .smenu button:focus { background:var(--hover); color:var(--amber); outline:none; }
   .mh .x { background:none; border:1px solid var(--line); color:var(--txt); font:inherit; font-size:16px; width:34px; height:34px; cursor:pointer; }
   .mh .x:hover { border-color:var(--amber); color:var(--amber); }
   .tfs { display:flex; gap:4px; padding:10px 12px 0; flex-wrap:wrap; }
-  .tfs button { background:#000; border:1px solid var(--line); color:var(--dim); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 14px; cursor:pointer; }
+  .tfs button { background:var(--hdr); border:1px solid var(--line); color:var(--dim); font:inherit; font-weight:700; letter-spacing:.06em; padding:6px 14px; cursor:pointer; }
   .tfs button:hover { color:var(--txt); }
-  .tfs button.on { color:#000; background:var(--amber); border-color:var(--amber); }
+  .tfs button.on { color:var(--on); background:var(--amber); border-color:var(--amber); }
   .cw { position:relative; margin:10px 12px 0; height:380px; border:1px solid var(--line); }
   #chart { position:absolute; inset:0; }
   .cmsg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--dim); pointer-events:none; text-align:center; padding:20px; }
@@ -95,21 +96,21 @@
   .stats { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:1px; background:var(--line); margin:8px 12px 0; border:1px solid var(--line); }
   .stats div { background:var(--panel); padding:8px 10px; }
   .stats small { display:block; color:var(--dim); font-size:10px; letter-spacing:.1em; margin-bottom:3px; }
-  .stats b { color:#fff; font-size:14px; font-weight:700; }
+  .stats b { color:var(--hi); font-size:14px; font-weight:700; }
   .stats b.up { color:var(--up); } .stats b.dn { color:var(--dn); } .stats b.am { color:var(--amber); }
-  .sum { margin:10px 12px 0; padding:10px 14px 12px; border-left:3px solid var(--amber); background:#0a0e11; }
+  .sum { margin:10px 12px 0; padding:10px 14px 12px; border-left:3px solid var(--amber); background:var(--sum); }
   .sumh { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
   .sum h3 { margin:0; font-size:11px; color:var(--amber); letter-spacing:.12em; }
   .langs { display:flex; gap:4px; }
-  .langs button { background:#000; border:1px solid var(--line); color:var(--dim); font:inherit; font-size:11px; padding:3px 9px; cursor:pointer; }
-  .langs button.on { color:#000; background:var(--amber); border-color:var(--amber); }
-  .rep h4 { margin:10px 0 3px; font-size:11px; letter-spacing:.08em; color:#fff; text-transform:uppercase; }
+  .langs button { background:var(--hdr); border:1px solid var(--line); color:var(--dim); font:inherit; font-size:11px; padding:3px 9px; cursor:pointer; }
+  .langs button.on { color:var(--on); background:var(--amber); border-color:var(--amber); }
+  .rep h4 { margin:10px 0 3px; font-size:11px; letter-spacing:.08em; color:var(--hi); text-transform:uppercase; }
   .rep p { margin:0; line-height:1.6; color:var(--txt); }
-  .rep .verdict p { color:#fff; }
+  .rep .verdict p { color:var(--hi); }
   .rep[dir="rtl"] { font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Geeza Pro",Arial,sans-serif; font-size:14px; }
   .rep[dir="rtl"] h4 { letter-spacing:0; font-size:13px; text-transform:none; }
   .rep[dir="rtl"] p { line-height:1.85; }
-  .bias { display:inline-block; padding:1px 8px; margin-inline-end:8px; font-weight:700; color:#000; }
+  .bias { display:inline-block; padding:1px 8px; margin-inline-end:8px; font-weight:700; color:var(--on); }
   .bias.strongBull, .bias.bull { background:var(--up); } .bias.strongBear, .bias.bear { background:var(--dn); } .bias.neutral { background:var(--amber); }
   @media (max-width:640px) {
     .ov { padding:0; align-items:stretch; }
@@ -123,12 +124,14 @@
   <span class="brand">ALREEF</span>
   <span class="hdr-t">MARKETS TERMINAL</span>
   <span class="status" id="status">loading…</span>
-  <button class="sharebtn" id="share-page" style="margin-left:auto" title="Share this page">⤴ SHARE</button>
+  <label class="ctl" style="margin-left:auto" title="How often prices refresh">⟳ <select id="rate" aria-label="Refresh rate"></select></label>
+  <label class="ctl" title="Colour theme">THEME <select id="theme" aria-label="Colour theme"></select></label>
+  <button class="sharebtn" id="share-page" title="Share this page">⤴ SHARE</button>
   <div class="clock" style="margin-left:0"><b id="clock">--:--:--</b><small id="date"></small></div>
 </header>
 <main>
   <section>
-    <h2>PRICES <span>click an asset for charts · refresh 60s</span></h2>
+    <h2>PRICES <span>click an asset for charts · live prices</span></h2>
     <div class="wrap"><table id="pxt">
       <thead><tr><th>ASSET</th><th>LAST</th><th class="grp">2H %</th><th>4H %</th><th>24H %</th><th>7D %</th><th class="grp">24H HIGH</th><th>24H LOW</th><th>24H VOL</th></tr></thead>
       <tbody id="px"></tbody>
@@ -183,8 +186,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211612"></script>
-<script src="/crypto/report.js?v=202611211612"></script>
+<script src="/crypto/lib.js?v=202611211620"></script>
+<script src="/crypto/report.js?v=202611211620"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -192,27 +195,51 @@
   let P = [], L = null, CH = {};
   function cls(v) { return v === null || v === undefined ? '' : v >= 0 ? 'up' : 'dn'; }
 
-  async function refresh() {
-    $('status').textContent = 'updating…';
-    let ch;
-    [P, L, ch] = await Promise.all([A.prices(), A.liquidations(), A.changes()]);
-    // keep the last good value per window if a source hiccups
-    Object.entries(ch).forEach(([s, v]) => { CH[s] = { ...(CH[s] || {}), ...Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined)) }; });
-    $('px').innerHTML = P.map(a => `<tr class="click" data-s="${a.sym}" tabindex="0" title="Open ${a.name} charts">
-        <td class="sym">${a.sym}<small>${a.name}</small></td>
+  // Prices refresh at the chosen rate (1 s – 1 min); 2H/4H/7D bases and liquidations every 15 s at most;
+  // the open chart's analysis every 60 s (its candles are already live).
+  let pricesAt = 0;
+  const pct = (px, o) => px > 0 && o > 0 ? (px / o - 1) * 100 : null;
+  const win = (a, w) => { const c = CH[a.sym] || {}; return pct(a.price, c[w + '_o']) ?? c[w] ?? null; };
+  const pcell = (v, extra = '') => `<td class="${cls(v ?? null)}${extra}">${A.fmtPct(v ?? null)}</td>`;
+  function pxRow(a) {
+    return `<td class="sym">${a.sym}<small>${a.name}</small></td>
         <td class="px" data-s="${a.sym}">${A.fmtPrice(a.price)}</td>
-        ${['2h', '4h'].map((w, i) => { const v = CH[a.sym] && CH[a.sym][w]; return `<td class="${cls(v ?? null)}${i ? '' : ' grp'}">${A.fmtPct(v ?? null)}</td>`; }).join('')}
-        <td class="${cls(a.chg)}">${A.fmtPct(a.chg)}</td>
-        ${(v => `<td class="${cls(v ?? null)}">${A.fmtPct(v ?? null)}</td>`)(CH[a.sym] && CH[a.sym]['7d'])}
-        <td class="grp">${A.fmtPrice(a.high)}</td><td>${A.fmtPrice(a.low)}</td><td>${A.fmtUSD(a.vol)}</td></tr>`).join('');
+        ${pcell(win(a, '2h'), ' grp')}${pcell(win(a, '4h'))}${pcell(a.chg)}${pcell(win(a, '7d'))}
+        <td class="grp">${A.fmtPrice(a.high)}</td><td>${A.fmtPrice(a.low)}</td><td>${A.fmtUSD(a.vol)}</td>`;
+  }
+  function renderPrices() {
+    const body = $('px');
+    if (body.querySelectorAll('tr').length !== P.length)
+      body.innerHTML = P.map(a => `<tr class="click" data-s="${a.sym}" tabindex="0" title="Open ${a.name} charts"></tr>`).join('');
     P.forEach(a => {
-      const td = document.querySelector(`td.px[data-s="${a.sym}"]`);
+      const tr = body.querySelector(`tr[data-s="${a.sym}"]`), html = pxRow(a);
+      if (tr._h !== html) { tr.innerHTML = html; tr._h = html; }      // update rows in place: no flicker, keyboard focus kept
+      const td = tr.querySelector('td.px');
       if (a.price !== null && last[a.sym] !== undefined && a.price !== last[a.sym]) {
         td.classList.add(a.price > last[a.sym] ? 'flash-up' : 'flash-dn');
         setTimeout(() => td.classList.remove('flash-up', 'flash-dn'), 900);
       }
       if (a.price !== null) last[a.sym] = a.price;
     });
+  }
+  function setStatus() {
+    const liqOk = L && A.LIQ_ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
+    const s = $('status'), r = A.getRate();
+    s.className = 'status' + ((liqOk || !L) && pxOk ? '' : ' err');
+    s.textContent = (pxOk ? '' : 'prices unavailable · ') + (L && !liqOk ? 'liquidations unavailable · ' : '') +
+      'updated ' + A.spain() + ` · every ${r < 60 ? r + 's' : '1 min'}`;
+  }
+  async function refreshPrices() {
+    const np = await A.prices();
+    if (np.some(a => a.price !== null) || !P.length) P = np;
+    pricesAt = Date.now(); renderPrices(); setStatus();
+  }
+  async function refreshSlow() {
+    let ch;
+    [L, ch] = await Promise.all([A.liquidations(), A.changes()]);
+    // keep the last good value per window if a source hiccups
+    Object.entries(ch).forEach(([s, v]) => { CH[s] = { ...(CH[s] || {}), ...Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null && x !== undefined)) }; });
+    if (P.length) renderPrices();
     const tot = { l: 0, s: 0, t: 0, w7: 0, w30: 0 };
     $('lq').innerHTML = A.LIQ_ASSETS.map(a => {
       const x = L[a.sym], d = x['24h'];
@@ -227,12 +254,9 @@
     $('hist-note').textContent = h.have < 7
       ? `7D / 30D build up from the daily log (saved 23:55 UTC): ${L.BTC['7d'].have} of 7 days and ${L.BTC['30d'].have} of 30 days so far.`
       : '';
-    const liqOk = A.LIQ_ASSETS.some(a => L[a.sym]['24h'].total !== null), pxOk = P.some(a => a.price !== null);
-    const s = $('status');
-    s.className = 'status' + (liqOk && pxOk ? '' : ' err');
-    s.textContent = (pxOk ? '' : 'prices unavailable · ') + (liqOk ? '' : 'liquidations unavailable · ') + 'updated ' + A.spain();
-    if (cur.sym) { header(); loadChart(false); }
+    setStatus();
   }
+  function refreshChart() { if (cur.sym) { header(); loadChart(false); } }
 
   // ---------- chart window ----------
   const TFS = Object.keys(A.TF);
@@ -241,19 +265,26 @@
   $('tfs').innerHTML = TFS.map(k => `<button data-tf="${k}">${A.TF[k].label}</button>`).join('');
 
   const madrid = (t, o) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour12: false, ...o }).format(new Date(t * 1000));
+  // chart colours come from the active theme
+  const C = () => Object.fromEntries(['panel', 'grid', 'line', 'axis', 'up', 'dn', 'amber', 'blue', 'dim'].map(k => [k, A.cssVar(k)]));
+  const chartTheme = c => ({ layout: { background: { color: c.panel }, textColor: c.axis },
+    grid: { vertLines: { color: c.grid }, horzLines: { color: c.grid } },
+    rightPriceScale: { borderColor: c.line }, timeScale: { borderColor: c.line }, crosshair: { vertLine: { color: c.dim, labelBackgroundColor: c.line }, horzLine: { color: c.dim, labelBackgroundColor: c.line } } });
   function makeChart() {
+    const c = C();
     chart = LightweightCharts.createChart($('chart'), {
       autoSize: true,
-      layout: { background: { color: '#0d1115' }, textColor: '#8a97a3', fontFamily: 'ui-monospace,Consolas,monospace', fontSize: 11 },
-      grid: { vertLines: { color: '#131a20' }, horzLines: { color: '#131a20' } },
-      rightPriceScale: { borderColor: '#1b232b', scaleMargins: { top: 0.08, bottom: 0.24 } },
-      timeScale: { borderColor: '#1b232b', timeVisible: true, secondsVisible: false,
+      layout: { background: { color: c.panel }, textColor: c.axis, fontFamily: 'ui-monospace,Consolas,monospace', fontSize: 11 },
+      grid: { vertLines: { color: c.grid }, horzLines: { color: c.grid } },
+      rightPriceScale: { borderColor: c.line, scaleMargins: { top: 0.08, bottom: 0.24 } },
+      timeScale: { borderColor: c.line, timeVisible: true, secondsVisible: false,
         tickMarkFormatter: (t, type) => type <= 1 ? madrid(t, { month: 'short', year: type === 0 ? 'numeric' : undefined })
           : type === 2 ? madrid(t, { day: 'numeric', month: 'short' }) : madrid(t, { hour: '2-digit', minute: '2-digit' }) },
       localization: { timeFormatter: t => madrid(t, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' Spain' },
       crosshair: { mode: 0 },
     });
-    sCandle = chart.addCandlestickSeries({ upColor: '#00e676', downColor: '#ff4d4d', borderVisible: false, wickUpColor: '#00e676', wickDownColor: '#ff4d4d',
+    chart.applyOptions(chartTheme(c));
+    sCandle = chart.addCandlestickSeries({ upColor: c.up, downColor: c.dn, borderVisible: false, wickUpColor: c.up, wickDownColor: c.dn,
       // widen the price scale so every support / resistance / target line stays on screen
       autoscaleInfoProvider: original => {
         const r = original();
@@ -263,8 +294,16 @@
     sVol = chart.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
     chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
     const line = c => chart.addLineSeries({ color: c, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-    sE20 = line('#ffb300'); sE50 = line('#4aa3ff');
+    sE20 = line(c.amber); sE50 = line(c.blue);
   }
+  window.addEventListener('alreef-theme', () => {
+    if (!chart) return;
+    const c = C();
+    chart.applyOptions(chartTheme(c));
+    sCandle.applyOptions({ upColor: c.up, downColor: c.dn, wickUpColor: c.up, wickDownColor: c.dn });
+    sE20.applyOptions({ color: c.amber }); sE50.applyOptions({ color: c.blue });
+    if (cur.sym) loadChart(false);   // redraws volume bars and level lines in the new colours
+  });
 
   // Header change % = price now vs the open of the first candle in the selected timeframe.
   const chgBase = { sym: null, tf: null, open: null, close: null };
@@ -331,7 +370,7 @@
       const px = bars[bars.length - 1].close, prec = px >= 10 ? 2 : px >= 1 ? 3 : Math.min(10, Math.ceil(-Math.log10(px)) + 3);
       sCandle.applyOptions({ priceFormat: { type: 'price', precision: prec, minMove: 1 / 10 ** prec } });
       sCandle.setData(bars);
-      sVol.setData(bars.map(b => ({ time: b.time, value: b.volume, color: b.close >= b.open ? 'rgba(0,230,118,.35)' : 'rgba(255,77,77,.35)' })));
+      sVol.setData(bars.map(b => ({ time: b.time, value: b.volume, color: A.alpha(A.cssVar(b.close >= b.open ? 'up' : 'dn'), .35) })));
     }
     const an = A.analyze(bars, liq);
     const toLine = s => an ? bars.map((b, i) => s[i] === null || s[i] === undefined ? null : { time: b.time, value: s[i] }).filter(Boolean) : [];
@@ -345,12 +384,13 @@
         levelPrices.push(price);
       };
       const same = (x, y) => x !== null && y !== null && Math.abs(x - y) / y < 1e-6;
-      line(an.support, '#00e676', 2, 2, 'S1');
-      if (!same(an.support2, an.targetDown)) line(an.support2, 'rgba(0,230,118,.6)', 1, 1, 'S2');
-      line(an.resistance, '#ff4d4d', 2, 2, 'R1');
-      if (!same(an.resistance2, an.targetUp)) line(an.resistance2, 'rgba(255,77,77,.6)', 1, 1, 'R2');
-      line(an.targetUp, '#ffb300', 2, 3, same(an.resistance2, an.targetUp) ? 'R2 ▲ target' : '▲ target');
-      line(an.targetDown, '#ffb300', 2, 3, same(an.support2, an.targetDown) ? 'S2 ▼ target' : '▼ target');
+      const c = C();
+      line(an.support, c.up, 2, 2, 'S1');
+      if (!same(an.support2, an.targetDown)) line(an.support2, A.alpha(c.up, .6), 1, 1, 'S2');
+      line(an.resistance, c.dn, 2, 2, 'R1');
+      if (!same(an.resistance2, an.targetUp)) line(an.resistance2, A.alpha(c.dn, .6), 1, 1, 'R2');
+      line(an.targetUp, c.amber, 2, 3, same(an.resistance2, an.targetUp) ? 'R2 ▲ target' : '▲ target');
+      line(an.targetDown, c.amber, 2, 3, same(an.support2, an.targetDown) ? 'S2 ▼ target' : '▼ target');
     }
     // fit even if this load replaced the one that asked for it (e.g. the 60 s refresh landed first)
     if (cur.fitPending && bars.length) { chart.timeScale().fitContent(); cur.fitPending = false; }
@@ -372,7 +412,7 @@
   // The chart redraws at most 4× a second; the full analysis still refreshes every 60 s.
   const IVS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '12h': 43200, '1d': 86400 };
   const live = { key: null, ws: null, timer: null, ping: null, flush: null, retry: 0, last: null, ivSec: 0, pend: false, lastPx: null };
-  const volBar = b => ({ time: b.time, value: b.volume, color: b.close >= b.open ? 'rgba(0,230,118,.35)' : 'rgba(255,77,77,.35)' });
+  const volBar = b => ({ time: b.time, value: b.volume, color: A.alpha(A.cssVar(b.close >= b.open ? 'up' : 'dn'), .35) });
   function badge(text, warn) { const el = $('m-live'); el.hidden = false; el.className = 'livebadge' + (warn ? ' warn' : ''); el.innerHTML = `<i></i>${text}`; }
   function stopLive() {
     live.key = null; live.lastPx = null;
@@ -569,22 +609,22 @@
     const shot = chart.takeScreenshot(), W = 1200, pad = 36;
     const ch = Math.round(shot.height * (W - pad * 2) / shot.width), H = 150 + ch + 70;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const g = c.getContext('2d'), mono = 'ui-monospace,Menlo,Consolas,monospace';
-    g.fillStyle = '#07090b'; g.fillRect(0, 0, W, H);
-    g.fillStyle = '#ffb300'; g.fillRect(0, 0, W, 6);
+    const g = c.getContext('2d'), mono = 'ui-monospace,Menlo,Consolas,monospace', T = n => A.cssVar(n);
+    g.fillStyle = T('bg'); g.fillRect(0, 0, W, H);
+    g.fillStyle = T('amber'); g.fillRect(0, 0, W, 6);
     g.textBaseline = 'alphabetic';
-    g.font = `700 20px ${mono}`; g.fillStyle = '#ffb300'; g.fillText('ALREEF', pad, 44);
-    g.fillStyle = '#7d8b96'; g.fillText(`· ${$('m-name').textContent.trim()} · ${tfLabel()}`, pad + 92, 44);
-    g.font = `700 46px ${mono}`; g.fillStyle = '#e8eef2';
+    g.font = `700 20px ${mono}`; g.fillStyle = T('amber'); g.fillText('ALREEF', pad, 44);
+    g.fillStyle = T('dim'); g.fillText(`· ${$('m-name').textContent.trim()} · ${tfLabel()}`, pad + 92, 44);
+    g.font = `700 46px ${mono}`; g.fillStyle = T('hi');
     const head = `${cur.sym}  ${$('m-px').textContent.trim()}`; g.fillText(head, pad, 106); const hw = g.measureText(head).width;
     const chg = $('m-chg').textContent.trim();
-    g.fillStyle = getComputedStyle($('m-chg')).color || '#e8eef2'; g.font = `700 34px ${mono}`;
+    g.fillStyle = getComputedStyle($('m-chg')).color || T('hi'); g.font = `700 34px ${mono}`;
     g.fillText(chg, pad + hw + 24, 106);
     const info = shareInfo().text.split(' · ').slice(2).join(' · ');
-    if (info) { g.font = `600 18px ${mono}`; g.fillStyle = '#ffb300'; g.textAlign = 'right'; g.fillText(info.toUpperCase(), W - pad, 44); g.textAlign = 'left'; }
+    if (info) { g.font = `600 18px ${mono}`; g.fillStyle = T('amber'); g.textAlign = 'right'; g.fillText(info.toUpperCase(), W - pad, 44); g.textAlign = 'left'; }
     g.drawImage(shot, pad, 130, W - pad * 2, ch);
-    g.strokeStyle = '#1c252c'; g.strokeRect(pad - .5, 129.5, W - pad * 2 + 1, ch + 1);
-    g.font = `16px ${mono}`; g.fillStyle = '#7d8b96';
+    g.strokeStyle = T('line'); g.strokeRect(pad - .5, 129.5, W - pad * 2 + 1, ch + 1);
+    g.font = `16px ${mono}`; g.fillStyle = T('dim');
     g.fillText(`alreef.es/crypto · ${A.spain({ day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} Spain time`, pad, H - 28);
     g.textAlign = 'right'; g.fillText('Not financial advice', W - pad, H - 28);
     return new Promise(r => c.toBlob(r, 'image/png'));
@@ -605,7 +645,10 @@
   document.addEventListener('click', e => { if (!smenu.hidden && !e.target.closest('.shwrap')) menu(false); });
   $('share-page').addEventListener('click', () => A.shareLink(shareInfo()));
 
-  A.every60(refresh);
+  A.rateUI($('rate')); A.themeUI($('theme'));
+  A.every(refreshPrices, () => A.getRate() * 1000);
+  A.every(refreshSlow, () => Math.max(15, A.getRate()) * 1000);
+  setTimeout(() => A.every(refreshChart, () => 60000), 60000);
   // Open straight from a link like /crypto/#BTC-7d
   const m = location.hash.match(/^#([A-Z]+)(?:-(1h|2h|4h|24h|7d|30d|90d|1y))?$/);
   if (m) openAsset(m[1], m[2]);

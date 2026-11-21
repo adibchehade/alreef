@@ -1,0 +1,23 @@
+/* alreef crypto: colour themes. The page sets <html data-theme="…"> before first paint. */
+:root, [data-theme="terminal"] {
+  --bg:#07090b; --panel:#0d1115; --line:#1b232b; --txt:#c9d3da; --dim:#6b7a86; --amber:#ffb300; --up:#00e676; --dn:#ff4d4d; --blue:#4aa3ff;
+  --hdr:#000; --hi:#fff; --on:#000; --hover:#111a21; --sum:#0a0e11; --grid:#131a20; --axis:#8a97a3;
+  --upbg:rgba(0,230,118,.28); --dnbg:rgba(255,77,77,.28); --shade:rgba(0,0,0,.6); --scrim:rgba(0,0,0,.72);
+  color-scheme:dark;
+}
+[data-theme="midnight"] {
+  --bg:#0a0f1f; --panel:#10172b; --line:#212c4a; --txt:#cfd8f0; --dim:#7884a8; --amber:#5ad1e8; --up:#4ade80; --dn:#fb7185; --blue:#c084fc;
+  --hdr:#070b17; --hi:#f4f7ff; --on:#06101c; --hover:#18223d; --sum:#0d1426; --grid:#172039; --axis:#8b97bb;
+  --upbg:rgba(74,222,128,.25); --dnbg:rgba(251,113,133,.25); --shade:rgba(0,0,0,.55); --scrim:rgba(3,6,15,.75);
+  color-scheme:dark;
+}
+[data-theme="light"] {
+  --bg:#eef1f4; --panel:#ffffff; --line:#d9dee4; --txt:#26313b; --dim:#66727e; --amber:#a35f00; --up:#08814a; --dn:#cc2b2b; --blue:#1d64c8;
+  --hdr:#ffffff; --hi:#0b1218; --on:#ffffff; --hover:#f1f4f7; --sum:#f7f9fa; --grid:#eef1f4; --axis:#5d6873;
+  --upbg:rgba(8,129,74,.16); --dnbg:rgba(204,43,43,.16); --shade:rgba(20,30,40,.18); --scrim:rgba(20,30,40,.45);
+  color-scheme:light;
+}
+/* header controls: theme + refresh rate */
+.ctl { display:flex; align-items:center; gap:6px; color:var(--dim); font-size:11px; }
+.ctl select { background:var(--hdr); color:var(--txt); border:1px solid var(--line); font:inherit; font-size:12px; padding:5px 6px; cursor:pointer; }
+.ctl select:hover, .ctl select:focus { border-color:var(--amber); outline:none; }
