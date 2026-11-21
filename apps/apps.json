@@ -283,6 +283,13 @@
         "override":  "/quiet InstallAllUsers=1 PrependPath=1 Include_launcher=1 Include_pip=1"
     },
     {
+        "name":  "Node.js (LTS)",
+        "id":  "OpenJS.NodeJS.LTS",
+        "category":  "Runtimes",
+        "homepage":  "https://nodejs.org",
+        "default":  false
+    },
+    {
         "name":  "Edge WebView2 Runtime",
         "id":  "Microsoft.EdgeWebView2Runtime",
         "category":  "Runtimes",
