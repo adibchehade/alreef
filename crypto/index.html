@@ -48,7 +48,13 @@
   .modal { width:min(1000px,100%); max-height:100%; overflow:auto; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--amber); box-shadow:0 20px 60px rgba(0,0,0,.6); }
   .mh { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid var(--line); background:#000; position:sticky; top:0; z-index:2; }
   .mh .nm { color:var(--dim); }
-  .mh .mpx { color:#fff; font-size:18px; font-weight:700; }
+  .mh .mpx { color:#fff; font-size:18px; font-weight:700; transition:color .5s, text-shadow .5s; font-variant-numeric:tabular-nums; }
+  .mh .mpx.flash-up { color:var(--up); text-shadow:0 0 10px rgba(0,230,118,.7); transition:none; }
+  .mh .mpx.flash-dn { color:var(--dn); text-shadow:0 0 10px rgba(255,77,77,.7); transition:none; }
+  .livebadge { font-weight:700; color:var(--up); letter-spacing:.06em; }
+  .livebadge i { display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-right:6px; vertical-align:1px; animation:pulse 1.2s infinite; }
+  .livebadge.warn { color:var(--amber); }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
   .mh .x { margin-left:auto; background:none; border:1px solid var(--line); color:var(--txt); font:inherit; font-size:16px; width:34px; height:34px; cursor:pointer; }
   .mh .x:hover { border-color:var(--amber); color:var(--amber); }
   .tfs { display:flex; gap:4px; padding:10px 12px 0; flex-wrap:wrap; }
@@ -131,6 +137,7 @@
       <span><i class="d" style="border-color:var(--dn)"></i>resistance R1 / R2</span>
       <span><i class="d" style="border-color:var(--amber)"></i>▲ / ▼ targets</span>
       <span id="m-src"></span>
+      <span class="livebadge" id="m-live" hidden></span>
     </div>
     <div class="stats" id="stats"></div>
     <div class="sum">
@@ -142,8 +149,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211500"></script>
-<script src="/crypto/report.js?v=202611211500"></script>
+<script src="/crypto/lib.js?v=202611211515"></script>
+<script src="/crypto/report.js?v=202611211515"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -223,7 +230,7 @@
   function header() {
     const p = P.find(x => x.sym === cur.sym) || A.ASSETS.find(x => x.sym === cur.sym);
     $('m-sym').textContent = p.sym; $('m-name').textContent = p.name;
-    $('m-px').textContent = A.fmtPrice(p.price ?? null);
+    if (live.lastPx === null) $('m-px').textContent = A.fmtPrice(p.price ?? null);
     $('m-chg').className = cls(p.chg); $('m-chg').textContent = p.chg === undefined ? '' : A.fmtPct(p.chg) + ' 24h';
   }
 
@@ -268,6 +275,7 @@
     if (!chart) makeChart();
     plines.forEach(l => sCandle.removePriceLine(l)); plines = [];
     if (!bars.length) {
+      stopLive();
       sCandle.setData([]); sVol.setData([]); sE20.setData([]); sE50.setData([]);
       $('cmsg').textContent = 'Chart data unavailable right now. It will retry on the next refresh.'; $('cmsg').hidden = false;
     } else {
@@ -299,10 +307,111 @@
     // fit even if this load replaced the one that asked for it (e.g. the 60 s refresh landed first)
     if (cur.fitPending && bars.length) { chart.timeScale().fitContent(); cur.fitPending = false; }
     $('m-src').textContent = bars.length ? `${A.TF[tf].iv} candles · ${cd.src}` : '';
+    if (bars.length) startLive(asset, tf, cd.src, bars);
     const keep = view.ctx && view.sym === sym ? view.ctx : null;
     Object.assign(view, { an, liq, asset, tf, sym, ctx: keep });
     renderStats(); renderReport();
     context(asset, seq);
+  }
+
+  // ---------- live candles ----------
+  // Crypto: Binance trade + kline WebSocket (every trade, ~per second). ANT / S&P 500 / gold:
+  // Hyperliquid candle WebSocket. Purple Bitcoin: no stream, so the last candle is polled every 15 s.
+  // The chart redraws at most 4× a second; the full analysis still refreshes every 60 s.
+  const IVS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400 };
+  const live = { key: null, ws: null, timer: null, ping: null, flush: null, retry: 0, last: null, ivSec: 0, pend: false, lastPx: null };
+  const volBar = b => ({ time: b.time, value: b.volume, color: b.close >= b.open ? 'rgba(0,230,118,.35)' : 'rgba(255,77,77,.35)' });
+  function badge(text, warn) { const el = $('m-live'); el.hidden = false; el.className = 'livebadge' + (warn ? ' warn' : ''); el.innerHTML = `<i></i>${text}`; }
+  function stopLive() {
+    live.key = null; live.lastPx = null;
+    if (live.ws) { live.ws.onclose = null; try { live.ws.close(); } catch (e) {} live.ws = null; }
+    [live.timer, live.ping, live.flush].forEach(clearInterval);
+    live.timer = live.ping = live.flush = null;
+    $('m-live').hidden = true;
+  }
+  function draw(b) {                       // b: a full candle (from the stream or built from trades)
+    if (!live.last || b.time < live.last.time) return;
+    live.last = b; live.pend = true;
+  }
+  function flush() {
+    if (!live.pend || !live.last) return;
+    live.pend = false;
+    try { sCandle.update(live.last); sVol.update(volBar(live.last)); } catch (e) { return; }
+    const px = live.last.close, el = $('m-px');
+    if (live.lastPx !== null && px !== live.lastPx) {
+      el.classList.remove('flash-up', 'flash-dn'); void el.offsetWidth;
+      el.classList.add(px > live.lastPx ? 'flash-up' : 'flash-dn');
+      clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('flash-up', 'flash-dn'), 700);
+    }
+    live.lastPx = px; el.textContent = A.fmtPrice(px);
+  }
+  function tick(price, usd, ms) {          // one trade → update the current candle or start a new one
+    if (!live.last || !(price > 0)) return;
+    const t = Math.floor(ms / 1000 / live.ivSec) * live.ivSec, b = live.last;
+    if (t < b.time) return;
+    draw(t > b.time ? { time: t, open: b.close, high: price, low: price, close: price, volume: usd }
+                    : { ...b, high: Math.max(b.high, price), low: Math.min(b.low, price), close: price, volume: b.volume + usd });
+  }
+  function reconnect(fn, key) {
+    if (live.key !== key) return;
+    badge('RECONNECTING…', true);
+    const wait = Math.min(30000, 1000 * 2 ** live.retry++);
+    setTimeout(() => { if (live.key === key) fn(); }, wait);
+  }
+  function openBinance(asset, tf, key) {
+    const s = asset.sym.toLowerCase() + 'usdt', iv = A.TF[tf].iv;
+    const host = ['wss://data-stream.binance.vision', 'wss://stream.binance.com:9443'][live.retry % 2];
+    const ws = new WebSocket(`${host}/stream?streams=${s}@aggTrade/${s}@kline_${iv}`);
+    live.ws = ws;
+    ws.onopen = () => { live.retry = 0; badge('LIVE · every trade'); };
+    ws.onmessage = e => {
+      if (live.key !== key) return;
+      let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      const d = m.data || m;
+      if (d.e === 'aggTrade') tick(+d.p, +d.p * +d.q, d.T);
+      else if (d.e === 'kline') { const k = d.k; draw({ time: Math.floor(k.t / 1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.q }); }
+    };
+    ws.onclose = () => reconnect(() => openBinance(asset, tf, key), key);
+  }
+  function openHL(asset, tf, key) {
+    const coin = asset.src === 'hl' ? 'xyz:' + asset.hl[0] : (asset.hlCoin || asset.sym);
+    const sc = asset.src === 'hl' ? 1 : (asset.hlScale || 1);
+    const ws = new WebSocket('wss://api.hyperliquid.xyz/ws');
+    live.ws = ws;
+    ws.onopen = () => {
+      live.retry = 0;
+      ws.send(JSON.stringify({ method: 'subscribe', subscription: { type: 'candle', coin, interval: A.TF[tf].iv } }));
+      badge('LIVE');
+      clearInterval(live.ping); live.ping = setInterval(() => { try { ws.send('{"method":"ping"}'); } catch (e) {} }, 30000);
+    };
+    ws.onmessage = e => {
+      if (live.key !== key) return;
+      let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      if (m.channel !== 'candle' || !m.data) return;
+      const k = m.data;
+      if (k.s && k.s !== coin) return;
+      draw({ time: Math.floor(k.t / 1000), open: k.o * sc, high: k.h * sc, low: k.l * sc, close: k.c * sc, volume: k.v / sc });
+    };
+    ws.onclose = () => { clearInterval(live.ping); reconnect(() => openHL(asset, tf, key), key); };
+  }
+  async function pollDex(asset, tf, key) {
+    const d = await A.candles(asset, tf);
+    if (live.key !== key || !d.bars.length) return;
+    draw({ ...d.bars[d.bars.length - 1] });
+  }
+  function startLive(asset, tf, src, bars) {
+    const key = asset.sym + '|' + tf + '|' + src, rest = { ...bars[bars.length - 1] };
+    live.ivSec = IVS[A.TF[tf].iv];
+    if (live.key === key) {                // same chart re-loaded by the 60 s refresh: keep the newer live candle
+      if (live.last && live.last.time >= rest.time) live.pend = true; else live.last = rest;
+      return;
+    }
+    stopLive();
+    live.key = key; live.last = rest; live.retry = 0;
+    live.flush = setInterval(flush, 250);
+    if (src === 'Binance') openBinance(asset, tf, key);
+    else if (src === 'Hyperliquid') openHL(asset, tf, key);
+    else { badge('UPDATES EVERY 15 S', true); live.timer = setInterval(() => pollDex(asset, tf, key), 15000); }
   }
 
   // ---------- stats grid + report ----------
@@ -372,6 +481,7 @@
     $('m-x').focus();
   }
   function closeAsset() {
+    stopLive();
     cur.sym = null; cur.seq++;
     $('ov').hidden = true; document.body.style.overflow = '';
     history.replaceState(null, '', location.pathname);
