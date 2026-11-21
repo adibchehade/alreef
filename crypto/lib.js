@@ -139,6 +139,7 @@
       const past = Object.keys(H).filter(d => d < today).sort().slice(-30).map(d => H[d] && H[d][a.sym]).filter(r => r && num(r.total) !== null);
       out[a.sym] = { '24h': live ? { ...live, have: 1, need: 1 } : { long: null, short: null, total: null, have: 0, need: 1 },
                      '7d': windowSum(H, a.sym, live, 7), '30d': windowSum(H, a.sym, live, 30),
+                     '90d': windowSum(H, a.sym, live, 90), '1y': windowSum(H, a.sym, live, 365),
                      avgDay: past.length ? { avg: past.reduce((s, r) => s + num(r.total), 0) / past.length, days: past.length } : null };
     });
     return out;
@@ -148,12 +149,15 @@
   // Crypto: Binance klines (fallback Hyperliquid perps). ANT / S&P 500: Hyperliquid xyz candleSnapshot.
   const TF = {
     '1h':  { label: '1H',  iv: '1m',  ms: 3600e3 },
+    '2h':  { label: '2H',  iv: '1m',  ms: 2 * 3600e3 },
     '4h':  { label: '4H',  iv: '5m',  ms: 4 * 3600e3 },
     '24h': { label: '24H', iv: '15m', ms: 864e5 },
     '7d':  { label: '7D',  iv: '1h',  ms: 7 * 864e5 },
     '30d': { label: '30D', iv: '4h',  ms: 30 * 864e5 },
+    '90d': { label: '90D', iv: '12h', ms: 90 * 864e5 },
+    '1y':  { label: '1Y',  iv: '1d',  ms: 365 * 864e5 },
   };
-  const IV_MS = { '1m': 6e4, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5 };
+  const IV_MS = { '1m': 6e4, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5, '12h': 432e5, '1d': 864e5 };
   const bar = (t, o, h, l, c, v) => ({ time: Math.floor(t / 1000), open: +o, high: +h, low: +l, close: +c, volume: +v });
 
   async function hlCandles(coin, tf, scale = 1) {
@@ -163,7 +167,7 @@
     return Array.isArray(d) ? d.map(k => bar(k.t, k.o * scale, k.h * scale, k.l * scale, k.c * scale, k.v / scale)) : [];
   }
   // GeckoTerminal pool OHLCV (USD, newest first). Thin pools skip minutes with no trades.
-  const GT_IV = { '1m': ['minute', 1], '5m': ['minute', 5], '15m': ['minute', 15], '1h': ['hour', 1], '4h': ['hour', 4] };
+  const GT_IV = { '1m': ['minute', 1], '5m': ['minute', 5], '15m': ['minute', 15], '1h': ['hour', 1], '4h': ['hour', 4], '12h': ['hour', 12], '1d': ['day', 1] };
   async function gtCandles(a, tf) {
     const [unit, agg] = GT_IV[TF[tf].iv], n = Math.min(1000, Math.ceil(TF[tf].ms / IV_MS[TF[tf].iv]) + 1);
     const d = await getJSON(`https://api.geckoterminal.com/api/v2/networks/${a.chain}/pools/${a.pool}/ohlcv/${unit}?aggregate=${agg}&limit=${n}&currency=usd&token=base`, { headers: { Accept: 'application/json' } }, 15000);
@@ -326,6 +330,7 @@
     const trend = bias.includes('Bull') || bias === 'bull' ? 'Bullish' : bias.includes('Bear') || bias === 'bear' ? 'Bearish' : 'Mixed';
     return {
       last, first, change: (last / first - 1) * 100, high, low, hiI, loI, upSwing,
+      firstTime: b[0].time, lastTime: b[n].time,
       rangePos: span > 0 ? (last - low) / span * 100 : null,
       fromHigh: (last / high - 1) * 100, fromLow: (last / low - 1) * 100,
       ema20: E20, ema50: E50, ema20Series: e20, ema50Series: e50,

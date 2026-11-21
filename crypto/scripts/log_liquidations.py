@@ -15,7 +15,7 @@ COINS = ["BTC", "ETH", "BNB", "SOL", "XRP", "PEPE", "ANT"]  # Purple Bitcoin has
 GROUPS = {"GOLD": ["XAUT", "PAXG"]}
 URL = "https://www.coinboss.com/api/liquidations/coins?limit=500"
 FILE = os.path.join(os.path.dirname(__file__), "..", "data", "liquidations.json")
-KEEP_DAYS = 60
+KEEP_DAYS = 400  # enough for the 1-year liquidation total
 
 
 def num(v):

@@ -10,7 +10,8 @@
   const L = {
     en: {
       dir: 'ltr', name: 'English',
-      tf: { '1h': ['1 hour', '1-hour'], '4h': ['4 hours', '4-hour'], '24h': ['24 hours', '24-hour'], '7d': ['7 days', '7-day'], '30d': ['30 days', '30-day'] },
+      tf: { '1h': ['1 hour', '1-hour'], '2h': ['2 hours', '2-hour'], '4h': ['4 hours', '4-hour'], '24h': ['24 hours', '24-hour'], '7d': ['7 days', '7-day'], '30d': ['30 days', '30-day'], '90d': ['90 days', '90-day'], '1y': ['1 year', '1-year'] },
+      short: (d, n, adj) => `Price history only starts on ${d} (${n} days), so this ${adj} view covers a shorter period.`,
       h: { verdict: 'Verdict', trend: 'Trend', mom: 'Momentum', vol: 'Volatility', flow: 'Volume & flows', pos: 'Positioning', lv: 'Key levels', sc: 'Scenarios', note: 'Note' },
       bias: { strongBull: 'Strong bullish', bull: 'Bullish', neutral: 'Neutral', bear: 'Bearish', strongBear: 'Strong bearish' },
       trendW: { Bullish: 'bullish', Bearish: 'bearish', Mixed: 'mixed' },
@@ -51,7 +52,8 @@
 
     es: {
       dir: 'ltr', name: 'Español',
-      tf: { '1h': ['1 hora', 'de 1 hora'], '4h': ['4 horas', 'de 4 horas'], '24h': ['24 horas', 'de 24 horas'], '7d': ['7 días', 'de 7 días'], '30d': ['30 días', 'de 30 días'] },
+      tf: { '1h': ['1 hora', 'de 1 hora'], '2h': ['2 horas', 'de 2 horas'], '4h': ['4 horas', 'de 4 horas'], '24h': ['24 horas', 'de 24 horas'], '7d': ['7 días', 'de 7 días'], '30d': ['30 días', 'de 30 días'], '90d': ['90 días', 'de 90 días'], '1y': ['1 año', 'de 1 año'] },
+      short: (d, n, adj) => `El historial de precios solo empieza el ${d} (${n} días), así que esta vista ${adj} cubre un periodo más corto.`,
       h: { verdict: 'Veredicto', trend: 'Tendencia', mom: 'Momento', vol: 'Volatilidad', flow: 'Volumen y flujos', pos: 'Posicionamiento', lv: 'Niveles clave', sc: 'Escenarios', note: 'Nota' },
       bias: { strongBull: 'Muy alcista', bull: 'Alcista', neutral: 'Neutral', bear: 'Bajista', strongBear: 'Muy bajista' },
       trendW: { Bullish: 'alcista', Bearish: 'bajista', Mixed: 'mixta' },
@@ -92,7 +94,8 @@
 
     ar: {
       dir: 'rtl', name: 'العربية',
-      tf: { '1h': ['ساعة واحدة', 'لساعة واحدة'], '4h': ['4 ساعات', 'لـ4 ساعات'], '24h': ['24 ساعة', 'لـ24 ساعة'], '7d': ['7 أيام', 'لـ7 أيام'], '30d': ['30 يومًا', 'لـ30 يومًا'] },
+      tf: { '1h': ['ساعة واحدة', 'لساعة واحدة'], '2h': ['ساعتين', 'لساعتين'], '4h': ['4 ساعات', 'لـ4 ساعات'], '24h': ['24 ساعة', 'لـ24 ساعة'], '7d': ['7 أيام', 'لـ7 أيام'], '30d': ['30 يومًا', 'لـ30 يومًا'], '90d': ['90 يومًا', 'لـ90 يومًا'], '1y': ['سنة واحدة', 'لسنة واحدة'] },
+      short: (d, n, adj) => `سجل الأسعار يبدأ فقط في ${d} (${n} يومًا)، لذا فهذا العرض ${adj} يغطي فترة أقصر.`,
       h: { verdict: 'الخلاصة', trend: 'الاتجاه', mom: 'الزخم', vol: 'التقلّب', flow: 'الحجم والتدفقات', pos: 'مراكز العقود', lv: 'المستويات الرئيسية', sc: 'السيناريوهات', note: 'ملاحظة' },
       bias: { strongBull: 'صعودي قوي', bull: 'صعودي', neutral: 'محايد', bear: 'هبوطي', strongBear: 'هبوطي قوي' },
       trendW: { Bullish: 'صعودي', Bearish: 'هبوطي', Mixed: 'متذبذب' },
@@ -132,7 +135,7 @@
     },
   };
 
-  const TF_ORDER = ['1h', '4h', '24h', '7d', '30d'];
+  const TF_ORDER = ['1h', '2h', '4h', '24h', '7d', '30d', '90d', '1y'];
 
   // Returns { dir, sections: [{ h, p }] }
   function report(a, ctx, tf, asset, lang) {
@@ -147,7 +150,7 @@
     if (ctx && ctx.mtf) {
       const parts = TF_ORDER.filter(k => ctx.mtf[k]).map(k => `${A.TF[k].label} ${T.trendW[ctx.mtf[k]]}`);
       const vals = TF_ORDER.map(k => ctx.mtf[k]).filter(Boolean);
-      const short = ['1h', '4h'].map(k => ctx.mtf[k]).filter(Boolean), long = ['7d', '30d'].map(k => ctx.mtf[k]).filter(Boolean);
+      const short = ['1h', '2h', '4h'].map(k => ctx.mtf[k]).filter(Boolean), long = ['30d', '90d', '1y'].map(k => ctx.mtf[k]).filter(Boolean);
       const all = (arr, v) => arr.length > 0 && arr.every(x => x === v);
       const agree = vals.length >= 3 && vals.every(v => v === vals[0] && v !== 'Mixed') ? 'all'
         : (all(short, 'Bullish') && all(long, 'Bearish')) || (all(short, 'Bearish') && all(long, 'Bullish')) ? 'split' : 'mixed';
@@ -208,7 +211,15 @@
     if (a.atr !== null) sc.push(T.noise(a.atr));
     if (sc.length) S.push({ h: T.h.sc, p: sc.join(' ') });
 
-    if (asset.src === 'dex') S.push({ h: T.h.note, p: T.thin });
+    // Newer markets (e.g. Anthropic, listed Oct 2026) don't have a full 90D / 1Y of history yet.
+    const notes = [];
+    const want = A.TF[tf].ms / 1000, have = a.lastTime - a.firstTime;
+    if (want >= 7 * 86400 && have < want * 0.85) {
+      const d = new Intl.DateTimeFormat(lang === 'ar' ? 'ar' : lang, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Madrid', numberingSystem: 'latn' }).format(new Date(a.firstTime * 1000));
+      notes.push(T.short(d, Math.max(1, Math.round(have / 86400)), tfA));
+    }
+    if (asset.src === 'dex') notes.push(T.thin);
+    if (notes.length) S.push({ h: T.h.note, p: notes.join(' ') });
     if (T.dir === 'rtl') S.forEach(x => { x.p = x.p.replace(/(?:[A-Za-z]+)?[+\-]?\$?\d[\d,]*(?:\.\d+)?(?:[%×]|[A-Za-z]+)?/g, m => '\u2066' + m + '\u2069'); });
     return { dir: T.dir, sections: S };
   }

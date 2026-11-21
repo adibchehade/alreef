@@ -149,8 +149,8 @@
 </div>
 
 <script src="/crypto/vendor/lightweight-charts-4.2.0.js"></script>
-<script src="/crypto/lib.js?v=202611211515"></script>
-<script src="/crypto/report.js?v=202611211515"></script>
+<script src="/crypto/lib.js?v=202611211527"></script>
+<script src="/crypto/report.js?v=202611211527"></script>
 <script>
   const A = window.ALREEF, $ = id => document.getElementById(id);
   A.clock($('clock'), $('date'));
@@ -331,7 +331,7 @@
   // Crypto: Binance trade + kline WebSocket (every trade, ~per second). ANT / S&P 500 / gold:
   // Hyperliquid candle WebSocket. Purple Bitcoin: no stream, so the last candle is polled every 15 s.
   // The chart redraws at most 4× a second; the full analysis still refreshes every 60 s.
-  const IVS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400 };
+  const IVS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '12h': 43200, '1d': 86400 };
   const live = { key: null, ws: null, timer: null, ping: null, flush: null, retry: 0, last: null, ivSec: 0, pend: false, lastPx: null };
   const volBar = b => ({ time: b.time, value: b.volume, color: b.close >= b.open ? 'rgba(0,230,118,.35)' : 'rgba(255,77,77,.35)' });
   function badge(text, warn) { const el = $('m-live'); el.hidden = false; el.className = 'livebadge' + (warn ? ' warn' : ''); el.innerHTML = `<i></i>${text}`; }
@@ -456,6 +456,7 @@
       c.push(cell('OPEN INTEREST', A.fmtUSD(ctx.pos.oiUsd)));
     }
     if (asset.noLiq) c.push(cell(`LIQUIDATIONS ${lab}`, asset.noLiq.toUpperCase()));
+    else if (tf === '2h') c.push(cell('LIQUIDATIONS 2H', 'N/A · SOURCE HAS 1H / 4H'));
     else if (!liq || liq.total === null) c.push(cell(`LIQUIDATIONS ${lab}`, '—'));
     else {
       c.push(cell(`LIQ LONGS ${lab}`, A.fmtUSD(liq.long), 'up'), cell(`LIQ SHORTS ${lab}`, A.fmtUSD(liq.short), 'dn'), cell(`LIQ TOTAL ${lab}`, A.fmtUSD(liq.total)));
@@ -515,7 +516,7 @@
 
   A.every60(refresh);
   // Open straight from a link like /crypto/#BTC-7d
-  const m = location.hash.match(/^#([A-Z]+)(?:-(1h|4h|24h|7d|30d))?$/);
+  const m = location.hash.match(/^#([A-Z]+)(?:-(1h|2h|4h|24h|7d|30d|90d|1y))?$/);
   if (m) openAsset(m[1], m[2]);
 </script>
 </body>
