@@ -57,31 +57,6 @@
   details[open] summary:after { content:"Hide"; }
   .archive { opacity:.72; }
   .foot { padding:12px 20px 16px; color:var(--muted); font-size:.78rem; border-top:1px solid var(--line); }
-  /* weekly plan */
-  .wk-sum { display:flex; flex-wrap:wrap; gap:8px; padding:12px 20px; border-bottom:1px solid var(--line); font-size:.82rem; color:var(--muted); }
-  .wk-sum b { color:var(--ink); }
-  .wk-sum span { background:#F8FAFC; border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
-  .wk-tabs { display:flex; gap:4px; padding:10px 20px 0; overflow-x:auto; border-bottom:1px solid var(--line); }
-  .wk-tabs button { width:auto !important; margin-top:0 !important; background:#fff; color:var(--navy); border:1px solid var(--line); border-bottom:0; border-radius:8px 8px 0 0; padding:8px 12px; font-size:.82rem; flex:0 0 auto; }
-  .wk-tabs button.on { background:var(--navy); color:#fff; border-color:var(--navy); }
-  .wk-tabs button small { display:block; font-weight:400; font-size:.7rem; opacity:.8; }
-  .wk-day { display:none; }
-  .wk-day.on { display:block; }
-  .wk-day h3 { margin:0; padding:10px 20px; font-size:.86rem; color:var(--navy); border-bottom:1px solid var(--line); }
-  .wk-row { display:flex; gap:12px; align-items:center; padding:9px 20px; border-bottom:1px solid var(--line); }
-  .wk-row:last-child { border-bottom:0; }
-  .wk-row.now { background:#E8F6F4; box-shadow: inset 4px 0 0 var(--teal); }
-  .wk-t { width:118px; flex:0 0 118px; font-weight:700; color:var(--navy); font-size:.88rem; font-variant-numeric:tabular-nums; }
-  .wk-x { flex:1; font-size:.9rem; }
-  .wk-x small { display:block; color:var(--muted); font-size:.78rem; margin-top:1px; }
-  .bd { flex:0 0 auto; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:4px 8px; border-radius:999px; min-width:86px; text-align:center; }
-  .bd.class { background:var(--navy); color:#fff; }
-  .bd.study { background:#D8EFEC; color:var(--teal); }
-  .bd.gym { background:#FDE3CF; color:#9A3D00; }
-  .bd.free { background:#F2F4F7; color:#475467; }
-  .wk-row.now .wk-t:after { content:"NOW"; display:block; font-size:.66rem; color:var(--teal); letter-spacing:.08em; }
-  @media (max-width:640px) { .wk-row { flex-wrap:wrap; gap:4px 10px; padding:9px 16px; } .wk-t { width:auto; flex:0 0 auto; } .wk-x { flex:1 1 100%; order:3; } .bd { min-width:0; } .wk-tabs, .wk-sum { padding-left:16px; padding-right:16px; } }
-  @media print { .wk-tabs { display:none; } .wk-day { display:block; break-inside:avoid; } }
   @media (max-width:640px) {
     .top { display:block; }
     .clock { text-align:left; margin-top:12px; }
@@ -129,7 +104,7 @@
       </div></div>
     </div>
     <div class="bar">
-      <span>Checked every 3 hours. Last update: Sun 22 Nov 14:12 · Spain.</span>
+      <span>Checked every 3 hours. Last update: Sat 21 Nov 15:10 · Spain.</span>
       <button type="button" onclick="window.print()">Download</button>
     </div>
     <h2>Every day until done</h2>
@@ -143,10 +118,6 @@ Register in this order (fewest options first): MA 121 → Foreign Language II �
 Back-ups: MA 121 full → Tue 3–6 · Foreign Language full → Mon 3–6 (or Tue 3–6 if MA 121 is on Monday) · EN 114 / MGF 1107 can swap Tue 9–12 and Tue 12–3; if Tuesday fills, use Mon 12–3 / 3–6 (MGF also Mon 9–12 if free).</div></div></div></div></td><td class="status"><span class="pill warn">Not done</span></td></tr>
       </tbody>
     </table>
-    <h2>Weekly plan · from Mon 23 Nov · repeats every week</h2>
-    <div class="wk-sum"><span>Study <b>32 h</b>/week</span><span>International Business <b>11 h</b></span><span>Spanish <b>7 h</b></span><span>Programming <b>7 h</b></span><span>English <b>7 h</b></span><span>Classes <b>15 h</b></span><span>Gym <b>7×</b> (after all study · closes 00:00 weekdays, 21:00 weekends)</span></div>
-    <div class="wk-tabs" id="wk-tabs" role="tablist"></div>
-    <div id="wk-days"></div>
     <h2>12–14 October · paper 9702/22</h2>
     <table>
       <thead><tr><th>When</th><th>Item</th><th>Status</th></tr></thead>
@@ -227,7 +198,7 @@ Back-ups: MA 121 full → Tue 3–6 · Foreign Language full → Mon 3–6 (or T
         </tbody>
       </table>
     </details>
-    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Last update: Sun 22 Nov 14:12 · Spain.</div>
+    <div class="foot">School: Maria Bellmunt · +34 607 924 572. Base remains the house in Málaga. Last update: Sat 21 Nov 15:10 · Spain.</div>
   </div>
 </div>
 <script>
@@ -251,79 +222,6 @@ Back-ups: MA 121 full → Tue 3–6 · Foreign Language full → Mon 3–6 (or T
     });
   }
   (function(){ var el=document.getElementById('selfreg-today'); if(el){ el.textContent='today · '+new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',weekday:'short',day:'numeric',month:'short'}).format(new Date()); } })();
-
-  // ---------- weekly plan (Europe/Madrid, repeats Mon–Sun from 23 Nov 2026) ----------
-  var GEB = 'International Business (GEB1350)', SP = 'Spanish (SP101)', CS = 'Programming Foundation (CS110)', EN = 'English Composition (EN113)';
-  var WEEK = [
-    ['Mon', 'Monday', '6h class · 4h study · late gym', [
-      ['10:00','11:00','study',GEB,'1h pre-lecture prep'], ['11:00','12:00','free','Lunch and commute to campus'],
-      ['12:00','15:00','class',GEB], ['15:00','18:00','class',SP], ['18:00','18:30','free','Post-class rest and decompression'],
-      ['18:30','19:30','study',SP,'1h'], ['19:30','20:30','study',CS,'1h'], ['20:30','21:30','free','Dinner · 1h break between study blocks'],
-      ['21:30','22:30','study',EN,'1h · completes all 4h of study'], ['22:30','23:45','gym','Evening workout','finishes before the 00:00 weekday closing'],
-      ['23:45','24:00','free','Shower and sleep']]],
-    ['Tue', 'Tuesday', '6h class · 4h study · gym 20:30', [
-      ['07:30','09:00','free','Morning routine, breakfast and commute'], ['09:00','12:00','class',CS], ['12:00','15:00','class',EN],
-      ['15:00','15:30','free','Post-class lunch'], ['15:30','16:30','study',CS,'1h'], ['16:30','17:30','study',EN,'1h'],
-      ['17:30','18:30','free','1h break between 2h study blocks'], ['18:30','19:30','study',GEB,'1h'], ['19:30','20:30','study',SP,'1h · completes all 4h of study'],
-      ['20:30','21:45','gym','Evening workout','finishes before the 00:00 weekday closing'], ['21:45','24:00','free','Dinner and free evening']]],
-    ['Wed', 'Wednesday', 'no class · 5h study · gym 19:30', [
-      ['10:00','12:00','study',GEB,'2h block'], ['12:00','12:30','free','30-min break after the 2h Business block'], ['12:30','13:30','study',SP,'1h'],
-      ['13:30','15:30','free','Cooking, lunch and midday break (2h)'], ['15:30','16:30','study',CS,'1h'], ['16:30','17:30','study',EN,'1h · completes all 5h of study'],
-      ['17:30','19:30','free','Afternoon personal / social downtime (2h)'], ['19:30','20:45','gym','Evening workout'], ['20:45','24:00','free','Dinner and free evening']]],
-    ['Thu', 'Thursday', 'no class · 5h study · gym 19:30', [
-      ['10:00','12:00','study',GEB,'2h block'], ['12:00','12:30','free','30-min break after the 2h Business block'], ['12:30','13:30','study',CS,'1h'],
-      ['13:30','15:30','free','Cooking, lunch and midday break (2h)'], ['15:30','16:30','study',SP,'1h'], ['16:30','17:30','study',EN,'1h · completes all 5h of study'],
-      ['17:30','19:30','free','Afternoon personal / social downtime (2h)'], ['19:30','20:45','gym','Evening workout'], ['20:45','24:00','free','Dinner and free evening']]],
-    ['Fri', 'Friday', '3h senior class · 4h study · gym 19:30', [
-      ['09:00','12:00','class','Senior Class','Invited guest session'], ['12:00','13:00','free','1h lunch break'], ['13:00','14:00','study',GEB,'1h'],
-      ['14:00','15:00','study',SP,'1h'], ['15:00','16:00','free','1h break between 2h study blocks'], ['16:00','17:00','study',CS,'1h'],
-      ['17:00','18:00','study',EN,'1h · completes all 4h of study'], ['18:00','19:30','free','Pre-gym downtime (1.5h)'],
-      ['19:30','20:45','gym','Evening workout','finishes before the 00:00 weekday closing'], ['20:45','24:00','free','Dinner and Friday night weekend kickoff']]],
-    ['Sat', 'Saturday', 'no class · 5h study · gym 19:00', [
-      ['10:00','12:00','study',GEB,'2h block'], ['12:00','12:30','free','30-min break after the 2h Business block'], ['12:30','13:30','study',SP,'1h'],
-      ['13:30','15:30','free','Lunch and midday recharge (2h)'], ['15:30','16:30','study',CS,'1h'], ['16:30','17:30','study',EN,'1h · completes all 5h of study'],
-      ['17:30','19:00','free','Afternoon social / free time (1.5h)'], ['19:00','20:15','gym','Evening workout','finishes 45 min before the 21:00 weekend closing'],
-      ['20:15','24:00','free','Dinner and Saturday night downtime']]],
-    ['Sun', 'Sunday', 'no class · 5h study · gym 19:00', [
-      ['10:00','12:00','study',GEB,'2h block'], ['12:00','12:30','free','30-min break after the 2h Business block'], ['12:30','13:30','study',CS,'1h'],
-      ['13:30','15:30','free','Brunch and midday recharge (2h)'], ['15:30','16:30','study',SP,'1h'], ['16:30','17:30','study',EN,'1h · completes all 5h of study'],
-      ['17:30','19:00','free','Evening downtime (1.5h)'], ['19:00','20:15','gym','Evening workout','finishes 45 min before the 21:00 weekend closing'],
-      ['20:15','24:00','free','Dinner and weekly wind-down before Monday']]]
-  ];
-  var BADGE = { 'class': 'Class', study: 'Study', gym: 'Gym', free: 'Free / Rest' };
-  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function madridNow() {
-    var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
-      .formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
-    return { day: p.weekday, min: (+p.hour % 24) * 60 + +p.minute };
-  }
-  var mins = function (t) { var a = t.split(':'); return +a[0] * 60 + +a[1]; };
-  var shown = null;
-  function showDay(d) {
-    shown = d;
-    Array.prototype.forEach.call(document.querySelectorAll('#wk-tabs button'), function (b) { var on = b.getAttribute('data-d') === d; b.className = on ? 'on' : ''; b.setAttribute('aria-selected', on); });
-    Array.prototype.forEach.call(document.querySelectorAll('.wk-day'), function (x) { x.className = 'wk-day' + (x.getAttribute('data-d') === d ? ' on' : ''); });
-  }
-  function markNow() {
-    var n = madridNow();
-    Array.prototype.forEach.call(document.querySelectorAll('.wk-row'), function (r) {
-      var on = r.getAttribute('data-d') === n.day && n.min >= +r.getAttribute('data-s') && n.min < +r.getAttribute('data-e');
-      r.className = 'wk-row' + (on ? ' now' : '');
-    });
-  }
-  (function () {
-    var tabs = document.getElementById('wk-tabs'), days = document.getElementById('wk-days'), today = madridNow().day;
-    tabs.innerHTML = WEEK.map(function (w) { return '<button type="button" role="tab" data-d="' + w[0] + '">' + w[0] + (w[0] === today ? '<small>today</small>' : '<small>&nbsp;</small>') + '</button>'; }).join('');
-    days.innerHTML = WEEK.map(function (w) {
-      return '<div class="wk-day" data-d="' + w[0] + '"><h3>' + w[1] + ' · ' + w[2] + '</h3>' + w[3].map(function (e) {
-        var end = e[1] === '24:00' ? 'onward' : e[1], what = esc(e[3]) + (e[4] ? '<small>' + esc(e[4]) + '</small>' : '');
-        return '<div class="wk-row" data-d="' + w[0] + '" data-s="' + mins(e[0]) + '" data-e="' + mins(e[1]) + '"><div class="wk-t">' + e[0] + (end === 'onward' ? ' onward' : '–' + end) +
-          '</div><span class="bd ' + e[2] + '">' + BADGE[e[2]] + '</span><div class="wk-x">' + what + '</div></div>';
-      }).join('') + '</div>';
-    }).join('');
-    tabs.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) showDay(b.getAttribute('data-d')); });
-    showDay(today); markNow(); setInterval(markNow, 30000);
-  })();
   tick();
   highlightNext();
   setInterval(tick, 1000);
