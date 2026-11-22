@@ -389,9 +389,8 @@
         "category":  "Visual C++ Runtimes",
         "homepage":  "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
         "default":  false
-    },
-    {
-        "installer":  "https://github.com/excalidraw/excalidraw",
+    }
+]
         "detect":  "excalidraw",
         "category":  "Web Tools - Design",
         "name":  "Excalidraw",

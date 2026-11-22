@@ -254,6 +254,12 @@ function Start-MyApps {
       <Button x:Name="BtnRefreshTop" DockPanel.Dock="Right" Content="Refresh" Margin="0,0,10,0"
               Padding="16,7" VerticalAlignment="Center" ToolTip="Re-check what's installed (F5)"/>
       <StackPanel x:Name="ThemePicker" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0"/>
+      <Border DockPanel.Dock="Right" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource BtnBorder}" BorderThickness="1"
+              CornerRadius="16" Padding="10,2" VerticalAlignment="Center" Margin="0,0,14,0" Width="260">
+        <TextBox x:Name="SearchBox" Text="" Foreground="{DynamicResource Text}" Background="Transparent" BorderThickness="0"
+                 FontSize="13" VerticalAlignment="Center" Padding="0"
+                 ToolTip="Type to search apps across all categories (press Esc to clear)"/>
+      </Border>
       <StackPanel VerticalAlignment="Center">
         <TextBlock Text="Softserv Tools" FontSize="24" FontWeight="SemiBold"/>
         <TextBlock Text="Tick the apps, then choose an action. Installs come from winget or the vendor's signed installer."
@@ -369,7 +375,7 @@ function Start-MyApps {
 </Window>
 '@
     $win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
-    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp','BusyBar','LogPanel','LinkLog') {
+    foreach ($n in 'AppPanel','BtnInstall','BtnUpdate','BtnUninstall','BtnUpdateAll','BtnRefresh','BtnRestore','BtnEdge','LogBox','LinkAll','LinkNone','StatusText','StatusDot','Summary','BtnRefreshTop','BtnScripts','BtnLiberNT','LinkExpand','LinkCollapse','ThemePicker','BtnRdp','BusyBar','LogPanel','LinkLog','SearchBox') {
         Set-Variable -Name $n -Value $win.FindName($n)
     }
     $buttons = @($BtnRefreshTop, $BtnInstall, $BtnUpdate, $BtnUninstall, $BtnUpdateAll, $BtnRefresh, $BtnRestore, $BtnEdge, $BtnScripts, $BtnLiberNT, $BtnRdp)
@@ -463,6 +469,87 @@ function Start-MyApps {
         if (-not $saved) { $saved = (Get-ItemProperty $oldKey -ErrorAction SilentlyContinue).Theme }
     }
     Set-Theme $(if ($saved) { $saved } else { 'auto' })
+
+    # ---------- Search state & handlers ----------
+    $script:searchQuery = ''
+    $script:searchResultsPanel = $null
+
+    function Show-SearchResults {
+        param([string]$query)
+        Clear-Detail
+        $query = $query.Trim().ToLower()
+        if (-not $query) {
+            if ($sections.Count) { Show-Category $sections[0] }
+            return
+        }
+        $sp = New-Object Windows.Controls.StackPanel
+        $h = New-Object Windows.Controls.TextBlock
+        $h.Text = "SEARCH RESULTS FOR ""$query""" ; $h.FontSize = 11; $h.FontWeight = 'SemiBold'; $h.Margin = '6,14,0,6'
+        Use-Res $h $FG 'AccentText'
+        [void]$sp.Children.Add($h)
+
+        $grid = New-Object Windows.Controls.Primitives.UniformGrid
+        $grid.Columns = 3
+        $matchCount = 0
+        foreach ($a in $apps) {
+            $nameMatch = $a.name.ToLower().Contains($query)
+            $catMatch  = $a.category.ToLower().Contains($query)
+            $idMatch   = if ($a.id) { $a.id.ToLower().Contains($query) } else { $false }
+            if ($nameMatch -or $catMatch -or $idMatch) {
+                $matchCount++
+                $card = New-Object Windows.Controls.Border
+                Use-Res $card $BG 'Card'; Use-Res $card $BRD 'CardBorder'; $card.BorderThickness = '1'
+                $card.CornerRadius = '10'; $card.Padding = '12,9'; $card.Margin = '4'
+                $dock = New-Object Windows.Controls.DockPanel
+
+                $pill = New-Object Windows.Controls.Border
+                $pill.CornerRadius = '10'; $pill.Padding = '9,2'; Use-Res $pill $BG 'WorkBg'
+                $pill.VerticalAlignment = 'Center'
+                $st = New-Object Windows.Controls.TextBlock
+                $st.Text = $rows[(if ($a.id) { $a.id } else { "direct:$($a.name)" })].Status.Text
+                $st.FontSize = 11; Use-Res $st $FG 'WorkFg'
+                $pill.Child = $st
+                [Windows.Controls.DockPanel]::SetDock($pill, 'Right')
+
+                $cb = New-Object Windows.Controls.CheckBox
+                $cb.Content = "$($a.name)  [$($a.category)]"; $cb.IsChecked = [bool]$a.default
+                $cb.ToolTip = $(if ($a.id) { $a.id } elseif ($a.ids) { $a.ids -join ', ' } elseif ($a.portable) { $a.portable } elseif ($a.page) { $a.page } elseif ($a.store) { "Microsoft Store: $($a.store)" } elseif ($a.web) { $a.web } else { $a.installer })
+                [void]$dock.Children.Add($pill); [void]$dock.Children.Add($cb)
+                $card.Child = $dock
+                $card.Cursor = 'Hand'
+                $card.Tag = $cb
+                $card.Add_MouseEnter({ Use-Res $this $BG 'CardHover'; Use-Res $this $BRD 'AccentText' })
+                $card.Add_MouseLeave({ Use-Res $this $BG 'Card'; Use-Res $this $BRD 'CardBorder' })
+                $card.Add_MouseLeftButtonUp({ $this.Tag.IsChecked = -not $this.Tag.IsChecked })
+                [void]$grid.Children.Add($card)
+            }
+        }
+        if ($matchCount -eq 0) {
+            $none = New-Object Windows.Controls.TextBlock
+            $none.Text = "No apps match ""$query""" ; $none.FontSize = 13; $none.Margin = '20,30,0,0'
+            Use-Res $none $FG 'Muted'
+            [void]$sp.Children.Add($none)
+        } else {
+            [void]$sp.Children.Add($grid)
+        }
+        $script:searchResultsPanel = $sp
+        $detail.Content = $sp
+        $detailTitle.Text = "Search: $query"
+        $script:activeSec = $null
+        foreach ($s in $sections) { Set-TileLook $s }
+    }
+
+    $SearchBox.Add_TextChanged({
+        $q = $SearchBox.Text
+        if ($q -ne $script:searchQuery) {
+            $script:searchQuery = $q
+            Show-SearchResults $q
+        }
+    })
+    $SearchBox.Add_KeyDown({
+        param($sender, $e)
+        if ($e.Key -eq 'Escape') { $SearchBox.Text = ''; $SearchBox.MoveFocus([System.Windows.Input.FocusNavigationDirection]::Next) }
+    })
 
     # ---------- Home: big category tiles; hovering a tile shows its apps below ----------
     $rows = @{}
@@ -1281,6 +1368,36 @@ function Start-MyApps {
         $inst = @($vals | Where-Object { $_ -eq 'Installed' -or $_ -eq 'Update available' }).Count
         $upd  = @($vals | Where-Object { $_ -eq 'Update available' }).Count
         $Summary.Text = "$($rows.Count) apps  |  $inst installed" + $(if ($upd) { "  |  $upd update" + $(if ($upd -gt 1) { 's' } else { '' }) } else { '' })
+        # ---- Search filter ----
+        $search = $SearchBox.Text.Trim().ToLower()
+        if ($search) {
+            foreach ($sc in $sections) {
+                $secVisible = $false
+                for ($i = 0; $i -lt $sc.Checks.Count; $i++) {
+                    $cb = $sc.Checks[$i]
+                    $card = $cb.Parent
+                    $appName = $cb.Content.ToString().ToLower()
+                    $catName = $sc.Name.ToLower()
+                    $appId = $rows.Keys | Where-Object { $rows[$_].Check -eq $cb } | Select-Object -First 1
+                    $idMatch = $appId -and $appId.ToLower().Contains($search)
+                    $match = $appName.Contains($search) -or $catName.Contains($search) -or $idMatch
+                    $card.Visibility = if ($match) { 'Visible' } else { 'Collapsed' }
+                    if ($match) { $secVisible = $true }
+                }
+                $sc.Tile.Visibility = if ($secVisible) { 'Visible' } else { 'Collapsed' }
+            }
+            $LinkExpand.Visibility = 'Collapsed'
+            $LinkCollapse.Visibility = 'Visible'
+        } else {
+            foreach ($sc in $sections) {
+                foreach ($cb in $sc.Checks) { $cb.Parent.Visibility = 'Visible' }
+                $sc.Tile.Visibility = 'Visible'
+            }
+            $LinkExpand.Visibility = 'Visible'
+            $LinkCollapse.Visibility = 'Collapsed'
+        }
+        # ---- End search filter ----
+
         foreach ($sc in $sections) {
             $inst = @($sc.Statuses | Where-Object { $_.Text -in 'Installed', 'Update available', 'Partly installed' }).Count
             $sel  = @($sc.Checks | Where-Object { $_.IsChecked }).Count
@@ -1315,6 +1432,37 @@ function Start-MyApps {
             Start-Work @([pscustomobject]@{ Action = 'libernt' })
         }
     })
+    # SearchBox: live filter on text change, Esc to clear
+    $SearchBox.Add_TextChanged({
+        $txt = $SearchBox.Text.Trim().ToLower()
+        if ($txt) {
+            foreach ($sc in $sections) {
+                $secVisible = $false
+                for ($i = 0; $i -lt $sc.Checks.Count; $i++) {
+                    $cb = $sc.Checks[$i]
+                    $card = $cb.Parent
+                    $appName = $cb.Content.ToString().ToLower()
+                    $catName = $sc.Name.ToLower()
+                    $appId = $rows.Keys | Where-Object { $rows[$_].Check -eq $cb } | Select-Object -First 1
+                    $idMatch = $appId -and $appId.ToLower().Contains($txt)
+                    $match = $appName.Contains($txt) -or $catName.Contains($txt) -or $idMatch
+                    $card.Visibility = if ($match) { 'Visible' } else { 'Collapsed' }
+                    if ($match) { $secVisible = $true }
+                }
+                $sc.Tile.Visibility = if ($secVisible) { 'Visible' } else { 'Collapsed' }
+            }
+            $LinkExpand.Visibility = 'Collapsed'
+            $LinkCollapse.Visibility = 'Visible'
+        } else {
+            foreach ($sc in $sections) {
+                foreach ($cb in $sc.Checks) { $cb.Parent.Visibility = 'Visible' }
+                $sc.Tile.Visibility = 'Visible'
+            }
+            $LinkExpand.Visibility = 'Visible'
+            $LinkCollapse.Visibility = 'Collapsed'
+        }
+    })
+    $SearchBox.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'Escape') { $SearchBox.Text = ''; $SearchBox.MoveFocus([System.Windows.Input.FocusNavigationDirection]::Next) } })
     $win.Add_KeyDown({ param($sender, $e) if ($e.Key -eq 'F5') { Start-Status } })
     $BtnRestore.Add_Click({   Start-Work @([pscustomobject]@{ Action = 'restore' }) })
     $BtnEdge.Add_Click({
