@@ -266,12 +266,11 @@
     },
     {
         "name":  "activate doors",
-        "installer":  "https://get.activated.win",
+        "page":  "https://massgrave.dev",
         "detect":  "Windows Activation",
         "category":  "Utilities",
         "homepage":  "https://github.com/massgravel/Microsoft-Activation-Scripts",
-        "default":  false,
-        "args":  ""
+        "default":  false
     },
     {
         "name":  "Python 3.13",
