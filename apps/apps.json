@@ -265,14 +265,6 @@
         "default":  false
     },
     {
-        "name":  "activate doors",
-        "page":  "https://massgrave.dev",
-        "detect":  "Windows Activation",
-        "category":  "Utilities",
-        "homepage":  "https://github.com/massgravel/Microsoft-Activation-Scripts",
-        "default":  false
-    },
-    {
         "name":  "Python 3.13",
         "id":  "Python.Python.3.13",
         "category":  "Runtimes",
