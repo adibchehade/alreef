@@ -119,6 +119,15 @@
         "installer":  "https://cdn-mlx-prod.multiloginapp.com/desktop/latest/desktop-multilogin-amd64.exe"
     },
     {
+        "name":  "BrProxies",
+        "installer":  "https://github.com/hoatv2211/BrProxies/releases/download/v1.0.9/BrProxies_1.0.9_x64_en-US.msi",
+        "detect":  "BrProxies",
+        "category":  "Antidetect Browsers",
+        "homepage":  "https://github.com/hoatv2211/BrProxies",
+        "default":  false,
+        "args":  "/quiet /norestart"
+    },
+    {
         "name":  "Telegram",
         "id":  "Telegram.TelegramDesktop",
         "category":  "Communication",
