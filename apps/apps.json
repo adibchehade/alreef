@@ -157,6 +157,15 @@
         "default":  false
     },
     {
+        "name":  "Stream-Tube-Desktop",
+        "installer":  "https://github.com/Avaneesh-Inamdar/Stream-Tube-Desktop/releases/download/v0.7.2-alpha/StreamTube-0.7.2-alpha-setup.exe",
+        "detect":  "Stream-Tube-Desktop",
+        "category":  "Streaming",
+        "homepage":  "https://github.com/Avaneesh-Inamdar/Stream-Tube-Desktop",
+        "default":  false,
+        "args":  "/silent"
+    },
+    {
         "name":  "Internet Download Manager",
         "id":  "Tonec.InternetDownloadManager",
         "category":  "Downloads",
