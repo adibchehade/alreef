@@ -784,7 +784,7 @@ function Start-MyApps {
         # Download a vendor's installer, refuse it unless it carries a valid digital signature, then run it
         function Install-Direct($t) {
             $src = $t.Installer
-            $fromGitHub = $src -like 'github:*'
+            $fromGitHub = ($src -like 'github:*') -or ($src -match '^https://github\.com/[^/]+/[^/]+/releases/download/')
             if ($fromGitHub) {
                 $src = Get-GitHubAsset $src.Substring(7) $t.Asset $t.Name
                 if (-not $src) { return }
@@ -818,7 +818,10 @@ function Start-MyApps {
                 Remove-Item $file -Force -ErrorAction SilentlyContinue
                 return
             }
-            if ($t.Args) {
+            if ([IO.Path]::GetExtension($file) -eq '.msi') {
+                Log "$($t.Name): signed by $signer. Installing silently (MSI)..."
+                Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$file`" /qn /norestart ALLUSERS=1" -Wait
+            } elseif ($t.Args) {
                 Log "$($t.Name): signed by $signer. Installing silently..."
                 Start-Process -FilePath $file -ArgumentList $t.Args -Wait
             } else {
