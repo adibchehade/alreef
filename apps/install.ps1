@@ -1060,6 +1060,7 @@ function Start-MyApps {
                         try {
                             $dir   = Join-Path $env:ProgramData 'SoftservTools'
                             $local = Join-Path $dir 'install.ps1'
+                            $ico   = Join-Path $dir 'softserv.ico'
                             New-Item -ItemType Directory -Path $dir -Force | Out-Null
                             & icacls.exe $dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
 
@@ -1070,6 +1071,9 @@ function Start-MyApps {
                             if ((Get-Item $tmp).Length -gt 20000 -and (Select-String -Path $tmp -Pattern 'function Start-MyApps' -Quiet)) {
                                 Move-Item $tmp $local -Force
                             } else { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+
+                            # The Softserv icon for the shortcuts
+                            try { Invoke-WebRequest -Uri "$($sync.RepoRaw)/softserv.ico" -OutFile $ico -UseBasicParsing -ErrorAction Stop } catch {}
 
                             $tn  = "SoftservTools-$env:USERNAME"
                             $arg = "-NoProfile -ExecutionPolicy RemoteSigned -WindowStyle Minimized -File `"$local`""
@@ -1096,7 +1100,7 @@ function Start-MyApps {
                                 $l = $shell.CreateShortcut($lp)
                                 $l.TargetPath   = "$env:SystemRoot\System32\schtasks.exe"
                                 $l.Arguments    = "/run /tn `"$tn`""
-                                $l.IconLocation = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0"
+                                $l.IconLocation = if (Test-Path $ico) { "$ico,0" } else { "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0" }
                                 $l.WindowStyle  = 7
                                 $l.Description  = 'Softserv Tools installer'
                                 $l.Save()
